@@ -1,0 +1,8 @@
+#+TITLE: ElectricFields.jl
+#+AUTHOR: Stefanos Carlström
+#+EMAIL: stefanos.carlstrom@gmail.com
+
+[[https://travis-ci.org/jagot/ElectricFields.jl][https://travis-ci.org/jagot/ElectricFields.jl.svg?branch=master]]
+[[https://coveralls.io/github/jagot/ElectricFields.jl?branch=master][https://coveralls.io/repos/github/jagot/ElectricFields.jl/badge.svg?branch=master]]
+[[http://codecov.io/gh/jagot/ElectricFields.jl][http://codecov.io/gh/jagot/ElectricFields.jl/branch/master/graph/badge.svg]]
+
