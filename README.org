@@ -6,3 +6,46 @@
 [[https://coveralls.io/github/jagot/ElectricFields.jl?branch=master][https://coveralls.io/repos/github/jagot/ElectricFields.jl/badge.svg?branch=master]]
 [[http://codecov.io/gh/jagot/ElectricFields.jl][http://codecov.io/gh/jagot/ElectricFields.jl/branch/master/graph/badge.svg]]
 
+#+PROPERTY: header-args:julia :session *julia-README*
+
+A small Julian DSL for defining electrical fields, chiefly for use in
+atomic physics calculations.
+
+* Usage
+ First we load the library and set the base units, which are used if
+ unitless quantities are passed to =@field=, below. The units are
+ defined in the fashion of [[https://github.com/ajkeller34/Unitful.jl][Unitful.jl]].
+ #+BEGIN_SRC julia
+   using ElectricFields
+
+   # These are the default base units, so setting these are actually not
+   # necessary, if you are happy with the defaults.
+   @set_base_units() do
+       λ : u"nm"
+       I : u"W/cm^2"
+       τ : u"fs"
+   end
+ #+END_SRC
+
+ #+RESULTS:
+ : nothing
+
+ We can now define a field, which we name =IR=, using the =@field=
+ macro:
+ #+BEGIN_SRC julia :results value code
+   @field(IR) do
+       λ : 800
+       I : 10
+       τ : 6.2
+   end
+ #+END_SRC
+
+ #+RESULTS:
+ #+begin_src julia
+ Dict{Symbol,Number}(Pair{Symbol,Number}(:I, 10),Pair{Symbol,Number}(:λ, 800),Pair{Symbol,Number}(:τ, 6.2))
+ #+end_src
+
+* Ideas
+  - Harmonic fields
+  - Chirped/dispersed fields
+  - Elliptically polarized fields
