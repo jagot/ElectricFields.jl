@@ -15,15 +15,15 @@ atomic physics calculations.
  First we load the library and set the base units, which are used if
  unitless quantities are passed to =@field=, below. The units are
  defined in the fashion of [[https://github.com/ajkeller34/Unitful.jl][Unitful.jl]].
- #+BEGIN_SRC julia
+ #+BEGIN_SRC julia :exports both
    using ElectricFields
 
-   # These are the default base units, so setting these are actually not
+   # These are the default base units, so setting these is actually not
    # necessary, if you are happy with the defaults.
    @set_base_units() do
-       λ : u"nm"
-       I : u"W/cm^2"
-       τ : u"fs"
+       λ  : u"nm"
+       I₀ : u"W/cm^2"
+       τ  : u"fs"
    end
  #+END_SRC
 
@@ -32,17 +32,17 @@ atomic physics calculations.
 
  We can now define a field, which we name =IR=, using the =@field=
  macro:
- #+BEGIN_SRC julia :results value code
+ #+BEGIN_SRC julia :exports both :results value code
    @field(IR) do
-       λ : 800
-       I : 10
-       τ : 6.2
+       λ  : 800
+       I₀ : 1e14
+       τ  : 6.2
    end
  #+END_SRC
 
  #+RESULTS:
  #+begin_src julia
- Dict{Symbol,Number}(Pair{Symbol,Number}(:I, 10),Pair{Symbol,Number}(:λ, 800),Pair{Symbol,Number}(:τ, 6.2))
+ Dict{Symbol,Number}(Pair{Symbol,Number}(:T, 1//374740572500000 s),Pair{Symbol,Number}(:ν, 12500.0 cm^-1),Pair{Symbol,Number}(:f, 374740572500000//1 Hz),Pair{Symbol,Number}(:E₀, 2.74492e10 m^-1 V),Pair{Symbol,Number}(:λ, 800 nm),Pair{Symbol,Number}(:I₀, 1.0e14 cm^-2 W),Pair{Symbol,Number}(:τ, 6.2 fs),Pair{Symbol,Number}(:ω, 2.35456e15 rad s^-1))
  #+end_src
 
 * Ideas
