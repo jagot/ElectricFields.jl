@@ -11,6 +11,8 @@
 A small Julian DSL for defining electrical fields, chiefly for use in
 atomic physics calculations.
 
+This is a [[https://github.com/jagot/LiterateOrg.jl][LiterateOrg.jl]] project. The documentation is found [[file:src/ElectricFields.org][within the code]].
+
 * Usage
  First we load the library and set the base units, which are used if
  unitless quantities are passed to =@field=, below. The units are
@@ -34,7 +36,7 @@ atomic physics calculations.
  macro:
  #+BEGIN_SRC julia :exports both :results value code
    @field(IR) do
-       λ  : 800
+       λ  : 800.0
        I₀ : 1e14
        τ  : 6.2
    end
@@ -42,7 +44,7 @@ atomic physics calculations.
 
  #+RESULTS:
  #+begin_src julia
- Dict{Symbol,Number}(Pair{Symbol,Number}(:T, 1//374740572500000 s),Pair{Symbol,Number}(:ν, 12500.0 cm^-1),Pair{Symbol,Number}(:f, 374740572500000//1 Hz),Pair{Symbol,Number}(:E₀, 2.74492e10 m^-1 V),Pair{Symbol,Number}(:λ, 800 nm),Pair{Symbol,Number}(:I₀, 1.0e14 cm^-2 W),Pair{Symbol,Number}(:τ, 6.2 fs),Pair{Symbol,Number}(:ω, 2.35456e15 rad s^-1))
+ Dict{Symbol,Number}(Pair{Symbol,Number}(:T, 2.66851e-15 s),Pair{Symbol,Number}(:ν, 12500.0 cm^-1),Pair{Symbol,Number}(:f, 3.74741e14 Hz),Pair{Symbol,Number}(:E₀, 2.74492e10 m^-1 V),Pair{Symbol,Number}(:λ, 800.0 nm),Pair{Symbol,Number}(:I₀, 1.0e14 cm^-2 W),Pair{Symbol,Number}(:τ, 6.2 fs),Pair{Symbol,Number}(:ω, 2.35456e15 rad s^-1))
  #+end_src
 
 * Ideas

@@ -1,0 +1,235 @@
+#+TITLE: ElectricFields.jl
+#+AUTHOR: Stefanos Carlström
+#+EMAIL: stefanos.carlstrom@gmail.com
+
+#+PROPERTY: header-args:julia :session *julia-ElectricFields*
+
+* Field types
+  #+BEGIN_SRC julia
+    using Unitful
+
+    abstract type AbstractField end
+
+    struct LinearField <: AbstractField
+        λ::Number
+        T::Number
+        ω::Number
+        τ::Number
+    end
+
+    wavelength(f::LinearField) = f.λ
+    period(f::LinearField) = f.T
+
+    frequency(f::LinearField) = 1/f.T
+    wavenumber(f::LinearField) = 1/f.λ
+    fundamental(f::LinearField) = f.ω
+    energy(f::LinearField) = f.ω * u"hbar"
+
+    duration(f::LinearField) = f.τ
+
+    intensity(f::LinearField) = 0
+    amplitude(f::LinearField) = 0
+
+    struct TransverseField <: AbstractField
+        z::LinearField
+        x::LinearField
+    end
+
+    duration(f::TransverseField) = max(duration.((f.z,f.x))...)
+  #+END_SRC
+
+* Parse DSL blocks
+  #+BEGIN_SRC julia
+    function parse_block(block, T)
+        line_no = 0
+        filename = ""
+        error_message = v -> error("$(filename):$(line_no)\n>   $(v)")
+
+        field_params = Dict{Symbol,T}()
+        param_line_nos = Dict()
+
+        for line in block.args
+            typeof(line) == Expr || error_message("Expected expression, got $(line)")
+            if line.head == :line
+                line_no,filename = line.args
+                continue
+            end
+            line.head == Symbol(":") ||
+                error_message("Expected “parameter : value expression”, got $(line)")
+            k = line.args[1]
+            k in keys(field_params) &&
+                error_message("Field parameter $(k) already specified at $(filename):$(param_line_nos[k])")
+            v = line.args[2]
+            field_params[k] = eval(v)
+            param_line_nos[k] = line_no
+        end
+
+        field_params
+    end
+  #+END_SRC
+
+* Units
+  #+BEGIN_SRC julia
+    base_units = Dict(:λ => u"nm",
+                      :I₀ => u"W/cm^2",
+                      :E₀ => u"V/m",
+                      :τ => u"fs",
+                      :T => u"s",
+                      :f => u"Hz",
+                      :ν => u"cm^-1",
+                      :ω => u"rad/s")
+
+    function get_unitful_quantity(field_params::Dict{Symbol,Union{Number,Quantity}}, sym::Symbol)
+        v = field_params[sym]
+        typeof(v) <: Quantity ? v : v*base_units[sym]
+    end
+
+    function set_base_units(unit_specs::Dict{Symbol, Any})
+        global base_units
+        unknown_units = setdiff(keys(unit_specs),
+                                keys(base_units))
+        length(unknown_units) != 0 && error("Unknown base unit, $(join(unknown_units, ", "))")
+
+        for (k,v) in unit_specs
+            base_units[k] = v
+        end
+
+        nothing
+    end
+
+    macro set_base_units(spec)
+        spec.head == :-> ||
+            error("Expected a block with parameters for definition of the field")
+        block = spec.args[2]
+        block.head == :block ||
+            error("Expected a block with parameters for definition of the field")
+
+        set_base_units(parse_block(block, Any))
+    end
+
+    export @set_base_units
+  #+END_SRC
+
+* Field creation
+  #+BEGIN_SRC julia
+    test_symbol_walk(node, params) = node
+    test_symbol_walk(node::Symbol, params) = Expr(:call, :in, Expr(:quote, node),
+                                                  Expr(:call, :keys, params))
+    test_symbol_walk(node::Expr, params) =
+        Expr(node.head, test_symbol_walk.(node.args, params)...)
+
+    walk(node, params) = node
+    walk(node::Symbol, params) = node
+
+    get_reference(r::Symbol,params) = Expr(:ref, params, Expr(:quote, r))
+    get_reference(r,params) = r
+
+    get_symbol(s::Symbol, params) = isdefined(s) ? s : get_reference(s, params)
+    get_symbol(s, params) = s
+
+    function walk(node::Expr, params)
+        if node.head ∈ [:line, :quote]
+            node
+        elseif node.head == :if
+            args = [test_symbol_walk(node.args[1], params)]
+            append!(args, [walk(a, params) for a in node.args[2:end]])
+            Expr(node.head, args...)
+        else
+            args = [walk(a, params) for a in node.args]
+            if node.head == :(=)
+                r = get_reference(args[1], params)
+                if typeof(args[1]) == Symbol
+                    conv = Expr(:call, :|>, args[2],
+                                Expr(:ref, base_units,
+                                     Expr(:quote, args[1])))
+                    Expr(node.head, r, conv)
+                else
+                    Expr(node.head, args...)
+                end
+            else
+                args = get_symbol.(args, params)
+                Expr(node.head, args...)
+            end
+        end
+    end
+
+    macro namespace!(exprs, params)
+        local tree = walk(exprs, esc(params))
+        quote
+            $tree()
+        end
+    end
+
+    function test_field_parameters(field_params, set)
+        info = set ∩ keys(field_params)
+        set_string = join(set, ", ", " and ")
+
+        length(info) == 0 &&
+            error("Need to provide one of $(set_string)")
+        length(info) > 1 &&
+            error("Can only specify one of $(set_string)")
+
+        info
+    end
+
+    function make_field(field_params::Dict{Symbol,Union{Number,Quantity}})
+        carrier_info = test_field_parameters(field_params, [:λ, :T, :f, :ν, :ω])
+        amplitude_info = test_field_parameters(field_params, [:I₀, :E₀])
+
+        for k in keys(field_params)
+            field_params[k] = get_unitful_quantity(field_params, k)
+        end
+
+        @namespace!(field_params) do
+            if λ || T
+                if λ
+                    T = λ/u"c"
+                elseif T
+                    λ = T/u"c"
+                end
+                ν = 1/λ
+                f = 1/T
+                ω = 2π*u"rad"*f
+            else # ∝ Frequency specified
+                if f
+                    ν = f/u"c"
+                    ω = 2π*u"rad"*f
+                elseif ν
+                    f = ν*u"c"
+                    ω = f/(2π*u"rad")
+                elseif ω
+                    f = ω/(2π*u"rad")
+                    ν = f/u"c"
+                end
+                T = 1/f
+                λ = 1/ν
+            end
+
+            if I₀
+                E₀ = √(2I₀/u"ε0*c")
+            elseif E₀
+                I₀ = u"ε0*c"/2*E₀^2
+            end
+        end
+
+        field_params
+    end
+  #+END_SRC
+
+** Frontend macro
+   #+BEGIN_SRC julia
+     macro field(spec, var)
+         spec.head == :-> ||
+             error("Expected a block with parameters for definition of the field")
+         block = spec.args[2]
+         block.head == :block ||
+             error("Expected a block with parameters for definition of the field")
+
+         field_params = parse_block(block, Number)
+         quote
+             $(esc(var)) = make_field($field_params)
+         end
+     end
+
+     export @field
+   #+END_SRC
