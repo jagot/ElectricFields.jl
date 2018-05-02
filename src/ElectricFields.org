@@ -37,6 +37,36 @@
 
     duration(f::TransverseField) = max(duration.((f.z,f.x))...)
   #+END_SRC
+** Field arithmetic
+   #+BEGIN_SRC julia
+     type SumField <: AbstractField
+         a::AbstractField
+         b::AbstractField
+     end
+
+     +(a::AbstractField,
+       b::AbstractField) = SumField(a, b)
+
+
+     type NegatedField <: AbstractField
+         a::AbstractField
+     end
+
+     -(a::AbstractField,
+       b::AbstractField) = SumField(a, NegatedField(b))
+
+
+     type DelayedField <: AbstractField
+         a::AbstractField
+         t₀::Number
+     end
+
+     delay(a::AbstractField, t₀::Number) = DelayedField(a, t₀)
+     delay(a::DelayedField) = a.t₀
+     delay(a::AbstractField) = 0
+
+     # Dispatch evaluation on units: time shift, radians, cycles
+   #+END_SRC
 
 * Parse DSL blocks
   #+BEGIN_SRC julia
