@@ -141,13 +141,34 @@
   #+END_SRC
 
 * Field creation
+  The somewhat complicated setup with walking the expression tree in
+  =make_field= (twice implemented :) allows for very clean expression
+  of the formulaic dependencies between different quantities, almost
+  as if it were pure math. All ingoing quantities are either unitful,
+  or made unitful using the set base units. Furthermore, outgoing
+  quantities are transformed to the base units, even though the
+  expression may result in a different (but equivalent) unit
+  expression. This way, even if a period time is provided in
+  femtoseconds, the wavenumber will always be returned in Kaysers, for
+  instance.
+
+  These methods are used for the =if x= constructs in the quantity
+  conversion DSL. We return =true= if the symbol =x= is present in the
+  =params= dict. Since we implement it as an expression walking
+  algorithm, we can have constructs as =if x || y=, which will expand
+  to =if :x in keys(params) || :y in keys(params)=.
   #+BEGIN_SRC julia
     test_symbol_walk(node, params) = node
     test_symbol_walk(node::Symbol, params) = Expr(:call, :in, Expr(:quote, node),
                                                   Expr(:call, :keys, params))
     test_symbol_walk(node::Expr, params) =
         Expr(node.head, test_symbol_walk.(node.args, params)...)
+  #+END_SRC
 
+  This walks the quantity conversions block, replacing symbols with
+  references to dictionary items and converting quantities to
+  applicable base units, before assignment.
+  #+BEGIN_SRC julia
     walk(node, params) = node
     walk(node::Symbol, params) = node
 
@@ -161,6 +182,8 @@
         if node.head ∈ [:line, :quote]
             node
         elseif node.head == :if
+            # Dispatch "if x" to test_symbol_walk, which checks if :x is
+            # present as key in params.
             args = [test_symbol_walk(node.args[1], params)]
             append!(args, [walk(a, params) for a in node.args[2:end]])
             Expr(node.head, args...)
@@ -169,6 +192,8 @@
             if node.head == :(=)
                 r = get_reference(args[1], params)
                 if typeof(args[1]) == Symbol
+                    # Generate expression that converts to the correct
+                    # base unit.
                     conv = Expr(:call, :|>, args[2],
                                 Expr(:ref, base_units,
                                      Expr(:quote, args[1])))
@@ -183,13 +208,19 @@
         end
     end
 
+    # This macros uses the dictionary params as a "namespace", i.e. all
+    # symbols are assumed to be keys in this dictionary.
     macro namespace!(exprs, params)
         local tree = walk(exprs, esc(params))
         quote
             $tree()
         end
     end
+  #+END_SRC
 
+  This function ensures that one and only one of "competing"
+  quantities is specified.
+  #+BEGIN_SRC julia
     function test_field_parameters(field_params, set)
         info = set ∩ keys(field_params)
         set_string = join(set, ", ", " and ")
@@ -201,7 +232,11 @@
 
         info
     end
+  #+END_SRC
 
+  This function performs the calculation of different quantities from
+  the information provided.
+  #+BEGIN_SRC julia
     function make_field(field_params::Dict{Symbol,Union{Number,Quantity}})
         carrier_info = test_field_parameters(field_params, [:λ, :T, :f, :ν, :ω])
         amplitude_info = test_field_parameters(field_params, [:I₀, :E₀])
