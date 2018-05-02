@@ -37,6 +37,10 @@
 
     duration(f::TransverseField) = max(duration.((f.z,f.x))...)
   #+END_SRC
+
+  #+RESULTS:
+  : duration
+
 ** Field arithmetic
    #+BEGIN_SRC julia
      type SumField <: AbstractField
@@ -60,7 +64,11 @@
          a::AbstractField
          t₀::Number
      end
+   #+END_SRC
 
+   Convention for delayed fields: a field delayed by a /positive/
+   time, comes /later/, i.e. we write \(f(t-\delta t)\).
+   #+BEGIN_SRC julia
      delay(a::AbstractField, t₀::Number) = DelayedField(a, t₀)
      delay(a::DelayedField) = a.t₀
      delay(a::AbstractField) = 0
@@ -140,6 +148,9 @@
     export @set_base_units
   #+END_SRC
 
+  #+RESULTS:
+  : nothing
+
 * Field creation
   The somewhat complicated setup with walking the expression tree in
   =make_field= (twice implemented :) allows for very clean expression
@@ -207,9 +218,11 @@
             end
         end
     end
+  #+END_SRC
 
-    # This macros uses the dictionary params as a "namespace", i.e. all
-    # symbols are assumed to be keys in this dictionary.
+  This macros uses the dictionary =params= as a "namespace", i.e. all
+  symbols are assumed to be keys in this dictionary.
+  #+BEGIN_SRC julia
     macro namespace!(exprs, params)
         local tree = walk(exprs, esc(params))
         quote
@@ -250,19 +263,20 @@
                 if λ
                     T = λ/u"c"
                 elseif T
-                    λ = T/u"c"
+                    λ = T*u"c"
                 end
                 ν = 1/λ
                 f = 1/T
                 ω = 2π*u"rad"*f
             else # ∝ Frequency specified
-                if f
-                    ν = f/u"c"
+                if f || ν
+                    if f
+                        ν = f/u"c"
+                    elseif ν
+                        f = ν*u"c"
+                    end
                     ω = 2π*u"rad"*f
-                elseif ν
-                    f = ν*u"c"
-                    ω = f/(2π*u"rad")
-                elseif ω
+                else ω
                     f = ω/(2π*u"rad")
                     ν = f/u"c"
                 end
@@ -281,6 +295,9 @@
     end
   #+END_SRC
 
+  #+RESULTS:
+  : make_field
+
 ** Frontend macro
    #+BEGIN_SRC julia
      macro field(spec, var)
@@ -298,3 +315,36 @@
 
      export @field
    #+END_SRC
+
+*** COMMENT Example usage
+**** Specifying wavelength
+     #+BEGIN_SRC julia :exports both :results value code
+       @field(IR) do
+           λ  : 800.0
+           I₀ : 1e14
+           τ  : 6.2
+       end
+     #+END_SRC
+
+     #+RESULTS:
+     #+begin_src julia
+     Dict{Symbol,Number}(Pair{Symbol,Number}(:T, 2.66851e-15 s),Pair{Symbol,Number}(:ν, 12500.0 cm^-1),Pair{Symbol,Number}(:f, 3.74741e14 Hz),Pair{Symbol,Number}(:E₀, 2.74492e10 m^-1 V),Pair{Symbol,Number}(:λ, 800.0 nm),Pair{Symbol,Number}(:I₀, 1.0e14 cm^-2 W),Pair{Symbol,Number}(:τ, 6.2 fs),Pair{Symbol,Number}(:ω, 2.35456e15 rad s^-1))
+     #+end_src
+
+**** Specifying period time
+     #+BEGIN_SRC julia :exports both :results value code
+       @set_base_units() do
+           λ  : u"km"
+       end
+
+       @field(radio) do
+           T  : 3.0u"ms"
+           E₀ : 5u"V/m"
+           τ  : 10u"s"
+       end
+     #+END_SRC
+
+     #+RESULTS:
+     #+begin_src julia
+     Dict{Symbol,Number}(Pair{Symbol,Number}(:T, 3.0 ms),Pair{Symbol,Number}(:ν, 1.11188e-8 cm^-1),Pair{Symbol,Number}(:f, 333.333 Hz),Pair{Symbol,Number}(:E₀, 5 m^-1 V),Pair{Symbol,Number}(:λ, 899.377 km),Pair{Symbol,Number}(:τ, 10 s),Pair{Symbol,Number}(:ω, 2094.4 rad s^-1),Pair{Symbol,Number}(:I₀, 3.31802e-6 cm^-2 W))
+     #+end_src
