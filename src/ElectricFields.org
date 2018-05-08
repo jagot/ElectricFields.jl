@@ -290,10 +290,15 @@ use in calculations.
    This function performs the calculation of different quantities from
    the information provided.
 
+   The [[https://en.wikipedia.org/wiki/Ponderomotive_energy][ponderomotive potential]] U_p is the cycle-average quiver energy
+   of a free electron in an electromagnetic field. It is given by
+   \[U_p = \frac{e^2E_0^2}{4m\omega^2}=\frac{2e^2}{c\varepsilon_0m}\times\frac{I}{4\omega^2}, \]
+   or, in atomic units,
+   \[U_p = \frac{I}{4\omega^2}.\]
    #+BEGIN_SRC julia
      function make_field(field_params::Dict{Symbol,Union{Number,Quantity}})
          carrier_info = test_field_parameters(field_params, [:λ, :T, :f, :ν, :ω])
-         amplitude_info = test_field_parameters(field_params, [:I₀, :E₀])
+         amplitude_info = test_field_parameters(field_params, [:I₀, :E₀, :Uₚ])
 
          for k in keys(field_params)
              field_params[k] = get_unitful_quantity(field_params, k)
@@ -325,10 +330,16 @@ use in calculations.
                  λ = 1/ν
              end
 
-             if I₀
+             if I₀ || Uₚ
+                 if Uₚ
+                     I₀ = Uₚ / u"2*q^2/c*ε0*me" * 4ω^2
+                 end
                  E₀ = √(2I₀/u"ε0*c")
              elseif E₀
                  I₀ = u"ε0*c"/2*E₀^2
+             end
+             if !Uₚ
+                 Uₚ = u"2*q^2/c*ε0*me" * I₀/4ω^2
              end
          end
 
@@ -372,7 +383,7 @@ use in calculations.
 
      #+RESULTS:
      #+begin_src julia
-     Dict{Symbol,Number}(Pair{Symbol,Number}(:T, 2.66851e-15 s),Pair{Symbol,Number}(:ν, 12500.0 cm^-1),Pair{Symbol,Number}(:f, 3.74741e14 Hz),Pair{Symbol,Number}(:E₀, 2.74492e10 m^-1 V),Pair{Symbol,Number}(:λ, 800.0 nm),Pair{Symbol,Number}(:I₀, 1.0e14 cm^-2 W),Pair{Symbol,Number}(:τ, 6.2 fs),Pair{Symbol,Number}(:ω, 2.35456e15 rad s^-1))
+     Dict{Symbol,Number}(Pair{Symbol,Number}(:T, 2.66851e-15 s),Pair{Symbol,Number}(:ν, 12500.0 cm^-1),Pair{Symbol,Number}(:f, 3.74741e14 Hz),Pair{Symbol,Number}(:Uₚ, 1.67822e-79 C^2 kg H^-1 cm^-2 m rad^-2 s^2 c^-3 W),Pair{Symbol,Number}(:E₀, 2.74492e10 m^-1 V),Pair{Symbol,Number}(:λ, 800.0 nm),Pair{Symbol,Number}(:I₀, 1.0e14 cm^-2 W),Pair{Symbol,Number}(:τ, 6.2 fs),Pair{Symbol,Number}(:ω, 2.35456e15 rad s^-1))
      #+end_src
 
 **** Specifying period time
