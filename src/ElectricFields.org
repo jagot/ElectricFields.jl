@@ -232,7 +232,7 @@ use in calculations.
              args = [walk(a, params) for a in node.args]
              if node.head == :(=)
                  r = get_reference(args[1], params)
-                 if typeof(args[1]) == Symbol
+                 if typeof(args[1]) == Symbol && args[1] ∈ keys(base_units)
                      # Generate expression that converts to the correct
                      # base unit.
                      conv = Expr(:call, :|>, args[2],
@@ -240,7 +240,7 @@ use in calculations.
                                       Expr(:quote, args[1])))
                      Expr(node.head, r, conv)
                  else
-                     Expr(node.head, args...)
+                     Expr(node.head, r, args[2:end]...)
                  end
              else
                  args = get_symbol.(args, params)
