@@ -195,8 +195,10 @@ use in calculations.
    to =if :x in keys(params) || :y in keys(params)=.
    #+BEGIN_SRC julia
      test_symbol_walk(node, params) = node
-     test_symbol_walk(node::Symbol, params) = Expr(:call, :in, Expr(:quote, node),
-                                                   Expr(:call, :keys, params))
+     test_symbol_walk(node::Symbol, params) = (isdefined(node) ?
+                                               node :
+                                               Expr(:call, :in, Expr(:quote, node),
+                                                    Expr(:call, :keys, params)))
      test_symbol_walk(node::Expr, params) =
          Expr(node.head, test_symbol_walk.(node.args, params)...)
    #+END_SRC
