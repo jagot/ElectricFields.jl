@@ -23,9 +23,11 @@ use in calculations.
 #+BEGIN_SRC julia
   using Unitful
   using Parameters
+  import Base: show
 #+END_SRC
 
 #+RESULTS:
+: nothing
 
 * Units
   #+BEGIN_SRC julia
@@ -40,10 +42,10 @@ use in calculations.
         :σ′ => u"fs",
         :σmax => NoUnits,
         :σ′max => NoUnits,
-        :T => u"s",
-        :f => u"Hz",
+        :T => u"fs",
+        :f => u"THz",
         :ν => u"cm"^-1,
-        :ω => u"rad"/u"s",
+        :ω => u"Trad"/u"s",
         :Uₚ => u"eV"
     )
 
@@ -76,10 +78,12 @@ use in calculations.
     end
 
     export @set_base_units
+
+    usplit(u) = ustrip(u),unit(u)
   #+END_SRC
 
   #+RESULTS:
-  : nothing
+  : usplit (generic function with 1 method)
 
 * DSLs
 ** Parse assignment DSL blocks
@@ -239,6 +243,13 @@ use in calculations.
         env::AbstractEnvelope # Amplitude envelope
     end
 
+    function show(io::IO, f::LinearField)
+        write(io, "Linearly polarized field with a\n  ")
+        show(io, f.carrier)
+        write(io, " and a\n  ")
+        show(io, f.env)
+    end
+
     wavelength(f::LinearField) = wavelength(f.carrier)
     period(f::LinearField) = period(f.carrier)
 
@@ -296,10 +307,14 @@ use in calculations.
          @unpack λ, T, ω = field_params
          FixedCarrier(λ, T, ω)
      end
+
+     function show(io::IO, carrier::FixedCarrier)
+         write(io, @sprintf("fixed carrier @ λ = %0.2f %s (T = %0.2f %s)",
+                            usplit(carrier.λ)..., usplit(carrier.T)...))
    #+END_SRC
 
    #+RESULTS:
-   : FixedCarrier
+   : show (generic function with 259 methods)
 
 ** Dispersed carriers
 *** Chirped carrier
@@ -346,6 +361,10 @@ use in calculations.
      end
      envelope_types[:gauss] = GaussianEnvelope
 
+     show(io::IO, env::GaussianEnvelope) =
+         write(io, @sprintf("Gaussian envelope of duration %0.2f %s (intensity FWHM; ±%0.2fσ)",
+                            usplit(env.τ)..., env.σmax))
+
      function GaussianEnvelope(field_params::Dict{Symbol,Any})
          test_field_parameters(field_params, [:T]) # Period time required to round time window up
          test_field_parameters(field_params, [:τ, :σ, :σ′])
@@ -381,6 +400,7 @@ use in calculations.
    #+END_SRC
 
    #+RESULTS:
+   : GaussianEnvelope
 
 ** Trapezoidal
 ** Sin2
@@ -494,7 +514,6 @@ use in calculations.
    #+END_SRC
 
    #+RESULTS:
-   : calc_params! (generic function with 1 method)
 
 ** Frontend macro
    #+BEGIN_SRC julia
@@ -556,7 +575,9 @@ use in calculations.
      #+END_SRC
 
      #+RESULTS:
-     : LinearField(FixedCarrier(800.0 km, 0.0026685127615852164 s, 2354.5644591360665 rad s^-1), GaussianEnvelope(6.2 fs, 2.632897580892859 fs, 3.7234794672379947 fs, 1.0135269905486715e13, 7.166718079325593e12, 10))
+     : Linearly polarized field with a
+     :   fixed carrier @ λ = 800.00 nm (T = 2.67 fs) and a
+     :   Gaussian envelope of duration 6.20 fs (intensity FWHM; ±10.14σ)
 
 **** Specifying period time
      #+BEGIN_SRC julia :exports both :results value verbatim
@@ -573,20 +594,6 @@ use in calculations.
      #+END_SRC
 
      #+RESULTS:
-     #+begin_example
-     Dict{Symbol,Any} with 14 entries:
-       :tmax => 10010
-       :σ => 4.24661e15 fs
-       :σmax => 7.07152
-       :E₀ => 5 m^-1 V
-       :λ => 899.377 km
-       :I₀ => 3.31802e-6 cm^-2 W
-       :σ′ => 6.00561e15 fs
-       :T => 3.0 ms
-       :ν => 1.11188e-8 cm^-1
-       :f => 333.333 Hz
-       :Uₚ => 2.50602e5 eV
-       :τ => 10 s
-       :σ′max => 5.00032
-       :ω => 2094.4 rad s^-1
-     #+end_example
+     : Linearly polarized field with a
+     :   fixed carrier @ λ = 899.38 km (T = 3.00 ms) and a
+     :   Gaussian envelope of duration 10.00 s (intensity FWHM; ±7.07σ)

@@ -44,7 +44,9 @@ This is a [[https://github.com/jagot/LiterateOrg.jl][LiterateOrg.jl]] project. T
  #+END_SRC
 
  #+RESULTS:
- : ElectricFields.LinearField(ElectricFields.FixedCarrier(800.0 nm, 2.6685127615852163e-15 s, 2.3545644591360665e15 rad s^-1), ElectricFields.GaussianEnvelope(6.2 fs, 2.632897580892859 fs, 3.7234794672379947 fs, 10.135269905486714, 7.166718079325594, 10))
+ : Linearly polarized field with a
+ :   fixed carrier @ λ = 800.00 nm (T = 2.67 fs) and a
+ :   Gaussian envelope of duration 6.20 fs (intensity FWHM; ±10.14σ)
 
 * Ideas
   - Harmonic fields
