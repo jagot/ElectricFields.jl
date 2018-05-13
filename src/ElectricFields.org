@@ -299,6 +299,22 @@ use in calculations.
    #+RESULTS:
    : duration (generic function with 2 methods)
 
+** Keldysh parameter
+   The [[https://en.wikipedia.org/wiki/Tunnel_ionization][Keldysh parameter]] relates the strength of a dynamic electric
+   field to that of the binding potential of an atom. It is given by
+
+   \[\gamma = \sqrt{\frac{I_p}{2U_p}},\]
+
+   where \(I_p\) is the ionization potential of the atom and \(U_p\)
+   is the ponderomotive potential of the dynamic field.
+   #+BEGIN_SRC julia
+     # TODO: Should require Iₚ to be of unit energy
+     keldysh(f::AbstractField, Iₚ::Number) = NoUnits(√(Iₚ/2params(f)[:Uₚ]))
+   #+END_SRC
+
+   #+RESULTS:
+   : keldysh (generic function with 1 method)
+
 ** Exports
    #+BEGIN_SRC julia
      export carrier,
@@ -307,7 +323,8 @@ use in calculations.
          envelope,
          intensity, amplitude,
          duration,
-         params
+         params,
+         keldysh
    #+END_SRC
 
    #+RESULTS:
@@ -708,25 +725,6 @@ use in calculations.
 
      #+RESULTS:
 
-**** Specifying period time
-     #+BEGIN_SRC julia :exports both :results value verbatim
-       @set_base_units() do
-           λ  = u"km"
-       end
-
-       @field(radio) do
-           T     = 3.0u"ms"
-           E₀    = 5u"V/m"
-           τ     = 10u"s"
-           σ′max = 5
-       end
-     #+END_SRC
-
-     #+RESULTS:
-     : Linearly polarized field with a
-     :   Fixed carrier @ λ = 899.38 km (T = 3.00 ms) and a
-     :   I₀ = 3.3e-06 cm^-2 W Gaussian envelope of duration 10 s (intensity FWHM; ±7.07σ)
-
 **** Trapezoidal envelope
      A trapezoidal envelope (also known as a tophat pulse) has a
      ramp-up, a flat region, and a ramp-down.
@@ -745,3 +743,22 @@ use in calculations.
      : Linearly polarized field with a
      :   Fixed carrier @ λ = 800.00 nm (T = 2.67 fs) and a
      :   I₀ = 1e+10 cm^-2 W /5‾10‾5\ cycles trapezoidal envelope
+
+**** Specifying period time, other base units
+     #+BEGIN_SRC julia :exports both :results value verbatim
+       @set_base_units() do
+           λ  = u"km"
+       end
+
+       @field(radio) do
+           T     = 3.0u"ms"
+           E₀    = 5u"V/m"
+           τ     = 10u"s"
+           σ′max = 5
+       end
+     #+END_SRC
+
+     #+RESULTS:
+     : Linearly polarized field with a
+     :   Fixed carrier @ λ = 899.38 km (T = 3.00 ms) and a
+     :   I₀ = 3.3e-06 cm^-2 W Gaussian envelope of duration 10 s (intensity FWHM; ±7.07σ)
