@@ -30,31 +30,36 @@ This is a [[https://github.com/jagot/LiterateOrg.jl][LiterateOrg.jl]] project. T
  #+END_SRC
 
  #+RESULTS:
- : nothing
 
  We can now define a field, which we name =IR=, using the =@field=
  macro:
- #+BEGIN_SRC julia :exports both :results value code
+ #+BEGIN_SRC julia :exports both :results value verbatim
    @field(IR) do
-       λ  = 800.0
-       I₀ = 1e14
-       τ  = 6.2
+       λ    = 800.0
+       I₀   = 1e14
+       τ    = 6.2
+       tmax = 10
    end
  #+END_SRC
 
  #+RESULTS:
- #+begin_src julia
- Dict{Symbol,Any} with 9 entries:
+ #+begin_example
+ Dict{Symbol,Any} with 14 entries:
+   :tmax => 10
+   :σ => 2.6329 fs
+   :σmax => 1.01353e-14 fs^-1 s
+   :E₀ => 2.74492e10 m^-1 V
+   :λ => 800.0 nm
+   :I₀ => 1.0e14 cm^-2 W
+   :σ′ => 3.72348 fs
    :T => 2.66851e-15 s
    :ν => 12500.0 cm^-1
    :f => 3.74741e14 Hz
    :Uₚ => 1.67822e-79 C^2 kg H^-1 cm^-2 m rad^-2 s^2 c^-3 W
-   :E₀ => 2.74492e10 m^-1 V
-   :λ => 800.0 nm
-   :I₀ => 1.0e14 cm^-2 W
    :τ => 6.2 fs
    :ω => 2.35456e15 rad s^-1
- #+end_src
+   :σ′max => 7.16672e-15 fs^-1 s
+ #+end_example
 
 * Ideas
   - Harmonic fields
