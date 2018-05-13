@@ -41,7 +41,8 @@ use in calculations.
         :T => u"s",
         :f => u"Hz",
         :ν => u"cm"^-1,
-        :ω => u"rad"/u"s"
+        :ω => u"rad"/u"s",
+        :Uₚ => u"eV"
     )
 
     function get_unitful_quantity(field_params::Dict{Symbol,Any}, sym::Symbol)
@@ -439,7 +440,7 @@ use in calculations.
                  if Uₚ
                      I₀ = Uₚ / (2*u"q"^2/(u"c"*u"ε0"*u"me")) * 4ω^2
                  end
-                 E₀ = √(2I₀/u"ε0"*u"c")
+                 E₀ = √(2I₀/(u"ε0"*u"c"))
              elseif E₀
                  I₀ = u"ε0"*u"c"/2*E₀^2
              end
@@ -510,7 +511,7 @@ use in calculations.
        :T => 2.66851e-15 s
        :ν => 12500.0 cm^-1
        :f => 3.74741e14 Hz
-       :Uₚ => 1.67822e-79 C^2 kg H^-1 cm^-2 m rad^-2 s^2 c^-3 W
+       :Uₚ => 5.97587 eV
        :τ => 6.2 fs
        :ω => 2.35456e15 rad s^-1
        :σ′max => 7.16672
@@ -534,17 +535,17 @@ use in calculations.
      #+begin_example
      Dict{Symbol,Any} with 14 entries:
        :tmax => 10010
-       :σ => 4.24661 s
-       :σmax => 7071.52 ms s^-1
+       :σ => 4.24661e15 fs
+       :σmax => 7.07152
        :E₀ => 5 m^-1 V
        :λ => 899.377 km
        :I₀ => 3.31802e-6 cm^-2 W
-       :σ′ => 6.00561 s
+       :σ′ => 6.00561e15 fs
        :T => 3.0 ms
        :ν => 1.11188e-8 cm^-1
        :f => 333.333 Hz
-       :Uₚ => 7.03772e-75 C^2 kg H^-1 cm^-2 m rad^-2 s^2 c^-3 W
+       :Uₚ => 2.50602e5 eV
        :τ => 10 s
-       :σ′max => 5000.32 ms s^-1
+       :σ′max => 5.00032
        :ω => 2094.4 rad s^-1
      #+end_example
