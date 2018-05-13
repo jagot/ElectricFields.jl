@@ -29,12 +29,13 @@ This is a [[https://github.com/jagot/LiterateOrg.jl][LiterateOrg.jl]] project. T
 #+END_SRC
 
 #+RESULTS:
+: savefig_f (generic function with 1 method)
 
 * Usage
  First we load the library and set the base units, which are used if
  unitless quantities are passed to =@field=, below. The units are
  defined in the fashion of [[https://github.com/ajkeller34/Unitful.jl][Unitful.jl]].
- #+BEGIN_SRC julia :exports both
+ #+BEGIN_SRC julia :exports code
    using ElectricFields
 
    # These are the default base units, so setting these is actually not
@@ -64,6 +65,9 @@ This is a [[https://github.com/jagot/LiterateOrg.jl][LiterateOrg.jl]] project. T
  : Linearly polarized field with a
  :   Fixed carrier @ λ = 800.00 nm (T = 2.67 fs) and a
  :   I₀ = 1e+14 cm^-2 W Gaussian envelope of duration 6.2 fs (intensity FWHM; ±10.14σ)
+
+ We can define a second pulse with the same parameters as the above,
+ but with a carrier–envelope phase of π/2:
 
  #+BEGIN_SRC julia :exports both :results value verbatim
    @field(IR2) do
@@ -101,6 +105,40 @@ This is a [[https://github.com/jagot/LiterateOrg.jl][LiterateOrg.jl]] project. T
 
  #+RESULTS:
  [[file:./images/ir.svg]]
+
+
+** Trapezoidal pulse
+   A common pulse used in calculation is the trapezoidal (or top-hat)
+   pulse:
+   #+BEGIN_SRC julia :exports both :results value verbatim
+     @field(XUV) do
+         λ    = 50.0
+         I₀   = 1e10
+         env  = :trapezoidal
+         ramp = 5
+         flat = 10
+     end
+   #+END_SRC
+
+   #+RESULTS:
+   : Linearly polarized field with a
+   :   Fixed carrier @ λ = 50.00 nm (T = 0.17 fs) and a
+   :   I₀ = 1e+10 cm^-2 W /5‾10‾5\ cycles trapezoidal envelope
+
+   #+BEGIN_SRC julia :exports results :results value file
+     t = linspace(-0.1, 1, 1001)*4u"fs"
+
+     figure("trapezoidal xuv")
+     clf()
+     plot(t./u"fs", NoUnits.(XUV.(t)./1e8u"V/m"))
+     xlabel(L"$t$ [fs]")
+     ylabel(L"$E$ [$10^8$ V/m]")
+     tight_layout()
+     savefig_f("trapezoidal-xuv")
+   #+END_SRC
+
+   #+RESULTS:
+   [[file:./images/trapezoidal-xuv.svg]]
 
 
 * Ideas

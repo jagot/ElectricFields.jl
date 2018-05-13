@@ -185,7 +185,7 @@ use in calculations.
                                        Expr(:quote, args[1])))
                       Expr(node.head, r, conv)
                   else
-                      Expr(node.head, r, args[2:end]...)
+                      Expr(node.head, r, get_symbol(args[2], params))
                   end
               else
                   args = get_symbol.(args, params)
@@ -222,7 +222,8 @@ use in calculations.
           set_string = join(set, ", ", " and ")
 
           length(info) == 0 &&
-              error("Need to provide one of $(set_string)")
+              (length(set) > 1 && error("Need to provide one of $(set_string)") ||
+               error("Required parameter $(set_string) missing"))
           length(info) > 1 &&
               error("Can only specify one of $(set_string)")
 
@@ -241,10 +242,24 @@ use in calculations.
     # # Not possible in current version of Julia
     # # https://github.com/JuliaLang/julia/issues/14919
     # (f::AbstractField)(t::Number) = envelope(f)(t)*carrier(f)(t)
+
+    wavelength(f::AbstractField) = wavelength(carrier(f))
+    period(f::AbstractField) = period(carrier(f))
+
+    frequency(f::AbstractField) = frequency(carrier(f))
+    wavenumber(f::AbstractField) = wavenumber(carrier(f))
+    fundamental(f::AbstractField) = fundamental(carrier(f))
+    energy(f::AbstractField) = energy(carrier(f))
+
+
+    intensity(f::AbstractField) = intensity(envelope(f))
+    amplitude(f::AbstractField) = amplitude(envelope(f))
+    duration(f::AbstractField) = duration(envelope(f))
+    continuity(f::AbstractField) = continuity(envelope(f))
   #+END_SRC
 
   #+RESULTS:
-  : nothing
+  : continuity (generic function with 1 method)
 
 ** Linear field
    #+BEGIN_SRC julia
@@ -264,22 +279,7 @@ use in calculations.
      end
 
      carrier(f::LinearField) = f.carrier
-
-     wavelength(f::LinearField) = wavelength(f.carrier)
-     period(f::LinearField) = period(f.carrier)
-
-     frequency(f::LinearField) = frequency(f.carrier)
-     wavenumber(f::LinearField) = wavenumber(f.carrier)
-     fundamental(f::LinearField) = fundamental(f.carrier)
-     energy(f::LinearField) = energy(f.carrier)
-
-
-
      envelope(f::LinearField) = f.env
-     intensity(f::LinearField) = intensity(envelope(f))
-     amplitude(f::LinearField) = amplitude(envelope(f))
-     duration(f::AbstractField) = duration(envelope(f))
-
      params(f::LinearField) = f.params
    #+END_SRC
 
@@ -387,7 +387,7 @@ use in calculations.
    where the standard deviation σ is related to the FWHM duration τ
    of the intensity envelope as
 
-   \[\sigma = \frac{\tau}{2\sqrt{2\ln 2}}\].
+   \[\sigma = \frac{\tau}{2\sqrt{2\ln 2}}.\]
 
    Furthermore, the /amplitude/ standard deviation σ′ is proportional
    to the intensity ditto: \(\sigma' = \sqrt{2}\sigma\). Therefore,
@@ -452,13 +452,87 @@ use in calculations.
          @unpack τ, σ, σ′, σmax, σ′max, tmax, I₀, E₀ = field_params
          GaussianEnvelope(τ, σ, σ′, σmax, σ′max, tmax, I₀, E₀)
      end
+
+     continuity(::GaussianEnvelope) = Inf
    #+END_SRC
 
    #+RESULTS:
-   : GaussianEnvelope
+   : continuity (generic function with 2 methods)
 
 ** Trapezoidal
+   #+BEGIN_SRC julia
+     struct TrapezoidalEnvelope <: AbstractEnvelope
+         ramp_up::Number
+         flat::Number
+         ramp_down::Number
+         I₀::Number
+         E₀::Number
+         T::Number
+     end
+     envelope_types[:trapezoidal] = TrapezoidalEnvelope
+     # Common alias
+     envelope_types[:tophat] = TrapezoidalEnvelope
+
+     function (env::TrapezoidalEnvelope)(t::Number)
+         t /= env.T
+         f = if t < 0
+             0
+         elseif t < env.ramp_up
+             t/env.ramp_up
+         elseif t < env.ramp_up + env.flat
+             1
+         elseif t < env.ramp_up + env.flat + env.ramp_down
+             1 - (t-env.ramp_up-env.flat)/env.ramp_down
+         else
+             0
+         end
+         f*env.E₀
+     end
+
+     show(io::IO, env::TrapezoidalEnvelope) =
+         write(io, @sprintf("I₀ = %0.2g %s /%s‾%s‾%s\\ cycles trapezoidal envelope",
+                            usplit(env.I₀)...,
+                            env.ramp_up, env.flat, env.ramp_down))
+
+     function TrapezoidalEnvelope(field_params::Dict{Symbol,Any})
+         test_field_parameters(field_params, [:T]) # Period time required to relate ramps/flat to cycles
+         test_field_parameters(field_params, [:ramp, :ramp_up])
+         test_field_parameters(field_params, [:ramp, :ramp_down])
+         test_field_parameters(field_params, [:flat])
+
+         @namespace!(field_params) do
+             if ramp
+                 ramp_up = ramp
+                 ramp_down = ramp
+             end
+         end
+
+         @unpack ramp_up, flat, ramp_down, I₀, E₀, T = field_params
+
+         ramp_up >= 0 || error("Negative up-ramp not supported")
+         flat >= 0 || error("Negative flat region not supported")
+         ramp_down >= 0 || error("Negative down-ramp not supported")
+         ramp_up + flat + ramp_down > 0 || error("Pulse length must be non-zero")
+
+         TrapezoidalEnvelope(ramp_up, flat, ramp_down, I₀, E₀, T)
+     end
+
+     continuity(::TrapezoidalEnvelope) = 0
+   #+END_SRC
+
+   #+RESULTS:
+   : continuity (generic function with 3 methods)
+
 ** Sin2
+
+** Exports
+   #+BEGIN_SRC julia
+     export continuity
+   #+END_SRC
+
+   #+RESULTS:
+   : nothing
+
 * Field arithmetic
   #+BEGIN_SRC julia
     import Base: +, -
@@ -633,9 +707,6 @@ use in calculations.
      #+END_SRC
 
      #+RESULTS:
-     : Linearly polarized field with a
-     :   Fixed carrier @ λ = 800.00 nm (T = 2.67 fs) and a
-     :   I₀ = 1e+14 cm^-2 W Gaussian envelope of duration 6.2 fs (intensity FWHM; ±10.14σ) 
 
 **** Specifying period time
      #+BEGIN_SRC julia :exports both :results value verbatim
@@ -654,4 +725,23 @@ use in calculations.
      #+RESULTS:
      : Linearly polarized field with a
      :   Fixed carrier @ λ = 899.38 km (T = 3.00 ms) and a
-     :   I₀ = 3.3e-06 cm^-2 W Gaussian envelope of duration 10 s (intensity FWHM; ±7.07σ) 
+     :   I₀ = 3.3e-06 cm^-2 W Gaussian envelope of duration 10 s (intensity FWHM; ±7.07σ)
+
+**** Trapezoidal envelope
+     A trapezoidal envelope (also known as a tophat pulse) has a
+     ramp-up, a flat region, and a ramp-down.
+     #+BEGIN_SRC julia :results value verbatim
+       @field(XUV) do
+           λ    = 800.0u"nm"
+           I₀   = 1e10u"W/cm^2"
+           q    = 3:2:17 # Harmonic orders of 800 nm
+           env  = :trapezoidal
+           ramp = 5
+           flat = 10
+       end
+     #+END_SRC
+
+     #+RESULTS:
+     : Linearly polarized field with a
+     :   Fixed carrier @ λ = 800.00 nm (T = 2.67 fs) and a
+     :   I₀ = 1e+10 cm^-2 W /5‾10‾5\ cycles trapezoidal envelope
