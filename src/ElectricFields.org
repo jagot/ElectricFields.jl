@@ -25,6 +25,8 @@ use in calculations.
   using Parameters
 #+END_SRC
 
+#+RESULTS:
+
 * Units
   #+BEGIN_SRC julia
     # Unit arithmetic is performed "outside" of @u_str, to ensure type
@@ -229,22 +231,21 @@ use in calculations.
 * Field types
   #+BEGIN_SRC julia
     abstract type AbstractField end
+    abstract type AbstractCarrier end
     abstract type AbstractEnvelope end
 
     struct LinearField <: AbstractField
-        λ::Number
-        T::Number
-        ω::Number
+        carrier::AbstractCarrier
         env::AbstractEnvelope # Amplitude envelope
     end
 
-    wavelength(f::LinearField) = f.λ
-    period(f::LinearField) = f.T
+    wavelength(f::LinearField) = wavelength(f.carrier)
+    period(f::LinearField) = period(f.carrier)
 
-    frequency(f::LinearField) = 1/f.T
-    wavenumber(f::LinearField) = 1/f.λ
-    fundamental(f::LinearField) = f.ω
-    energy(f::LinearField) = f.ω * u"hbar"
+    frequency(f::LinearField) = frequency(f.carrier)
+    wavenumber(f::LinearField) = wavenumber(f.carrier)
+    fundamental(f::LinearField) = fundamental(f.carrier)
+    energy(f::LinearField) = energy(f.carrier)
 
 
     intensity(f::LinearField) = 0
@@ -262,7 +263,47 @@ use in calculations.
   #+END_SRC
 
   #+RESULTS:
+  : duration (generic function with 2 methods)
+* Carriers
 
+  #+BEGIN_SRC julia :results value verbatim
+    carrier_types = Dict{Symbol,Any}()
+  #+END_SRC
+
+  #+RESULTS:
+  : Dict{Symbol,Any} with 0 entries
+
+** Fixed carrier
+   The carrier is fixed in the sense that the instantaneous frequency
+   is constant throughout the pulse.
+   #+BEGIN_SRC julia
+     struct FixedCarrier <: AbstractCarrier
+         λ::Number
+         T::Number
+         ω::Number
+     end
+     carrier_types[:fixed] = FixedCarrier
+
+     wavelength(carrier::FixedCarrier) = carrier.λ
+     period(carrier::FixedCarrier) = carrier.T
+
+     frequency(carrier::FixedCarrier) = 1/carrier.T
+     wavenumber(carrier::FixedCarrier) = 1/carrier.λ
+     fundamental(carrier::FixedCarrier) = carrier.ω
+     energy(carrier::FixedCarrier) = carrier.ω * u"hbar"
+
+     function FixedCarrier(field_params::Dict{Symbol,Any})
+         @unpack λ, T, ω = field_params
+         FixedCarrier(λ, T, ω)
+     end
+   #+END_SRC
+
+   #+RESULTS:
+   : FixedCarrier
+
+** Dispersed carriers
+*** Chirped carrier
+*** Sellmeier equations
 * Envelopes
   The envelopes implemented below are all /amplitude/ envelopes,
   since that is what is being used in calculations. However, they may
@@ -340,7 +381,6 @@ use in calculations.
    #+END_SRC
 
    #+RESULTS:
-   : GaussianEnvelope
 
 ** Trapezoidal
 ** Sin2
@@ -403,8 +443,8 @@ use in calculations.
 
    #+BEGIN_SRC julia
      function calc_params!(field_params::Dict{Symbol,Any})
-         carrier_info = test_field_parameters(field_params, [:λ, :T, :f, :ν, :ω])
-         amplitude_info = test_field_parameters(field_params, [:I₀, :E₀, :Uₚ])
+         test_field_parameters(field_params, [:λ, :T, :f, :ν, :ω])
+         test_field_parameters(field_params, [:I₀, :E₀, :Uₚ])
 
          for k in keys(field_params)
              field_params[k] = get_unitful_quantity(field_params, k)
@@ -458,24 +498,40 @@ use in calculations.
 
 ** Frontend macro
    #+BEGIN_SRC julia
-     function make_field(field_params::Dict{Symbol,Any}, envT::Type{T}) where {T<:AbstractEnvelope}
+     function make_field(field_params::Dict{Symbol,Any})
          calc_params!(field_params)
-         env = envT(field_params)
-         field_params
+
+         # Maybe these two blocks can be implicitly deduced from the passed
+         # parameters? E.g. if a chirp parameter is given, the carrier type
+         # should autmatically be resolved as ChirpedCarrier. Similarly, if
+         # ramp and flat are given, a trapezoidal pulse is requested.
+
+         carrier_sym = get(field_params, :carrier, :fixed)
+         carrier_sym ∉ keys(carrier_types) &&
+             error("Unknown carrier type $(carrier_sym), valid choices are $(keys(carrier_types))")
+         carrier = carrier_types[carrier_sym](field_params)
+
+         env_sym = get(field_params, :env, :gauss)
+         env_sym ∉ keys(envelope_types) &&
+             error("Unknown envelope type $(env_sym), valid choices are $(keys(envelope_types))")
+         env = envelope_types[env_sym](field_params)
+
+         :ξ in keys(field_params) &&
+             error("Elliptical (transverse) fields not yet supported!")
+
+         LinearField(carrier, env)
      end
 
-     macro field(spec, var, env=:gauss)
+     macro field(spec, var)
          spec.head == :-> ||
              error("Expected a block with parameters for definition of the field")
          block = spec.args[2]
          block.head == :block ||
              error("Expected a block with parameters for definition of the field")
 
-         envT = envelope_types[env]
-
          field_params = parse_block(block, Any)
          quote
-             $(esc(var)) = make_field($field_params, $envT)
+             $(esc(var)) = make_field($field_params)
          end
      end
 
@@ -490,32 +546,17 @@ use in calculations.
      A [[https://en.wikipedia.org/wiki/Gaussian_function][Gaussian envelope]] is the default and can be omitted; τ refers
      the [[https://en.wikipedia.org/wiki/Full_width_at_half_maximum][FWHM]] duration of the intensity envelope.
      #+BEGIN_SRC julia :exports both :results value verbatim
-       @field(IR, gauss) do
+       @field(IR) do
            λ  = 800.0
            I₀ = 1e14
            τ  = 6.2
            tmax = 10
+           env = :gauss
        end
      #+END_SRC
 
      #+RESULTS:
-     #+begin_example
-     Dict{Symbol,Any} with 14 entries:
-       :tmax => 10
-       :σ => 2.6329 fs
-       :σmax => 10.1353
-       :E₀ => 2.74492e10 m^-1 V
-       :λ => 800.0 nm
-       :I₀ => 1.0e14 cm^-2 W
-       :σ′ => 3.72348 fs
-       :T => 2.66851e-15 s
-       :ν => 12500.0 cm^-1
-       :f => 3.74741e14 Hz
-       :Uₚ => 5.97587 eV
-       :τ => 6.2 fs
-       :ω => 2.35456e15 rad s^-1
-       :σ′max => 7.16672
-     #+end_example
+     : LinearField(FixedCarrier(800.0 km, 0.0026685127615852164 s, 2354.5644591360665 rad s^-1), GaussianEnvelope(6.2 fs, 2.632897580892859 fs, 3.7234794672379947 fs, 1.0135269905486715e13, 7.166718079325593e12, 10))
 
 **** Specifying period time
      #+BEGIN_SRC julia :exports both :results value verbatim
