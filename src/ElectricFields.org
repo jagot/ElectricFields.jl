@@ -27,18 +27,22 @@ use in calculations.
 
 * Units
   #+BEGIN_SRC julia
-    base_units = Dict(:λ => u"nm",
-                      :I₀ => u"W/cm^2",
-                      :E₀ => u"V/m",
-                      :τ => u"fs",
-                      :σ => u"fs",
-                      :σ′ => u"fs",
-                      :σmax => NoUnits,
-                      :σ′max => NoUnits,
-                      :T => u"s",
-                      :f => u"Hz",
-                      :ν => u"cm^-1",
-                      :ω => u"rad/s")
+    # Unit arithmetic is performed "outside" of @u_str, to ensure type
+    # stability and allow precompilation
+    base_units = Dict{Symbol,Unitful.FreeUnits}(
+        :λ => u"nm",
+        :I₀ => u"W"/u"cm"^2,
+        :E₀ => u"V"/u"m",
+        :τ => u"fs",
+        :σ => u"fs",
+        :σ′ => u"fs",
+        :σmax => NoUnits,
+        :σ′max => NoUnits,
+        :T => u"s",
+        :f => u"Hz",
+        :ν => u"cm"^-1,
+        :ω => u"rad"/u"s"
+    )
 
     function get_unitful_quantity(field_params::Dict{Symbol,Any}, sym::Symbol)
         v = field_params[sym]
@@ -433,14 +437,14 @@ use in calculations.
 
              if I₀ || Uₚ
                  if Uₚ
-                     I₀ = Uₚ / u"2*q^2/c*ε0*me" * 4ω^2
+                     I₀ = Uₚ / (2*u"q"^2/(u"c"*u"ε0"*u"me")) * 4ω^2
                  end
-                 E₀ = √(2I₀/u"ε0*c")
+                 E₀ = √(2I₀/u"ε0"*u"c")
              elseif E₀
-                 I₀ = u"ε0*c"/2*E₀^2
+                 I₀ = u"ε0"*u"c"/2*E₀^2
              end
              if !Uₚ
-                 Uₚ = u"2*q^2/c*ε0*me" * I₀/4ω^2
+                 Uₚ = 2*u"q"^2/(u"c"*u"ε0"*u"me") * I₀/4ω^2
              end
          end
 

@@ -1,3 +1,5 @@
+__precompile__()
+
 module ElectricFields
 
 const codefile = joinpath(dirname(@__FILE__), "..", "deps", "build", "code.jl")
