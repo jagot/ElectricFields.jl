@@ -13,6 +13,23 @@ atomic physics calculations.
 
 This is a [[https://github.com/jagot/LiterateOrg.jl][LiterateOrg.jl]] project. The documentation is found [[file:src/ElectricFields.org][within the code]].
 
+
+#+BEGIN_SRC julia :exports none
+  using Unitful
+  using PyPlot
+  matplotlib[:style][:use]("ggplot")
+
+  mkpath("images")
+
+  function savefig_f(filename)
+      filename = "./images/$(filename).svg"
+      savefig(filename, transparent=true)
+      filename
+  end
+#+END_SRC
+
+#+RESULTS:
+
 * Usage
  First we load the library and set the base units, which are used if
  unitless quantities are passed to =@field=, below. The units are
@@ -45,8 +62,46 @@ This is a [[https://github.com/jagot/LiterateOrg.jl][LiterateOrg.jl]] project. T
 
  #+RESULTS:
  : Linearly polarized field with a
- :   fixed carrier @ λ = 800.00 nm (T = 2.67 fs) and a
- :   Gaussian envelope of duration 6.20 fs (intensity FWHM; ±10.14σ)
+ :   Fixed carrier @ λ = 800.00 nm (T = 2.67 fs) and a
+ :   I₀ = 1e+14 cm^-2 W Gaussian envelope of duration 6.2 fs (intensity FWHM; ±10.14σ)
+
+ #+BEGIN_SRC julia :exports both :results value verbatim
+   @field(IR2) do
+       λ    = 800.0
+       I₀   = 1e14
+       τ    = 6.2
+       tmax = 10
+       ϕ    = π/2
+   end
+ #+END_SRC
+
+ #+RESULTS:
+ : Linearly polarized field with a
+ :   Fixed carrier @ λ = 800.00 nm (T = 2.67 fs); CEP = 0.50π and a
+ :   I₀ = 1e+14 cm^-2 W Gaussian envelope of duration 6.2 fs (intensity FWHM; ±10.14σ)
+
+ #+BEGIN_SRC julia :exports code
+   t = linspace(-1,1,1001)*10u"fs"
+   E = IR.(t)
+   E2 = IR2.(t)
+ #+END_SRC
+
+ #+RESULTS:
+
+ #+BEGIN_SRC julia :exports results :results value file
+   figure("pulse")
+   clf()
+   plot(t./u"fs", IR.(t)./1e10u"V/m")
+   plot(t./u"fs", IR2.(t)./1e10u"V/m")
+   xlabel(L"$t$ [fs]")
+   ylabel(L"$E$ [$10^{10}$ V/m]")
+   tight_layout()
+   savefig_f("ir")
+ #+END_SRC
+
+ #+RESULTS:
+ [[file:./images/ir.svg]]
+
 
 * Ideas
   - Harmonic fields

@@ -238,45 +238,82 @@ use in calculations.
     abstract type AbstractCarrier end
     abstract type AbstractEnvelope end
 
-    struct LinearField <: AbstractField
-        carrier::AbstractCarrier
-        env::AbstractEnvelope # Amplitude envelope
-    end
-
-    function show(io::IO, f::LinearField)
-        write(io, "Linearly polarized field with a\n  ")
-        show(io, f.carrier)
-        write(io, " and a\n  ")
-        show(io, f.env)
-    end
-
-    wavelength(f::LinearField) = wavelength(f.carrier)
-    period(f::LinearField) = period(f.carrier)
-
-    frequency(f::LinearField) = frequency(f.carrier)
-    wavenumber(f::LinearField) = wavenumber(f.carrier)
-    fundamental(f::LinearField) = fundamental(f.carrier)
-    energy(f::LinearField) = energy(f.carrier)
-
-
-    intensity(f::LinearField) = 0
-    amplitude(f::LinearField) = 0
-
-    envelope(f::LinearField) = f.env
-    duration(f::AbstractField) = duration(envelope(f))
-
-    struct TransverseField <: AbstractField
-        z::LinearField
-        x::LinearField
-    end
-
-    duration(f::TransverseField) = max(duration.((f.z,f.x))...)
+    # # Not possible in current version of Julia
+    # # https://github.com/JuliaLang/julia/issues/14919
+    # (f::AbstractField)(t::Number) = envelope(f)(t)*carrier(f)(t)
   #+END_SRC
 
   #+RESULTS:
-  : duration (generic function with 2 methods)
-* Carriers
+  : nothing
 
+** Linear field
+   #+BEGIN_SRC julia
+     struct LinearField <: AbstractField
+         carrier::AbstractCarrier
+         env::AbstractEnvelope # Amplitude envelope
+         params::Dict{Symbol, Any}
+     end
+
+     (f::LinearField)(t::Number) = f.carrier(t)*f.env(t)
+
+     function show(io::IO, f::LinearField)
+         write(io, "Linearly polarized field with a\n  ")
+         show(io, f.carrier)
+         write(io, " and a\n  ")
+         show(io, f.env)
+     end
+
+     carrier(f::LinearField) = f.carrier
+
+     wavelength(f::LinearField) = wavelength(f.carrier)
+     period(f::LinearField) = period(f.carrier)
+
+     frequency(f::LinearField) = frequency(f.carrier)
+     wavenumber(f::LinearField) = wavenumber(f.carrier)
+     fundamental(f::LinearField) = fundamental(f.carrier)
+     energy(f::LinearField) = energy(f.carrier)
+
+
+
+     envelope(f::LinearField) = f.env
+     intensity(f::LinearField) = intensity(envelope(f))
+     amplitude(f::LinearField) = amplitude(envelope(f))
+     duration(f::AbstractField) = duration(envelope(f))
+
+     params(f::LinearField) = f.params
+   #+END_SRC
+
+   #+RESULTS:
+   : params (generic function with 1 method)
+
+** Transverse field
+   #+BEGIN_SRC julia
+     struct TransverseField <: AbstractField
+         z::LinearField
+         x::LinearField
+     end
+
+     duration(f::TransverseField) = max(duration.((f.z,f.x))...)
+   #+END_SRC
+
+   #+RESULTS:
+   : duration (generic function with 2 methods)
+
+** Exports
+   #+BEGIN_SRC julia
+     export carrier,
+         wavelength, period,
+         frequency, wavenumber, fundamental, energy,
+         envelope,
+         intensity, amplitude,
+         duration,
+         params
+   #+END_SRC
+
+   #+RESULTS:
+   : nothing
+
+* Carriers
   #+BEGIN_SRC julia :results value verbatim
     carrier_types = Dict{Symbol,Any}()
   #+END_SRC
@@ -292,7 +329,11 @@ use in calculations.
          λ::Number
          T::Number
          ω::Number
+         ϕ::Number # Carrier–envelope phase, in radians
      end
+
+     (carrier::FixedCarrier)(t::Number) = sin(carrier.ω*t + carrier.ϕ)
+
      carrier_types[:fixed] = FixedCarrier
 
      wavelength(carrier::FixedCarrier) = carrier.λ
@@ -305,12 +346,17 @@ use in calculations.
 
      function FixedCarrier(field_params::Dict{Symbol,Any})
          @unpack λ, T, ω = field_params
-         FixedCarrier(λ, T, ω)
+         ϕ = get(field_params, :ϕ, 0)
+         FixedCarrier(λ, T, ω, ϕ)
      end
 
      function show(io::IO, carrier::FixedCarrier)
-         write(io, @sprintf("fixed carrier @ λ = %0.2f %s (T = %0.2f %s)",
+         write(io, @sprintf("Fixed carrier @ λ = %0.2f %s (T = %0.2f %s)",
                             usplit(carrier.λ)..., usplit(carrier.T)...))
+         if carrier.ϕ != 0
+             write(io, @sprintf("; CEP = %0.2fπ", carrier.ϕ/π))
+         end
+     end
    #+END_SRC
 
    #+RESULTS:
@@ -336,7 +382,7 @@ use in calculations.
 ** Gaussian
    A Gaussian pulse is given by
 
-   \[\exp\left(-\frac{t^2}{2\sigma^2}\right),\]
+   \[I_0\exp\left(-\frac{t^2}{2\sigma^2}\right),\]
 
    where the standard deviation σ is related to the FWHM duration τ
    of the intensity envelope as
@@ -344,7 +390,12 @@ use in calculations.
    \[\sigma = \frac{\tau}{2\sqrt{2\ln 2}}\].
 
    Furthermore, the /amplitude/ standard deviation σ′ is proportional
-   to the intensity ditto: \(\sigma' = \sqrt{2}\sigma\).
+   to the intensity ditto: \(\sigma' = \sqrt{2}\sigma\). Therefore,
+   the amplitude envelope is given by
+
+   \[E_0\exp\left(-\frac{t^2}{2{\sigma'}^2}\right)
+   =E_0\exp\left(-\frac{t^2}{4\sigma^2}\right)
+   =E_0\exp\left(-\frac{2\ln2t^2}{\tau^2}\right).\]
 
    Since a Gaussian never ends, we specify how many σ we
    require; the resulting time window will be rounded up to an
@@ -358,12 +409,16 @@ use in calculations.
          σmax::Number
          σ′max::Number
          tmax::Integer # Maximum time, in cycles of the fundamental. Time window: [-tmax,tmax]
+         I₀::Number
+         E₀::Number
      end
      envelope_types[:gauss] = GaussianEnvelope
 
+     (env::GaussianEnvelope)(t::Number) = env.E₀*exp(-t^2/(2*env.σ′^2))
+
      show(io::IO, env::GaussianEnvelope) =
-         write(io, @sprintf("Gaussian envelope of duration %0.2f %s (intensity FWHM; ±%0.2fσ)",
-                            usplit(env.τ)..., env.σmax))
+         write(io, @sprintf("I₀ = %0.2g %s Gaussian envelope of duration %0.2g %s (intensity FWHM; ±%0.2fσ) ",
+                            usplit(env.I₀)..., usplit(env.τ)..., env.σmax))
 
      function GaussianEnvelope(field_params::Dict{Symbol,Any})
          test_field_parameters(field_params, [:T]) # Period time required to round time window up
@@ -394,8 +449,8 @@ use in calculations.
              σ′max = tmax*T/σ′
          end
 
-         @unpack τ, σ, σ′, σmax, σ′max, tmax = field_params
-         GaussianEnvelope(τ, σ, σ′, σmax, σ′max, tmax)
+         @unpack τ, σ, σ′, σmax, σ′max, tmax, I₀, E₀ = field_params
+         GaussianEnvelope(τ, σ, σ′, σmax, σ′max, tmax, I₀, E₀)
      end
    #+END_SRC
 
@@ -406,6 +461,8 @@ use in calculations.
 ** Sin2
 * Field arithmetic
   #+BEGIN_SRC julia
+    import Base: +, -
+
     type SumField <: AbstractField
         a::AbstractField
         b::AbstractField
@@ -514,6 +571,7 @@ use in calculations.
    #+END_SRC
 
    #+RESULTS:
+   : calc_params! (generic function with 1 method)
 
 ** Frontend macro
    #+BEGIN_SRC julia
@@ -538,7 +596,7 @@ use in calculations.
          :ξ in keys(field_params) &&
              error("Elliptical (transverse) fields not yet supported!")
 
-         LinearField(carrier, env)
+         LinearField(carrier, env, field_params)
      end
 
      macro field(spec, var)
@@ -576,8 +634,8 @@ use in calculations.
 
      #+RESULTS:
      : Linearly polarized field with a
-     :   fixed carrier @ λ = 800.00 nm (T = 2.67 fs) and a
-     :   Gaussian envelope of duration 6.20 fs (intensity FWHM; ±10.14σ)
+     :   Fixed carrier @ λ = 800.00 nm (T = 2.67 fs) and a
+     :   I₀ = 1e+14 cm^-2 W Gaussian envelope of duration 6.2 fs (intensity FWHM; ±10.14σ) 
 
 **** Specifying period time
      #+BEGIN_SRC julia :exports both :results value verbatim
@@ -595,5 +653,5 @@ use in calculations.
 
      #+RESULTS:
      : Linearly polarized field with a
-     :   fixed carrier @ λ = 899.38 km (T = 3.00 ms) and a
-     :   Gaussian envelope of duration 10.00 s (intensity FWHM; ±7.07σ)
+     :   Fixed carrier @ λ = 899.38 km (T = 3.00 ms) and a
+     :   I₀ = 3.3e-06 cm^-2 W Gaussian envelope of duration 10 s (intensity FWHM; ±7.07σ) 
