@@ -29,6 +29,14 @@ use in calculations.
 #+RESULTS:
 : nothing
 
+* Todo
+  - [ ] Automatic calculation of time span from envelope
+  - [ ] Delayed fields
+  - [ ] Field arithmetic
+  - [ ] Common time-base
+  - [ ] Temporal discretization
+  - [ ] Tests
+
 * Units
   #+BEGIN_SRC julia
     # Unit arithmetic is performed "outside" of @u_str, to ensure type
@@ -256,6 +264,7 @@ use in calculations.
     amplitude(f::AbstractField) = amplitude(envelope(f))
     duration(f::AbstractField) = duration(envelope(f))
     continuity(f::AbstractField) = continuity(envelope(f))
+    span(f::AbstractField) = span(envelope(f))
   #+END_SRC
 
   #+RESULTS:
@@ -379,10 +388,10 @@ use in calculations.
    #+RESULTS:
    : show (generic function with 259 methods)
 
-** Dispersed carriers
-*** Chirped carrier
-*** Sellmeier equations
-* Envelopes
+** Dispersed carriers [0/2]
+*** TODO Chirped carrier
+*** TODO Sellmeier equations
+* Envelopes [2/3]
   The envelopes implemented below are all /amplitude/ envelopes,
   since that is what is being used in calculations. However, they may
   be specified using intensity-related quantities, e.g. Gaussian
@@ -396,7 +405,7 @@ use in calculations.
   #+RESULTS:
   : Dict{Symbol,Any} with 0 entries
 
-** Gaussian
+** DONE Gaussian
    A Gaussian pulse is given by
 
    \[I_0\exp\left(-\frac{t^2}{2\sigma^2}\right),\]
@@ -476,7 +485,7 @@ use in calculations.
    #+RESULTS:
    : continuity (generic function with 2 methods)
 
-** Trapezoidal
+** DONE Trapezoidal
    #+BEGIN_SRC julia
      struct TrapezoidalEnvelope <: AbstractEnvelope
          ramp_up::Number
@@ -540,7 +549,7 @@ use in calculations.
    #+RESULTS:
    : continuity (generic function with 3 methods)
 
-** Sin2
+** TODO Sin2
 
 ** Exports
    #+BEGIN_SRC julia
@@ -550,7 +559,24 @@ use in calculations.
    #+RESULTS:
    : nothing
 
-* Field arithmetic
+* TODO Field arithmetic [0/1]
+  For calculations, a time-base is necessary ("normalized time"), with
+  respect to which all harmonic motions &c are analyzed.  When
+  combining fields of commensurate frequencies, it is easy to
+  establish a common time-base, most likely the fundamental wavelength
+  will be the obvious choice -- such as when adding an IR field and its
+  harmonic components as generated through e.g. HHG:
+
+  \[E(t) = \sum_q E_{2q + 1}(t)\sin[(2q+1)\omega t].\]
+
+  However, when adding incommensurate frequencies, there is no obvious
+  choice, so the user has to specify the time-base explicitly -- maybe
+  by the order in which the fields are added?
+
+  There should also be some helper routines that, when discretizing
+  the time axis, estimate whether all harmonic components of interest
+  are satisfactorily resolved.
+
   #+BEGIN_SRC julia
     import Base: +, -
 
@@ -580,7 +606,7 @@ use in calculations.
   #+RESULTS:
   : nothing
 
-** Delay operators
+** TODO Delay operators
    Convention for delayed fields: a field delayed by a /positive/
    time, comes /later/, i.e. we write \(f(t-\delta t)\).
    #+BEGIN_SRC julia
