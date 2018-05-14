@@ -750,11 +750,14 @@ use in calculations.
      #+END_SRC
 
      #+RESULTS:
+     : Linearly polarized field with a
+     :   Fixed carrier @ λ = 800.00 nm (T = 2.67 fs) and a
+     :   I₀ = 1e+14 cm^-2 W Gaussian envelope of duration 6.2 fs (intensity FWHM; ±10.14σ)
 
 **** Trapezoidal envelope
      A trapezoidal envelope (also known as a tophat pulse) has a
      ramp-up, a flat region, and a ramp-down.
-     #+BEGIN_SRC julia :results value verbatim
+     #+BEGIN_SRC julia :exports both :results value verbatim
        @field(XUV) do
            λ    = 800.0u"nm"
            I₀   = 1e10u"W/cm^2"
