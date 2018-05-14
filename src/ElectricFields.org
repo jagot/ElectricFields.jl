@@ -735,7 +735,7 @@ use in calculations.
    #+RESULTS:
    : nothing
 
-* COMMENT Example usage
+* EXAMPLE Usage
 **** Specifying wavelength
      A [[https://en.wikipedia.org/wiki/Gaussian_function][Gaussian envelope]] is the default and can be omitted; τ refers
      the [[https://en.wikipedia.org/wiki/Full_width_at_half_maximum][FWHM]] duration of the intensity envelope.
