@@ -2,7 +2,7 @@ __precompile__()
 
 module ElectricFields
 
-const codefile = joinpath(dirname(@__FILE__), "..", "deps", "build", "code.jl")
+const codefile = joinpath(dirname(@__FILE__), "literate_org_tangled_code.jl")
 if isfile(codefile)
     include(codefile)
 else

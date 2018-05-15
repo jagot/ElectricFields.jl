@@ -1,7 +1,7 @@
 using ElectricFields
 using Base.Test
 
-const testfile = joinpath(dirname(@__FILE__), "..", "deps", "build", "tests.jl")
+const testfile = joinpath(dirname(@__FILE__), "literate_org_tangled_tests.jl")
 if isfile(testfile)
     include(testfile)
 else
