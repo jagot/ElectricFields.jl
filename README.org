@@ -57,7 +57,7 @@ This is a [[https://github.com/jagot/LiterateOrg.jl][LiterateOrg.jl]] project. T
        λ    = 800.0
        I₀   = 1e14
        τ    = 6.2
-       tmax = 10
+       Tmax = 10
    end
  #+END_SRC
 
@@ -74,7 +74,7 @@ This is a [[https://github.com/jagot/LiterateOrg.jl][LiterateOrg.jl]] project. T
        λ    = 800.0
        I₀   = 1e14
        τ    = 6.2
-       tmax = 10
+       Tmax = 10
        ϕ    = π/2
    end
  #+END_SRC
@@ -85,7 +85,7 @@ This is a [[https://github.com/jagot/LiterateOrg.jl][LiterateOrg.jl]] project. T
  :   I₀ = 1e+14 cm^-2 W Gaussian envelope of duration 6.2 fs (intensity FWHM; ±10.14σ)
 
  #+BEGIN_SRC julia :exports code
-   t = linspace(-1,1,1001)*10u"fs"
+   t = timeaxis(IR)
    E = IR.(t)
    E2 = IR2.(t)
  #+END_SRC
@@ -126,13 +126,14 @@ This is a [[https://github.com/jagot/LiterateOrg.jl][LiterateOrg.jl]] project. T
    :   I₀ = 1e+10 cm^-2 W /5‾10‾5\ cycles trapezoidal envelope
 
    #+BEGIN_SRC julia :exports results :results value file
-     t = linspace(-0.1, 1, 1001)*4u"fs"
+     t = timeaxis(span(XUV))
 
      figure("trapezoidal xuv")
      clf()
      plot(t./u"fs", NoUnits.(XUV.(t)./1e8u"V/m"))
      xlabel(L"$t$ [fs]")
      ylabel(L"$E$ [$10^8$ V/m]")
+     margins(0.1,0.1)
      tight_layout()
      savefig_f("trapezoidal-xuv")
    #+END_SRC

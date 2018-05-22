@@ -30,7 +30,7 @@ use in calculations.
 : nothing
 
 * Todo
-  - [ ] Automatic calculation of time span from envelope
+  - [X] Automatic calculation of time span from envelope
   - [ ] Delayed fields
   - [ ] Field arithmetic
   - [ ] Common time-base
@@ -50,6 +50,8 @@ use in calculations.
         :σ′ => u"fs",
         :σmax => NoUnits,
         :σ′max => NoUnits,
+        :tmax => u"fs",
+        :Tmax => NoUnits,
         :T => u"fs",
         :f => u"THz",
         :ν => u"cm"^-1,
@@ -241,6 +243,7 @@ use in calculations.
 
     #+RESULTS:
     : test_field_parameters (generic function with 1 method)
+
 * Field types
   #+BEGIN_SRC julia
     abstract type AbstractField end
@@ -254,7 +257,8 @@ use in calculations.
     wavelength(f::AbstractField) = wavelength(carrier(f))
     period(f::AbstractField) = period(carrier(f))
 
-    frequency(f::AbstractField) = frequency(carrier(f))
+    frequency(f::AbstractField) = frequency(carrier(f)) |> base_units[:f]
+    max_frequency(f::AbstractField) = max_frequency(carrier(f)) |> base_units[:f]
     wavenumber(f::AbstractField) = wavenumber(carrier(f))
     fundamental(f::AbstractField) = fundamental(carrier(f))
     energy(f::AbstractField) = energy(carrier(f))
@@ -264,12 +268,10 @@ use in calculations.
     amplitude(f::AbstractField) = amplitude(envelope(f))
     duration(f::AbstractField) = duration(envelope(f))
     continuity(f::AbstractField) = continuity(envelope(f))
-    span(f::AbstractField) = span(envelope(f))
   #+END_SRC
 
   #+RESULTS:
-  : continuity (generic function with 1 method)
-
+  : nothing
 ** Linear field
    #+BEGIN_SRC julia
      struct LinearField <: AbstractField
@@ -328,7 +330,7 @@ use in calculations.
    #+BEGIN_SRC julia
      export carrier,
          wavelength, period,
-         frequency, wavenumber, fundamental, energy,
+         frequency, max_frequency, wavenumber, fundamental, energy,
          envelope,
          intensity, amplitude,
          duration,
@@ -339,13 +341,38 @@ use in calculations.
    #+RESULTS:
    : nothing
 
+* Time axis
+  We construct the time axis such that the highest frequency component
+  of the field is resolved. By the Nyquist sampling theorem, we need
+  minimum \(f_s>2f_{\textrm{max}}\), but to be on the safe side, we
+  use, as default, \(f_s=100f_{\textrm{max}}\). This also makes plots
+  nicer.
+  #+BEGIN_SRC julia
+    span(f::AbstractField) = span(envelope(f))
+
+    const DEFAULT_SAMPLING_FACTOR = 100
+    default_sampling_frequency(f::AbstractField) = DEFAULT_SAMPLING_FACTOR*max_frequency(f)
+
+    steps(f::AbstractField, fs::Unitful.Frequency=default_sampling_frequency(f)) =
+        ceil(Int, fs*abs(-(span(f)...)))
+    steps(f::AbstractField, ndt::Integer) = steps(f, ndt/period(f))
+
+    timeaxis(f::AbstractField, fs::Unitful.Frequency=default_sampling_frequency(f)) =
+        linspace(span(f)..., steps(f, fs))
+    timeaxis(f::AbstractField, ndt::Integer) = linspace(span(f)..., steps(f, ndt))
+
+    export span, steps, timeaxis
+  #+END_SRC
+
 * Carriers
   #+BEGIN_SRC julia :results value verbatim
     carrier_types = Dict{Symbol,Any}()
+
+    max_frequency(carrier::AbstractCarrier) = frequency(carrier)
   #+END_SRC
 
   #+RESULTS:
-  : Dict{Symbol,Any} with 0 entries
+  : max_frequency (generic function with 3 methods)
 
 ** Fixed carrier
    The carrier is fixed in the sense that the instantaneous frequency
@@ -434,7 +461,8 @@ use in calculations.
          σ′::Number # Envelope std.dev.
          σmax::Number
          σ′max::Number
-         tmax::Integer # Maximum time, in cycles of the fundamental. Time window: [-tmax,tmax]
+         tmax::Number # Maximum time. Time window: [-tmax,tmax]
+         Tmax::Integer # Maximum time, in cycles of the fundamental.
          I₀::Number
          E₀::Number
      end
@@ -449,7 +477,7 @@ use in calculations.
      function GaussianEnvelope(field_params::Dict{Symbol,Any})
          test_field_parameters(field_params, [:T]) # Period time required to round time window up
          test_field_parameters(field_params, [:τ, :σ, :σ′])
-         test_field_parameters(field_params, [:σmax, :σ′max, :tmax])
+         test_field_parameters(field_params, [:σmax, :σ′max, :tmax, :Tmax])
 
          @namespace!(field_params) do
              if τ
@@ -466,24 +494,32 @@ use in calculations.
 
              if σmax || σ′max
                  if σmax
-                     tmax = ceil(Int, σmax*σ/T)
+                     Tmax = ceil(Int, σmax*σ/T)
                  elseif σ′max
-                     tmax = ceil(Int, σ′max*σ′/T)
+                     Tmax = ceil(Int, σ′max*σ′/T)
+                 end
+                 tmax = Tmax*T
+             else
+                 if tmax
+                     Tmax = ceil(Int, tmax/T)
+                 elseif Tmax
+                     tmax = Tmax*T
                  end
              end
-             σmax = tmax*T/σ
-             σ′max = tmax*T/σ′
+             σmax = tmax/σ
+             σ′max = tmax/σ′
          end
 
-         @unpack τ, σ, σ′, σmax, σ′max, tmax, I₀, E₀ = field_params
-         GaussianEnvelope(τ, σ, σ′, σmax, σ′max, tmax, I₀, E₀)
+         @unpack τ, σ, σ′, σmax, σ′max, tmax, Tmax, I₀, E₀ = field_params
+         GaussianEnvelope(τ, σ, σ′, σmax, σ′max, tmax, Tmax, I₀, E₀)
      end
 
      continuity(::GaussianEnvelope) = Inf
+     span(env::GaussianEnvelope) = (-env.tmax, env.tmax)
    #+END_SRC
 
    #+RESULTS:
-   : continuity (generic function with 2 methods)
+   : span (generic function with 2 methods)
 
 ** DONE Trapezoidal
    #+BEGIN_SRC julia
@@ -544,10 +580,11 @@ use in calculations.
      end
 
      continuity(::TrapezoidalEnvelope) = 0
+     span(env::TrapezoidalEnvelope) = (0u"fs", (env.ramp_up + env.flat + env.ramp_down)*env.T)
    #+END_SRC
 
    #+RESULTS:
-   : continuity (generic function with 3 methods)
+   : span (generic function with 3 methods)
 
 ** TODO Sin2
 
@@ -588,6 +625,12 @@ use in calculations.
     +(a::AbstractField,
       b::AbstractField) = SumField(a, b)
 
+    function span(f::SumField)
+        sa = span(a)
+        sb = span(b)
+        (min(sa[1], sb[1]), max(sa[2],sb[2]))
+    end
+
 
     type NegatedField <: AbstractField
         a::AbstractField
@@ -601,10 +644,12 @@ use in calculations.
         a::AbstractField
         t₀::Number
     end
+
+    span(f::DelayedField) = span(f.a) .+ f.t₀
   #+END_SRC
 
   #+RESULTS:
-  : nothing
+  : span (generic function with 5 methods)
 
 ** TODO Delay operators
    Convention for delayed fields: a field delayed by a /positive/
@@ -744,7 +789,7 @@ use in calculations.
            λ  = 800.0
            I₀ = 1e14
            τ  = 6.2
-           tmax = 10
+           Tmax = 10
            env = :gauss
        end
      #+END_SRC
