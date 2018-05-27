@@ -42,7 +42,6 @@ use in calculations.
 ** EXAMPLE
    #+BEGIN_SRC julia
      using PyPlot
-     matplotlib[:style][:use]("ggplot")
 
      mkpath("../images")
 
@@ -408,6 +407,7 @@ use in calculations.
   #+END_SRC
 
   #+RESULTS:
+  : max_frequency (generic function with 6 methods)
 
 ** Fixed carrier
    The carrier is fixed in the sense that the instantaneous frequency
@@ -448,6 +448,7 @@ use in calculations.
    #+END_SRC
 
    #+RESULTS:
+   : show (generic function with 329 methods)
 
 ** Harmonic carrier
    #+BEGIN_SRC julia
@@ -493,6 +494,7 @@ use in calculations.
    #+END_SRC
 
    #+RESULTS:
+   : show (generic function with 329 methods)
 
 
 ** Dispersed carriers [0/2]
@@ -510,6 +512,7 @@ use in calculations.
   #+END_SRC
 
   #+RESULTS:
+  : Dict{Symbol,Any} with 0 entries
 
 ** DONE Gaussian
    A Gaussian pulse is given by
@@ -598,6 +601,7 @@ use in calculations.
    #+END_SRC
 
    #+RESULTS:
+   : span (generic function with 5 methods)
 
 ** DONE Trapezoidal
    #+BEGIN_SRC julia
@@ -662,6 +666,7 @@ use in calculations.
    #+END_SRC
 
    #+RESULTS:
+   : span (generic function with 5 methods)
 
 ** TODO Sin2
 
@@ -745,6 +750,7 @@ use in calculations.
    #+END_SRC
 
    #+RESULTS:
+   : continuity (generic function with 5 methods)
 
 ** Negated fields
    #+BEGIN_SRC julia
@@ -768,6 +774,7 @@ use in calculations.
    #+END_SRC
 
    #+RESULTS:
+   : envelope (generic function with 3 methods)
 
 ** Delayed fields
    #+BEGIN_SRC julia
@@ -831,6 +838,7 @@ use in calculations.
     #+END_SRC
 
     #+RESULTS:
+    : nothing
 * Field creation
 ** Parameter calculation
    This function performs the calculation of different quantities from
@@ -900,6 +908,7 @@ use in calculations.
    #+END_SRC
 
    #+RESULTS:
+   : nothing
 
 ** Frontend macro
    #+BEGIN_SRC julia
