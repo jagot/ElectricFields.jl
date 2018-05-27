@@ -304,7 +304,7 @@ use in calculations.
   #+END_SRC
 
   #+RESULTS:
-  : continuity (generic function with 5 methods)
+  : continuity (generic function with 1 method)
 ** Linear field
    #+BEGIN_SRC julia
      struct LinearField <: AbstractField
@@ -341,7 +341,7 @@ use in calculations.
    #+END_SRC
 
    #+RESULTS:
-   : duration (generic function with 3 methods)
+   : duration (generic function with 2 methods)
 
 ** Keldysh parameter
    The [[https://en.wikipedia.org/wiki/Tunnel_ionization][Keldysh parameter]] relates the strength of a dynamic electric
@@ -407,7 +407,7 @@ use in calculations.
   #+END_SRC
 
   #+RESULTS:
-  : max_frequency (generic function with 6 methods)
+  : max_frequency (generic function with 2 methods)
 
 ** Fixed carrier
    The carrier is fixed in the sense that the instantaneous frequency
@@ -448,7 +448,7 @@ use in calculations.
    #+END_SRC
 
    #+RESULTS:
-   : show (generic function with 329 methods)
+   : show (generic function with 311 methods)
 
 ** Harmonic carrier
    #+BEGIN_SRC julia
@@ -494,8 +494,7 @@ use in calculations.
    #+END_SRC
 
    #+RESULTS:
-   : show (generic function with 329 methods)
-
+   : show (generic function with 312 methods)
 
 ** Dispersed carriers [0/2]
 *** TODO Chirped carrier
@@ -601,7 +600,38 @@ use in calculations.
    #+END_SRC
 
    #+RESULTS:
-   : span (generic function with 5 methods)
+   : span (generic function with 2 methods)
+
+*** Spectrum
+    Gaussians belong to the [[https://en.wikipedia.org/wiki/Schwartz_space][Schwarz class]], i.e. functions who, under Fourier
+    transform, are mapped back to the same space. That is to say, the
+    Fourier transform of a Gaussian is a Gaussian:
+
+    \[\exp(-\alpha t^2) \leftrightarrow
+    \frac{1}{\sqrt{2\alpha}}
+    \exp\left(-\frac{\omega^2}{4\alpha}\right).\]
+
+    Comparing with the above, we find that the spectral standard
+    deviation
+
+    \[\Omega = \sqrt{2\alpha} = \frac{2\sqrt{\ln 2}}{\tau},\]
+
+    and the Gaussian function in the spectral domain is thus
+
+    \[E(\omega) =
+    \frac{E_0\tau}{2\sqrt{\ln 2}}
+    \exp\left[-\frac{(\omega\tau)^2}{8\ln2}\right].\]
+
+    #+BEGIN_SRC julia
+      function spectrum(env::GaussianEnvelope)
+          N = env.E₀*env.τ/(2*√(log(2)))
+          ω -> N*exp(-(ω*env.τ)^2/8log(2))
+      end
+    #+END_SRC
+
+    #+RESULTS:
+    : spectrum (generic function with 3 methods)
+
 
 ** DONE Trapezoidal
    #+BEGIN_SRC julia
@@ -666,7 +696,7 @@ use in calculations.
    #+END_SRC
 
    #+RESULTS:
-   : span (generic function with 5 methods)
+   : span (generic function with 3 methods)
 
 ** TODO Sin2
 
@@ -750,7 +780,7 @@ use in calculations.
    #+END_SRC
 
    #+RESULTS:
-   : continuity (generic function with 5 methods)
+   : continuity (generic function with 4 methods)
 
 ** Negated fields
    #+BEGIN_SRC julia
@@ -774,7 +804,7 @@ use in calculations.
    #+END_SRC
 
    #+RESULTS:
-   : envelope (generic function with 3 methods)
+   : envelope (generic function with 2 methods)
 
 ** Delayed fields
    #+BEGIN_SRC julia
@@ -908,7 +938,7 @@ use in calculations.
    #+END_SRC
 
    #+RESULTS:
-   : nothing
+   : calc_params! (generic function with 1 method)
 
 ** Frontend macro
    #+BEGIN_SRC julia
@@ -1127,3 +1157,111 @@ use in calculations.
 
     #+RESULTS:
     [[file:../images/summed-fields.svg]]
+
+* Spectra
+  We implement the calculation of the spectrum of /an arbitrary/ field
+  using the FFT, which requires equidistant samples. For this reason,
+  we only allow the evaluation of the spectrum on equidistant
+  frequency vectors, which we ensure by only accepting =Range=
+  objects.
+
+  #+BEGIN_SRC julia
+    import Base: fft
+    function fft(f::AbstractField,
+                 fs::Unitful.Frequency=default_sampling_frequency(f))
+        t = timeaxis(f, fs)
+        f_v = f.(t)./u"V/m" .|> NoUnits
+        fft(f_v)
+    end
+    spectrum(f::AbstractField,
+             fs::Unitful.Frequency=default_sampling_frequency(f)) =
+                 fftshift(fft(f,fs))*√(2/π)/NoUnits(fs*period(f))
+
+    # where {A<:AbstractField}
+  #+END_SRC
+
+  #+RESULTS:
+  : nothing
+
+** Frequency axis
+   #+BEGIN_SRC julia
+     import DSP: fftfreq
+
+     fftfreq(f::AbstractField, fs::Unitful.Frequency=default_sampling_frequency(f)) =
+         fftfreq(steps(f, fs), fs/u"Hz" |> NoUnits)*u"Hz"
+
+     freqaxis(f::AbstractField, fs::Unitful.Frequency=default_sampling_frequency(f)) =
+         fftshift(fftfreq(f, fs))
+   #+END_SRC
+
+   #+RESULTS:
+   : freqaxis (generic function with 2 methods)
+
+** EXAMPLE Plot spectra
+   #+BEGIN_SRC julia :exports both :results file
+     @set_base_units() do
+         λ  = u"nm"
+     end
+
+     @field(IR) do
+         λ  = 800.0
+         # I₀ = 1e14
+         E₀ = 1
+         τ  = 10u"fs"
+         σmax = 25
+         env = :gauss
+     end
+
+     @field(XUV) do
+         λ  = 800.0
+         # I₀ = 1e14
+         E₀ = 1
+         τ  = 2u"fs"
+         σmax = 5
+         env = :gauss
+         q = 15:2:37
+     end
+
+     XUV = delay(XUV, 8u"fs")
+     field = IR + XUV
+
+
+     t = timeaxis(field)
+
+     f = freqaxis(field)
+     sel = (f .>= 0u"Hz") .& (f .< 2max_frequency(field))
+     F = spectrum(field)[sel]
+
+     using PyPlot
+     using Jagot.plotting
+     plot_style("default")
+     using DSP
+
+     figure("field spectrum")
+     clf()
+     subplot(211)
+     plot(t./u"fs" .|> NoUnits, field.(t)./u"V/m" .|> NoUnits, label="Combined field")
+     plot(t./u"fs" .|> NoUnits, envelope(IR).(t)./u"V/m" .|> NoUnits, label="IR envelope")
+     plot(t./u"fs" .|> NoUnits, envelope(XUV).(t)./u"V/m" .|> NoUnits, label="XUV envelope")
+     legend()
+     xlabel(L"$t$ [fs]")
+     axes_labels_opposite(:x)
+     subplot(212)
+     plot(f[sel]./u"THz" .|> NoUnits,
+          abs2.(F), label="Combined spectrum")
+     plot(f[sel]./u"THz" .|> NoUnits,
+          abs2.(spectrum(envelope(IR)).(2π*(f[sel]-frequency(IR)))./(u"V*fs/m") .|> NoUnits),
+          label="Analytic IR spectrum")
+     margins(0, 0.1)
+     yscale("log")
+     xlim(0,2max_frequency(field)/u"THz")
+     legend()
+     xlabel(L"$f$ [THz]")
+     # a2=gca()[:twinx]()
+     # a2[:plot](f[sel]./u"THz" .|> NoUnits, unwrap(angle.(F)))
+     tight_layout()
+     savefig_f("spectrum")
+   #+END_SRC
+
+   #+RESULTS:
+   [[file:../images/spectrum.svg]]
