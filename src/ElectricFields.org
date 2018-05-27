@@ -288,7 +288,7 @@ use in calculations.
   #+END_SRC
 
   #+RESULTS:
-  : continuity (generic function with 1 method)
+  : continuity (generic function with 5 methods)
 ** Linear field
    #+BEGIN_SRC julia
      struct LinearField <: AbstractField
@@ -300,9 +300,9 @@ use in calculations.
      (f::LinearField)(t::Number) = f.carrier(t)*f.env(t)
 
      function show(io::IO, f::LinearField)
-         write(io, "Linearly polarized field with a\n  ")
+         write(io, "Linearly polarized field with\n  – a ")
          show(io, f.carrier)
-         write(io, " and a\n  ")
+         write(io, " \n  – and a ")
          show(io, f.env)
      end
 
@@ -325,7 +325,7 @@ use in calculations.
    #+END_SRC
 
    #+RESULTS:
-   : duration (generic function with 2 methods)
+   : duration (generic function with 3 methods)
 
 ** Keldysh parameter
    The [[https://en.wikipedia.org/wiki/Tunnel_ionization][Keldysh parameter]] relates the strength of a dynamic electric
@@ -391,7 +391,6 @@ use in calculations.
   #+END_SRC
 
   #+RESULTS:
-  : max_frequency (generic function with 2 methods)
 
 ** Fixed carrier
    The carrier is fixed in the sense that the instantaneous frequency
@@ -432,7 +431,6 @@ use in calculations.
    #+END_SRC
 
    #+RESULTS:
-   : show (generic function with 259 methods)
 
 ** Harmonic carrier
    #+BEGIN_SRC julia
@@ -478,7 +476,6 @@ use in calculations.
    #+END_SRC
 
    #+RESULTS:
-   : show (generic function with 260 methods)
 
 
 ** Dispersed carriers [0/2]
@@ -496,7 +493,6 @@ use in calculations.
   #+END_SRC
 
   #+RESULTS:
-  : Dict{Symbol,Any} with 0 entries
 
 ** DONE Gaussian
    A Gaussian pulse is given by
@@ -585,7 +581,6 @@ use in calculations.
    #+END_SRC
 
    #+RESULTS:
-   : span (generic function with 2 methods)
 
 ** DONE Trapezoidal
    #+BEGIN_SRC julia
@@ -650,7 +645,6 @@ use in calculations.
    #+END_SRC
 
    #+RESULTS:
-   : span (generic function with 3 methods)
 
 ** TODO Sin2
 
@@ -662,7 +656,7 @@ use in calculations.
    #+RESULTS:
    : nothing
 
-* TODO Field arithmetic [0/1]
+* TODO Field arithmetic [1/1]
   For calculations, a time-base is necessary ("normalized time"), with
   respect to which all harmonic motions &c are analyzed.  When
   combining fields of commensurate frequencies, it is easy to
@@ -680,56 +674,146 @@ use in calculations.
   the time axis, estimate whether all harmonic components of interest
   are satisfactorily resolved.
 
-  #+BEGIN_SRC julia
-    import Base: +, -
-
-    type SumField <: AbstractField
-        a::AbstractField
-        b::AbstractField
-    end
-
-    +(a::AbstractField,
-      b::AbstractField) = SumField(a, b)
-
-    function span(f::SumField)
-        sa = span(a)
-        sb = span(b)
-        (min(sa[1], sb[1]), max(sa[2],sb[2]))
-    end
-
-
-    type NegatedField <: AbstractField
-        a::AbstractField
-    end
-
-    -(a::AbstractField,
-      b::AbstractField) = SumField(a, NegatedField(b))
-
-
-    type DelayedField <: AbstractField
-        a::AbstractField
-        t₀::Number
-    end
-
-    span(f::DelayedField) = span(f.a) .+ f.t₀
-  #+END_SRC
-
-  #+RESULTS:
-  : span (generic function with 5 methods)
-
-** TODO Delay operators
-   Convention for delayed fields: a field delayed by a /positive/
-   time, comes /later/, i.e. we write \(f(t-\delta t)\).
+** Sum fields
    #+BEGIN_SRC julia
-     delay(a::AbstractField, t₀::Number) = DelayedField(a, t₀)
-     delay(a::DelayedField) = a.t₀
-     delay(a::AbstractField) = 0
+     import Base: +
 
-     # Dispatch evaluation on units: time shift, radians, cycles
+     type SumField <: AbstractField
+         a::AbstractField
+         b::AbstractField
+     end
+
+     function show(io::IO, f::SumField)
+         a_str = split(string(f.a), "\n")
+         b_str = split(string(f.b), "\n")
+
+         for (s,l) in zip("⌈" * repeat("|", length(a_str)-1), a_str)
+             write(io, "$s $l\n")
+         end
+
+         write(io, "⊕\n")
+
+         for (s,l) in zip(repeat("|", length(b_str)-1) * "⌊", b_str)
+             write(io, "$s $l\n")
+         end
+     end
+
+     +(a::AbstractField,
+       b::AbstractField) = SumField(a, b)
+
+     (f::SumField)(t::Unitful.Time) = f.a(t) + f.b(t)
+
+     function span(f::SumField)
+         sa = span(f.a)
+         sb = span(f.b)
+         (min(sa[1], sb[1]), max(sa[2],sb[2]))
+     end
+
+     for fun in [:wavelength, :period, :frequency, :wavenumber, :fundamental, :energy]
+         @eval begin
+             function ($fun)(f::SumField)
+                 a = ($fun)(f.a)
+                 b = ($fun)(f.b)
+                 a != b && error("$(ucfirst(string($fun))) differs between SumField composants!")
+                 a
+             end
+         end
+     end
+
+     max_frequency(f::SumField) =
+         max(max_frequency(f.a), max_frequency(f.b))
+
+     continuity(f::SumField) =
+         min(continuity(f.a), continuity(f.b))
+   #+END_SRC
+
+   #+RESULTS:
+
+** Negated fields
+   #+BEGIN_SRC julia
+     import Base: -
+
+     type NegatedField <: AbstractField
+         a::AbstractField
+     end
+     (f::NegatedField)(t::Unitful.Time) = -f.a(t)
+
+     -(a::AbstractField,
+       b::AbstractField) = a + NegatedField(b)
+
+     type NegatedCarrier <: AbstractCarrier
+         carrier::AbstractCarrier
+     end
+     (carrier::NegatedCarrier)(t::Unitful.Time) = -carrier.carrier(t)
+
+     carrier(f::NegatedField) = NegatedCarrier(carrier(f.a), f.t₀)
+     envelope(f::NegatedField) = envelope(f.a)
+   #+END_SRC
+
+   #+RESULTS:
+
+** Delayed fields
+   #+BEGIN_SRC julia
+     type DelayedField <: AbstractField
+         a::AbstractField
+         t₀::Number
+     end
+     (f::DelayedField)(t::Unitful.Time) = f.a(t-f.t₀)
+
+     function show(io::IO, f::DelayedField)
+         show(io, f.a)
+         write(io, "\n  – delayed by ")
+         show(io, f.t₀)
+     end
+
+     type DelayedCarrier <: AbstractCarrier
+         carrier::AbstractCarrier
+         t₀::Number
+     end
+     (carrier::DelayedCarrier)(t::Unitful.Time) = carrier.carrier(t-carrier.t₀)
+
+     type DelayedEnvelope <: AbstractEnvelope
+         env::AbstractEnvelope
+         t₀::Number
+     end
+     (envelope::DelayedEnvelope)(t::Unitful.Time) = envelope.env(t-envelope.t₀)
+
+     carrier(f::DelayedField) = DelayedCarrier(carrier(f.a), f.t₀)
+     envelope(f::DelayedField) = DelayedEnvelope(envelope(f.a), f.t₀)
+
+     span(env::DelayedEnvelope) = span(env.env) .+ env.t₀
+
+
+     for CarrierType in [:NegatedCarrier, :DelayedCarrier]
+         for fun in [:wavelength, :period, :frequency, :max_frequency,
+                     :wavenumber, :fundamental, :energy]
+             @eval ($fun)(carrier::($CarrierType)) = ($fun)(carrier.carrier)
+         end
+     end
+
+     for fun in [:intensity, :amplitude, :duration, :continuity]
+         @eval ($fun)(env::DelayedEnvelope) = ($fun)(env.env)
+     end
    #+END_SRC
 
    #+RESULTS:
    : nothing
+
+*** DONE Delay operators
+    Convention for delayed fields: a field delayed by a /positive/
+    time, comes /later/, i.e. we write \(f(t-\delta t)\).
+    #+BEGIN_SRC julia
+      delay(a::AbstractField, t₀::Unitful.Time) = DelayedField(a, t₀)
+      delay(a::AbstractField, nT::Real) = delay(a, nT*period(a))
+      delay(a::AbstractField, ϕ::Quantity{Float64, Unitful.Dimensions{()}}) = delay(a, ϕ/(2π*u"rad"))
+
+      delay(a::DelayedField) = a.t₀
+      delay(a::AbstractField) = 0u"s"
+
+      export delay
+    #+END_SRC
+
+    #+RESULTS:
 * Field creation
 ** Parameter calculation
    This function performs the calculation of different quantities from
@@ -799,7 +883,6 @@ use in calculations.
    #+END_SRC
 
    #+RESULTS:
-   : calc_params! (generic function with 1 method)
 
 ** Frontend macro
    #+BEGIN_SRC julia
@@ -864,9 +947,9 @@ use in calculations.
      #+END_SRC
 
      #+RESULTS:
-     : Linearly polarized field with a
-     :   Fixed carrier @ λ = 800.00 nm (T = 2.67 fs) and a
-     :   I₀ = 1e+14 cm^-2 W Gaussian envelope of duration 6.2 fs (intensity FWHM; ±10.14σ)
+     : Linearly polarized field with
+     :   – a Fixed carrier @ λ = 800.00 nm (T = 2.67 fs) 
+     :   – and a I₀ = 1e+14 cm^-2 W Gaussian envelope of duration 6.2 fs (intensity FWHM; ±10.14σ) 
 
 **** Trapezoidal envelope
      A trapezoidal envelope (also known as a tophat pulse) has a
@@ -883,9 +966,9 @@ use in calculations.
      #+END_SRC
 
      #+RESULTS:
-     : Linearly polarized field with a
-     :   Harmonic carrier @ λ = 800.00 nm (T = 2.67 fs); q ∈ 3:2:17 and a
-     :   I₀ = 1e+10 cm^-2 W /5‾10‾5\ cycles trapezoidal envelope
+     : Linearly polarized field with
+     :   – a Harmonic carrier @ λ = 800.00 nm (T = 2.67 fs); q ∈ 3:2:17 
+     :   – and a I₀ = 1e+10 cm^-2 W /5‾10‾5\ cycles trapezoidal envelope
 
 **** Specifying period time, other base units
      #+BEGIN_SRC julia :exports both :results value verbatim
@@ -902,6 +985,43 @@ use in calculations.
      #+END_SRC
 
      #+RESULTS:
-     : Linearly polarized field with a
-     :   Fixed carrier @ λ = 899.38 km (T = 3.00 ms) and a
-     :   I₀ = 3.3e-06 cm^-2 W Gaussian envelope of duration 10 s (intensity FWHM; ±7.07σ)
+     : Linearly polarized field with
+     :   – a Fixed carrier @ λ = 899.38 km (T = 3.00 ms) 
+     :   – and a I₀ = 3.3e-06 cm^-2 W Gaussian envelope of duration 10 s (intensity FWHM; ±7.07σ) 
+
+**** Summing two fields
+     #+BEGIN_SRC julia :exports both :results verbatim
+       @set_base_units() do
+           λ  = u"nm"
+       end
+
+       @field(IR) do
+           λ  = 800.0
+           E₀ = 4
+           τ  = 15u"fs"
+           σmax = 5
+           env = :gauss
+       end
+
+       @field(XUV) do
+           λ  = 800.0
+           E₀ = 1
+           τ  = 2u"fs"
+           σmax = 5
+           env = :gauss
+           q = 15:2:37
+       end
+
+       IR = delay(IR, 8u"fs")
+       field = IR + XUV
+     #+END_SRC
+
+     #+RESULTS:
+     : ⌈ Linearly polarized field with
+     : |   – a Fixed carrier @ λ = 800.00 nm (T = 2.67 fs) 
+     : |   – and a I₀ = 2.1e-06 cm^-2 W Gaussian envelope of duration 15 fs (intensity FWHM; ±5.03σ) 
+     : |   – delayed by 8 fs
+     : ⊕
+     : | Linearly polarized field with
+     : |   – a Harmonic carrier @ λ = 800.00 nm (T = 2.67 fs); q ∈ 15:2:37 
+     : ⌊   – and a I₀ = 1.3e-07 cm^-2 W Gaussian envelope of duration 2 fs (intensity FWHM; ±6.28σ) 
