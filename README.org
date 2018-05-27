@@ -64,7 +64,7 @@ This is a [[https://github.com/jagot/LiterateOrg.jl][LiterateOrg.jl]] project. T
  #+RESULTS:
  : Linearly polarized field with a
  :   Fixed carrier @ λ = 800.00 nm (T = 2.67 fs) and a
- :   I₀ = 1e+14 cm^-2 W Gaussian envelope of duration 6.2 fs (intensity FWHM; ±10.14σ)
+ :   I₀ = 1e+14 cm^-2 W Gaussian envelope of duration 6.2 fs (intensity FWHM; ±10.14σ) 
 
  We can define a second pulse with the same parameters as the above,
  but with a carrier–envelope phase of π/2:
@@ -82,7 +82,7 @@ This is a [[https://github.com/jagot/LiterateOrg.jl][LiterateOrg.jl]] project. T
  #+RESULTS:
  : Linearly polarized field with a
  :   Fixed carrier @ λ = 800.00 nm (T = 2.67 fs); CEP = 0.50π and a
- :   I₀ = 1e+14 cm^-2 W Gaussian envelope of duration 6.2 fs (intensity FWHM; ±10.14σ)
+ :   I₀ = 1e+14 cm^-2 W Gaussian envelope of duration 6.2 fs (intensity FWHM; ±10.14σ) 
 
  #+BEGIN_SRC julia :exports code
    t = timeaxis(IR)
@@ -112,8 +112,9 @@ This is a [[https://github.com/jagot/LiterateOrg.jl][LiterateOrg.jl]] project. T
    pulse:
    #+BEGIN_SRC julia :exports both :results value verbatim
      @field(XUV) do
-         λ    = 50.0
+         λ    = 800.0
          I₀   = 1e10
+         q    = 17:2:55 # Harmonic orders of 800 nm
          env  = :trapezoidal
          ramp = 5
          flat = 10
@@ -122,11 +123,11 @@ This is a [[https://github.com/jagot/LiterateOrg.jl][LiterateOrg.jl]] project. T
 
    #+RESULTS:
    : Linearly polarized field with a
-   :   Fixed carrier @ λ = 50.00 nm (T = 0.17 fs) and a
+   :   Harmonic carrier @ λ = 800.00 nm (T = 2.67 fs); q ∈ 17:2:55 and a
    :   I₀ = 1e+10 cm^-2 W /5‾10‾5\ cycles trapezoidal envelope
 
    #+BEGIN_SRC julia :exports results :results value file
-     t = timeaxis(span(XUV))
+     t = timeaxis(XUV)
 
      figure("trapezoidal xuv")
      clf()
