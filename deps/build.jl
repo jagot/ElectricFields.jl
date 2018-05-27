@@ -1,2 +1,2 @@
 using LiterateOrg
-tangle_package(joinpath(Pkg.dir("ElectricFields", "src", "ElectricFields.org")), "ElectricFields")
+tangle_package(joinpath(dirname(@__FILE__), "..", "src", "ElectricFields.org"), "ElectricFields")

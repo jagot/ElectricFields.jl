@@ -20,21 +20,38 @@ physically reasonable, to recreate complicated experimental
 situations. Everything can then be converted to normalized time, for
 use in calculations.
 
-#+BEGIN_SRC julia
-  using Unitful
-  using Parameters
-  import Base: show
-#+END_SRC
+* Setup
+  #+BEGIN_SRC julia
+    using Unitful
+    using Parameters
+    import Base: show
+  #+END_SRC
 
-#+RESULTS:
-: nothing
+  #+RESULTS:
+  : nothing
+
+** TEST
+   #+BEGIN_SRC julia
+     using Base.Test
+     using Unitful
+   #+END_SRC
+
+   #+RESULTS:
+   : nothing
 
 * Todo
-  - [X] Automatic calculation of time span from envelope
+  - [-] Automatic time/frequency axes
+    - [X] Calculation of time span from envelope
+    - [ ] Calculation of maximal frequency of all fields
   - [ ] Delayed fields
   - [ ] Field arithmetic
+  - [ ] Simple evaluation of field spectrum
+    - [ ] Default implementation uses FFT
+    - [ ] Concrete types may provide analytic implementations
   - [ ] Common time-base
   - [ ] Temporal discretization
+  - [ ] Conversion to atomic units
+  - [ ] Arbitrary fields
   - [ ] Tests
 
 * Units
@@ -271,7 +288,7 @@ use in calculations.
   #+END_SRC
 
   #+RESULTS:
-  : nothing
+  : continuity (generic function with 1 method)
 ** Linear field
    #+BEGIN_SRC julia
      struct LinearField <: AbstractField
@@ -319,8 +336,7 @@ use in calculations.
    where \(I_p\) is the ionization potential of the atom and \(U_p\)
    is the ponderomotive potential of the dynamic field.
    #+BEGIN_SRC julia
-     # TODO: Should require Iₚ to be of unit energy
-     keldysh(f::AbstractField, Iₚ::Number) = NoUnits(√(Iₚ/2params(f)[:Uₚ]))
+     keldysh(f::AbstractField, Iₚ::Unitful.Energy) = √(Iₚ/2params(f)[:Uₚ]) |> NoUnits
    #+END_SRC
 
    #+RESULTS:
@@ -364,6 +380,9 @@ use in calculations.
     export span, steps, timeaxis
   #+END_SRC
 
+  #+RESULTS:
+  : nothing
+
 * Carriers
   #+BEGIN_SRC julia :results value verbatim
     carrier_types = Dict{Symbol,Any}()
@@ -372,7 +391,7 @@ use in calculations.
   #+END_SRC
 
   #+RESULTS:
-  : max_frequency (generic function with 3 methods)
+  : max_frequency (generic function with 2 methods)
 
 ** Fixed carrier
    The carrier is fixed in the sense that the instantaneous frequency
@@ -459,7 +478,7 @@ use in calculations.
    #+END_SRC
 
    #+RESULTS:
-   : show (generic function with 321 methods)
+   : show (generic function with 260 methods)
 
 
 ** Dispersed carriers [0/2]
