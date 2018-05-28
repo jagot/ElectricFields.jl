@@ -851,16 +851,13 @@ use in calculations.
 
      span(env::DelayedEnvelope) = span(env.env) .+ env.t₀
 
-
-     for CarrierType in [:NegatedCarrier, :DelayedCarrier]
+     for FieldType in [:NegatedField, :DelayedField]
          for fun in [:wavelength, :period, :frequency, :max_frequency,
-                     :wavenumber, :fundamental, :energy]
-             @eval ($fun)(carrier::($CarrierType)) = ($fun)(carrier.carrier)
+                     :wavenumber, :fundamental, :energy,
+                     :intensity, :amplitude, :duration, :continuity,
+                     :span, :steps]
+             @eval ($fun)(f::($FieldType)) = ($fun)(f.a)
          end
-     end
-
-     for fun in [:intensity, :amplitude, :duration, :continuity]
-         @eval ($fun)(env::DelayedEnvelope) = ($fun)(env.env)
      end
    #+END_SRC
 
@@ -1296,3 +1293,96 @@ use in calculations.
 
    #+RESULTS:
    [[file:../images/spectrum.svg]]
+* Dispersed fields
+  We calculate the effect of dispersion described by the Sellmeier
+  equations in the frequency domain, to which we transform via an
+  FFT. For this to be possible, we only allow the evaluation of the
+  field for a specified sampling frequency, i.e. we don't provide an
+  implementation for evaluating a =DispersedField= at an arbitrary
+  time point.
+  #+BEGIN_SRC julia
+    using Sellmeier
+
+    type DispersedField <: AbstractField
+        a::AbstractField
+        m::Medium
+        d::Unitful.Length
+    end
+
+    function show(io::IO, f::DispersedField)
+        show(io, f.a)
+        write(io, "\n  – dispersed through $(f.d) of $(f.m)")
+    end
+
+    disperse(a::AbstractField, m::Medium, d::Unitful.Length) =
+        DispersedField(a, m, d)
+
+    (f::DispersedField)(t::Union{Unitful.Time,AbstractVector{<:Unitful.Time}}) =
+        error("Dispersed fields can only be evaluated by specifying a sampling frequency")
+
+    function (f::DispersedField)(fs::Unitful.Frequency = default_sampling_frequency(f.a))
+        F̂ = fft(f.a, fs)
+        ifft(F̂.*dispersion(f.m, f.d, fftfreq(f.a, fs), frequency(f.a)))*u"V/m"
+    end
+
+    max_frequency(f::DispersedField) = max_frequency(f.a)
+
+    # This is, strictly speaking, not true, since dispersing a pulse will
+    # in general stretch it in the time domain. It is up to the user to
+    # ensure that the time window is large enough to contain even the
+    # stretched pulse, by setting the σmax (or friends) to a large enough
+    # value.
+    span(f::DispersedField) = span(f.a)
+
+    export disperse
+  #+END_SRC
+
+  #+RESULTS:
+  : nothing
+
+** EXAMPLE
+   #+BEGIN_SRC julia :exports both :results verbatim
+     using Sellmeier
+
+     @field(IR) do
+         λ  = 800.0
+         # I₀ = 1e14
+         E₀ = 1
+         τ  = 5u"fs"
+         σmax = 30
+         env = :gauss
+     end
+
+     IR = delay(IR, -20u"fs")
+     dIR = disperse(IR, BK7, 800u"μm")
+
+     IR + dIR
+   #+END_SRC
+
+   #+RESULTS:
+   #+begin_example
+   ⌈ Linearly polarized field with
+   |   – a Fixed carrier @ λ = 800.00 nm (T = 2.67 fs) 
+   |   – and a I₀ = 1.3e-07 cm^-2 W Gaussian envelope of duration 5 fs (intensity FWHM; ±30.16σ) 
+   |   – delayed by -20 fs
+   ⊕
+   | Linearly polarized field with
+   |   – a Fixed carrier @ λ = 800.00 nm (T = 2.67 fs) 
+   |   – and a I₀ = 1.3e-07 cm^-2 W Gaussian envelope of duration 5 fs (intensity FWHM; ±30.16σ) 
+   |   – delayed by -20 fs
+   ⌊   – dispersed through 800 μm of Medium([1.03961, 0.231792, 1.01047], [0.00600069867 μm^2, 0.0200179144 μm^2, 103.560653 μm^2])
+   #+end_example
+
+   #+BEGIN_SRC julia :exports results :results file
+     figure("dispersion")
+     clf()
+     plot(IR+dIR, label="Sum")
+     plot(IR-dIR, label="Difference")
+     legend()
+     xlabel(L"$t$ [fs]")
+     title("IR & dispersed field")
+     savefig_f("dispersion")
+   #+END_SRC
+
+   #+RESULTS:
+   [[file:../images/dispersion.svg]]
