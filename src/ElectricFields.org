@@ -50,10 +50,21 @@ use in calculations.
          savefig(filename, transparent=true)
          filename
      end
+
+     import PyPlot: plot
+     # Convenience overloads for plotting unitful vectors
+     plot(t::AbstractVector{<:Unitful.Time}, y, args...; kwargs...) =
+         plot(t./u"fs" .|> NoUnits, y, args...; kwargs...)
+     plot(t::AbstractVector{<:Unitful.Frequency}, y, args...; kwargs...) =
+         plot(t./u"THz" .|> NoUnits, y, args...; kwargs...)
+
+     isdefined(:ElectricField) || @derived_dimension ElectricField Unitful.𝐈^-1*Unitful.𝐋*Unitful.𝐌*Unitful.𝐓^-3
+     plot(x::AbstractVector{<:Real}, E::AbstractVector{<:ElectricField}, args...; kwargs...) =
+         plot(x, E./u"V/m" .|> NoUnits, args...; kwargs...)
    #+END_SRC
 
    #+RESULTS:
-   : savefig_f (generic function with 1 method)
+   : plot (generic function with 4 methods)
 
 * Todo
   - [-] Automatic time/frequency axes
@@ -988,6 +999,14 @@ use in calculations.
    : nothing
 
 ** EXAMPLE Usage
+*** Plot setup
+    #+BEGIN_SRC julia
+      plot(f::AbstractField, args...; kwargs...) = plot(timeaxis(f), f(), args...; kwargs...)
+    #+END_SRC
+
+    #+RESULTS:
+    : plot (generic function with 5 methods)
+
 *** Specifying wavelength
     A [[https://en.wikipedia.org/wiki/Gaussian_function][Gaussian envelope]] is the default and can be omitted; τ refers
     the [[https://en.wikipedia.org/wiki/Full_width_at_half_maximum][FWHM]] duration of the intensity envelope.
