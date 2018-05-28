@@ -313,7 +313,7 @@ use in calculations.
          params::Dict{Symbol, Any}
      end
 
-     (f::LinearField)(t::Number) = f.carrier(t)*f.env(t)
+     (f::LinearField)(t::Unitful.Time) = f.carrier(t)*f.env(t)
 
      function show(io::IO, f::LinearField)
          write(io, "Linearly polarized field with\n  – a ")
@@ -414,13 +414,13 @@ use in calculations.
    is constant throughout the pulse.
    #+BEGIN_SRC julia
      struct FixedCarrier <: AbstractCarrier
-         λ::Number
-         T::Number
-         ω::Number
+         λ::Unitful.Length
+         T::Unitful.Time
+         ω::Unitful.Frequency
          ϕ::Number # Carrier–envelope phase, in radians
      end
 
-     (carrier::FixedCarrier)(t::Number) = sin(carrier.ω*t + carrier.ϕ)
+     (carrier::FixedCarrier)(t::Unitful.Time) = sin(carrier.ω*t + carrier.ϕ)
 
      carrier_types[:fixed] = FixedCarrier
 
@@ -453,9 +453,9 @@ use in calculations.
 ** Harmonic carrier
    #+BEGIN_SRC julia
      struct HarmonicCarrier <: AbstractCarrier
-         λ::Number
-         T::Number
-         ω::Number
+         λ::Unitful.Length
+         T::Unitful.Time
+         ω::Unitful.Frequency
          ϕ::Number # Carrier–envelope phase, in radians
          q::AbstractVector{Int}
      end
@@ -463,8 +463,8 @@ use in calculations.
      harmonics(carrier::HarmonicCarrier) = carrier.q
      export harmonics
 
-     (carrier::HarmonicCarrier)(t::Number) = sum(sin(q*(carrier.ω*t + carrier.ϕ))
-                                                 for q ∈ harmonics(carrier))
+     (carrier::HarmonicCarrier)(t::Unitful.Time) = sum(sin(q*(carrier.ω*t + carrier.ϕ))
+                                                       for q ∈ harmonics(carrier))
 
      carrier_types[:harmonic] = HarmonicCarrier
 
@@ -549,7 +549,7 @@ use in calculations.
      end
      envelope_types[:gauss] = GaussianEnvelope
 
-     (env::GaussianEnvelope)(t::Number) = env.E₀*exp(-t^2/(2*env.σ′^2))
+     (env::GaussianEnvelope)(t::Unitful.Time) = env.E₀*exp(-t^2/(2*env.σ′^2))
 
      show(io::IO, env::GaussianEnvelope) =
          write(io, @sprintf("I₀ = %0.2g %s Gaussian envelope of duration %0.2g %s (intensity FWHM; ±%0.2fσ) ",
@@ -630,8 +630,7 @@ use in calculations.
     #+END_SRC
 
     #+RESULTS:
-    : spectrum (generic function with 3 methods)
-
+    : spectrum (generic function with 1 method)
 
 ** DONE Trapezoidal
    #+BEGIN_SRC julia
@@ -641,13 +640,13 @@ use in calculations.
          ramp_down::Number
          I₀::Number
          E₀::Number
-         T::Number
+         T::Unitful.Time
      end
      envelope_types[:trapezoidal] = TrapezoidalEnvelope
      # Common alias
      envelope_types[:tophat] = TrapezoidalEnvelope
 
-     function (env::TrapezoidalEnvelope)(t::Number)
+     function (env::TrapezoidalEnvelope)(t::Unitful.Time)
          t /= env.T
          f = if t < 0
              0
@@ -1176,12 +1175,10 @@ use in calculations.
     spectrum(f::AbstractField,
              fs::Unitful.Frequency=default_sampling_frequency(f)) =
                  fftshift(fft(f,fs))*√(2/π)/NoUnits(fs*period(f))
-
-    # where {A<:AbstractField}
   #+END_SRC
 
   #+RESULTS:
-  : nothing
+  : spectrum (generic function with 3 methods)
 
 ** Frequency axis
    #+BEGIN_SRC julia
