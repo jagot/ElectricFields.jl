@@ -325,6 +325,7 @@ use in calculations.
      end
 
      (f::LinearField)(t::Unitful.Time) = f.carrier(t)*f.env(t)
+     (f::LinearField)(fs::Unitful.Frequency=default_sampling_frequency(f)) = f(timeaxis(f, fs))
 
      function show(io::IO, f::LinearField)
          write(io, "Linearly polarized field with\n  – a ")
@@ -764,6 +765,7 @@ use in calculations.
        b::AbstractField) = SumField(a, b)
 
      (f::SumField)(t::Unitful.Time) = f.a(t) + f.b(t)
+     (f::SumField)(fs::Unitful.Frequency=default_sampling_frequency(f)) = f.a(fs) + f.b(fs)
 
      function span(f::SumField)
          sa = span(f.a)
@@ -790,7 +792,7 @@ use in calculations.
    #+END_SRC
 
    #+RESULTS:
-   : continuity (generic function with 4 methods)
+   : continuity (generic function with 5 methods)
 
 ** Negated fields
    #+BEGIN_SRC julia
@@ -800,9 +802,11 @@ use in calculations.
          a::AbstractField
      end
      (f::NegatedField)(t::Unitful.Time) = -f.a(t)
+     (f::NegatedField)(fs::Unitful.Frequency=default_sampling_frequency(f)) = -f.a(fs)
 
      -(a::AbstractField,
        b::AbstractField) = a + NegatedField(b)
+     -(a::AbstractField) = NegatedField(a)
 
      type NegatedCarrier <: AbstractCarrier
          carrier::AbstractCarrier
@@ -814,7 +818,7 @@ use in calculations.
    #+END_SRC
 
    #+RESULTS:
-   : envelope (generic function with 2 methods)
+   : envelope (generic function with 3 methods)
 
 ** Delayed fields
    #+BEGIN_SRC julia
@@ -879,6 +883,17 @@ use in calculations.
 
     #+RESULTS:
     : nothing
+* Field evaluation
+  Here we provide a convenience routine to evaluating fields on a arbitrary time vector.
+  #+BEGIN_SRC julia
+    for FieldType in [:LinearField, :SumField, :NegatedField, :DelayedField]
+        @eval (f::($FieldType))(t::AbstractVector{<:Unitful.Time}) = f.(t)
+    end
+  #+END_SRC
+
+  #+RESULTS:
+  : nothing
+
 * Field creation
 ** Parameter calculation
    This function performs the calculation of different quantities from
@@ -1188,7 +1203,7 @@ use in calculations.
     function fft(f::AbstractField,
                  fs::Unitful.Frequency=default_sampling_frequency(f))
         t = timeaxis(f, fs)
-        f_v = f.(t)./u"V/m" .|> NoUnits
+        f_v = f(t)./u"V/m" .|> NoUnits
         fft(f_v)
     end
     spectrum(f::AbstractField,
