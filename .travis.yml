@@ -28,6 +28,7 @@ git:
 ## uncomment the following lines to override the default test script
 script:
  - julia -e 'Pkg.clone("https://github.com/jagot/LiterateOrg.jl.git")'
+ - julia -e 'Pkg.clone("https://github.com/jagot/Sellmeier.jl.git")'
  - julia -e 'Pkg.clone(pwd())'
  - julia -e 'Pkg.build("ElectricFields"); Pkg.test("ElectricFields"; coverage=true)'
 after_success:
