@@ -100,6 +100,7 @@ use in calculations.
         :f => u"THz",
         :ν => u"cm"^-1,
         :ω => u"Trad"/u"s",
+        :ħω => u"eV",
         :Uₚ => u"eV"
     )
 
@@ -305,7 +306,7 @@ use in calculations.
     max_frequency(f::AbstractField) = max_frequency(carrier(f)) |> base_units[:f]
     wavenumber(f::AbstractField) = wavenumber(carrier(f))
     fundamental(f::AbstractField) = fundamental(carrier(f))
-    energy(f::AbstractField) = energy(carrier(f))
+    energy(f::AbstractField) = energy(carrier(f)) |> base_units[:ħω]
 
 
     intensity(f::AbstractField) = intensity(envelope(f))
@@ -442,7 +443,7 @@ use in calculations.
      frequency(carrier::FixedCarrier) = 1/carrier.T
      wavenumber(carrier::FixedCarrier) = 1/carrier.λ
      fundamental(carrier::FixedCarrier) = carrier.ω
-     energy(carrier::FixedCarrier) = carrier.ω * u"hbar"
+     energy(carrier::FixedCarrier) = carrier.ω * u"ħ" |> base_units[:ħω]
 
      function FixedCarrier(field_params::Dict{Symbol,Any})
          @unpack λ, T, ω = field_params
@@ -487,7 +488,7 @@ use in calculations.
      max_frequency(carrier::HarmonicCarrier) = maximum(harmonics(carrier))*frequency(carrier)
      wavenumber(carrier::HarmonicCarrier) = 1/carrier.λ
      fundamental(carrier::HarmonicCarrier) = carrier.ω
-     energy(carrier::HarmonicCarrier) = carrier.ω * u"hbar"
+     energy(carrier::HarmonicCarrier) = carrier.ω * u"ħ" |> base_units[:ħω]
 
      function HarmonicCarrier(field_params::Dict{Symbol,Any})
          @unpack λ, T, ω, q = field_params
@@ -909,7 +910,7 @@ use in calculations.
 
    #+BEGIN_SRC julia
      function calc_params!(field_params::Dict{Symbol,Any})
-         test_field_parameters(field_params, [:λ, :T, :f, :ν, :ω])
+         test_field_parameters(field_params, [:λ, :T, :f, :ν, :ω, :ħω])
          test_field_parameters(field_params, [:I₀, :E₀, :Uₚ])
 
          for k in keys(field_params)
@@ -926,6 +927,7 @@ use in calculations.
                  ν = 1/λ
                  f = 1/T
                  ω = 2π*u"rad"*f
+                 ħω = u"ħ"*ω
              else # ∝ Frequency specified
                  if f || ν
                      if f
@@ -934,7 +936,12 @@ use in calculations.
                          f = ν*u"c"
                      end
                      ω = 2π*u"rad"*f
-                 else ω
+                 elseif ω || ħω
+                     if ω
+                         ħω = u"ħ"*ω
+                     elseif ħω
+                         ω = ħω/u"ħ"
+                     end
                      f = ω/(2π*u"rad")
                      ν = f/u"c"
                  end
