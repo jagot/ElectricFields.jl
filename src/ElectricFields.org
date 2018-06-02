@@ -268,6 +268,36 @@ use in calculations.
     #+RESULTS:
     : @namespace! (macro with 1 method)
 
+**** TEST Namespace macro
+     #+BEGIN_SRC julia
+       params = Dict{Symbol,Rational}()
+
+       ElectricFields.@namespace!(params) do
+           x = 5
+           y = 3x
+           z = x//3
+           if x
+               w = x^2
+           end
+       end
+
+       @test params[:x] == 5
+       @test params[:y] == 15
+       @test params[:z] == 5//3
+       @test params[:w] == 25
+
+       params2 = Dict{Symbol,Quantity}(:λ => 1u"m")
+
+       ElectricFields.@namespace!(params2) do
+           if λ
+               ν = 1/λ
+           end
+       end
+
+       @test params2[:ν] == 1u"m"^-1
+     #+END_SRC
+
+
 *** Test of "competing quantities"
     This function ensures that one and only one of "competing"
     quantities is specified.
