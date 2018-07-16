@@ -742,6 +742,43 @@ use in calculations.
 
 ** TODO Sin2
 
+** CW
+   #+BEGIN_SRC julia
+     struct CWEnvelope <: AbstractEnvelope
+         tmax::Number # Maximum time. Time window: [-tmax,tmax]
+         Tmax::Integer # Maximum time, in cycles of the fundamental.
+         I₀::Intensity
+         E₀::ElectricField
+     end
+     envelope_types[:cw] = CWEnvelope
+
+     (env::CWEnvelope)(t::Unitful.Time) = env.E₀
+
+     show(io::IO, env::CWEnvelope) =
+         write(io, @sprintf("I₀ = %0.2g %s CW envelope of duration %0.2g %s (%0.2g cycles) ",
+                            usplit(env.I₀)..., usplit(env.tmax)..., env.Tmax))
+
+     function CWEnvelope(field_params::Dict{Symbol,Any})
+         test_field_parameters(field_params, [:T]) # Period time required to set time window
+         test_field_parameters(field_params, [:tmax, :Tmax])
+
+         @namespace!(field_params) do
+             if tmax
+                 Tmax = ceil(Int, tmax/T)
+             end
+             tmax = Tmax*T
+         end
+
+         @unpack tmax, Tmax, I₀, E₀ = field_params
+         CWEnvelope(tmax, Tmax, I₀, E₀)
+     end
+
+     continuity(::CWEnvelope) = Inf
+     span(env::CWEnvelope) = (0u"s", env.tmax)
+
+     intensity(env::CWEnvelope) = env.I₀
+     amplitude(env::CWEnvelope) = env.E₀
+   #+END_SRC
 ** Exports
    #+BEGIN_SRC julia
      export continuity
