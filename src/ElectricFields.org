@@ -23,16 +23,43 @@ use in calculations.
 * Setup
   #+BEGIN_SRC julia
     using Unitful
+    using FFTW
     using Parameters
     import Base: show
+    using Printf
   #+END_SRC
 
   #+RESULTS:
   : nothing
 
+* Todo
+  - [-] Automatic time/frequency axes
+    - [X] Calculation of time span from envelope
+    - [ ] Calculation of maximal frequency of all fields
+  - [ ] Delayed fields
+  - [ ] Field arithmetic
+  - [ ] Simple evaluation of field spectrum
+    - [ ] Default implementation uses FFT
+    - [ ] Concrete types may provide analytic implementations
+  - [ ] Common time-base
+  - [ ] Temporal discretization
+  - [ ] Conversion to atomic units
+  - [ ] Arbitrary fields
+  - [ ] Tests
+
+* Dimensions
+  #+BEGIN_SRC julia
+    @derived_dimension ElectricField Unitful.𝐈^-1*Unitful.𝐋*Unitful.𝐌*Unitful.𝐓^-3
+    @derived_dimension Intensity Unitful.𝐌*Unitful.𝐓^-3
+  #+END_SRC
+
+  #+RESULTS:
+  : nothing
+
+* Misc
 ** TEST
    #+BEGIN_SRC julia
-     using Base.Test
+     using Test
      using Unitful
    #+END_SRC
 
@@ -58,28 +85,11 @@ use in calculations.
      plot(t::AbstractVector{<:Unitful.Frequency}, y, args...; kwargs...) =
          plot(t./u"THz" .|> NoUnits, y, args...; kwargs...)
 
-     isdefined(:ElectricField) || @derived_dimension ElectricField Unitful.𝐈^-1*Unitful.𝐋*Unitful.𝐌*Unitful.𝐓^-3
      plot(x::AbstractVector{<:Real}, E::AbstractVector{<:ElectricField}, args...; kwargs...) =
-         plot(x, E./u"V/m" .|> NoUnits, args...; kwargs...)
+         plot(x, E./(u"V"/u"m") .|> NoUnits, args...; kwargs...)
    #+END_SRC
 
    #+RESULTS:
-   : plot (generic function with 4 methods)
-
-* Todo
-  - [-] Automatic time/frequency axes
-    - [X] Calculation of time span from envelope
-    - [ ] Calculation of maximal frequency of all fields
-  - [ ] Delayed fields
-  - [ ] Field arithmetic
-  - [ ] Simple evaluation of field spectrum
-    - [ ] Default implementation uses FFT
-    - [ ] Concrete types may provide analytic implementations
-  - [ ] Common time-base
-  - [ ] Temporal discretization
-  - [ ] Conversion to atomic units
-  - [ ] Arbitrary fields
-  - [ ] Tests
 
 * Units
   #+BEGIN_SRC julia
@@ -152,11 +162,11 @@ use in calculations.
          param_line_nos = Dict()
 
          for line in block.args
-             typeof(line) == Expr || error_message("Expected expression, got $(line)")
-             if line.head == :line
-                 line_no,filename = line.args
+             if typeof(line) == LineNumberNode
+                 line_no,filename = line.line,line.file
                  continue
              end
+             typeof(line) == Expr || error_message("Expected expression, got $(line)")
              line.head == Symbol("=") ||
                  error_message("Expected “parameter = value expression”, got $(line)")
              k = line.args[1]
@@ -188,18 +198,21 @@ use in calculations.
 
 *** Testing presence of quantity in the namespace
     These methods are used for the =if x= constructs in the quantity
-    conversion DSL. We return =true= if the symbol =x= is present in the
-    =params= dict. Since we implement it as an expression walking
-    algorithm, we can have constructs as =if x || y=, which will expand
-    to =if :x in keys(params) || :y in keys(params)=.
+    conversion DSL. We return =true= if the symbol =x= is present in
+    the =params= dict. Since we implement it as an expression walking
+    algorithm, we can have constructs as =if x || y=, which will
+    expand to =if :x in keys(params) || :y in keys(params)=. At first,
+    however, we check if the symbols =isdefined= in the =Main= scope,
+    which is generally the case for operators and such, to avoid
+    generating tentative key lookups for every symbol that is
+    encountered.
     #+BEGIN_SRC julia
       test_symbol_walk(node, params) = node
-      test_symbol_walk(node::Symbol, params) = (isdefined(node) ?
-                                                node :
-                                                Expr(:call, :in, Expr(:quote, node),
-                                                     Expr(:call, :keys, params)))
+      test_symbol_walk(node::Symbol, params) = (isdefined(Main, node) ?
+                                                node  : Expr(:call, :in, Expr(:quote, node),
+                                                             Expr(:call, :keys, params)))
       test_symbol_walk(node::Expr, params) =
-          Expr(node.head, test_symbol_walk.(node.args, params)...)
+          Expr(node.head, test_symbol_walk.(node.args, Ref(params))...)
     #+END_SRC
 
     #+RESULTS:
@@ -208,7 +221,9 @@ use in calculations.
 *** Expression walker
     This walks the quantity conversions block, replacing symbols with
     references to dictionary items and converting quantities to
-    applicable base units, before assignment.
+    applicable base units, before assignment. As above, before
+    generating dictionary lookups for all symbols encountered, we
+    first check if the symbol =isdefined= in the =Main= scope.
     #+BEGIN_SRC julia
       walk(node, params) = node
       walk(node::Symbol, params) = node
@@ -216,16 +231,24 @@ use in calculations.
       get_reference(r::Symbol,params) = Expr(:ref, params, Expr(:quote, r))
       get_reference(r,params) = r
 
-      get_symbol(s::Symbol, params) = isdefined(s) ? s : get_reference(s, params)
+      function get_symbol(s::Symbol, params)
+          if isdefined(Main, s)
+              s
+          else
+              test_expression = test_symbol_walk(s, params)
+              ref_expression = get_reference(s, params)
+              Expr(:if, test_expression, ref_expression, s)
+          end
+      end
       get_symbol(s, params) = s
 
       function walk(node::Expr, params)
-          if node.head ∈ [:line, :quote]
+          if node.head ∈ [:line, :quote, :macrocall]
               node
-          elseif node.head == :if
+          elseif node.head ∈ [:if, :elseif]
               # Dispatch "if x" to test_symbol_walk, which checks if :x is
               # present as key in params.
-              args = [test_symbol_walk(node.args[1], params)]
+              args = Any[test_symbol_walk(node.args[1], params)]
               append!(args, [walk(a, params) for a in node.args[2:end]])
               Expr(node.head, args...)
           else
@@ -243,7 +266,7 @@ use in calculations.
                       Expr(node.head, r, get_symbol(args[2], params))
                   end
               else
-                  args = get_symbol.(args, params)
+                  args = get_symbol.(args, Ref(params))
                   Expr(node.head, args...)
               end
           end
@@ -255,12 +278,14 @@ use in calculations.
 
 *** Namespace macro
     This macro uses the dictionary =params= as a "namespace", i.e. all
-    symbols are assumed to be keys in this dictionary.
+    symbols are assumed to be keys in this dictionary. We need to
+    escape the generated expression tree to modify in the scope of the
+    caller, not the global scope.
     #+BEGIN_SRC julia
       macro namespace!(exprs, params)
-          local tree = walk(exprs, esc(params))
+          local tree = walk(exprs, params)
           quote
-              $tree()
+              $(esc(tree))()
           end
       end
     #+END_SRC
@@ -268,11 +293,16 @@ use in calculations.
     #+RESULTS:
     : @namespace! (macro with 1 method)
 
+**** TEST
+     #+BEGIN_SRC julia
+       import ElectricFields: @namespace!
+     #+END_SRC
+
 **** TEST Namespace macro
      #+BEGIN_SRC julia
        params = Dict{Symbol,Rational}()
 
-       ElectricFields.@namespace!(params) do
+       @namespace!(params) do
            x = 5
            y = 3x
            z = x//3
@@ -288,7 +318,7 @@ use in calculations.
 
        params2 = Dict{Symbol,Quantity}(:λ => 1u"m")
 
-       ElectricFields.@namespace!(params2) do
+       @namespace!(params2) do
            if λ
                ν = 1/λ
            end
@@ -297,6 +327,8 @@ use in calculations.
        @test params2[:ν] == 1u"m"^-1
      #+END_SRC
 
+     #+RESULTS:
+     : nothing
 
 *** Test of "competing quantities"
     This function ensures that one and only one of "competing"
@@ -371,7 +403,7 @@ use in calculations.
    #+END_SRC
 
    #+RESULTS:
-   : params (generic function with 1 method)
+   : envelope (generic function with 1 method)
 
 ** Transverse field
    #+BEGIN_SRC julia
@@ -542,7 +574,7 @@ use in calculations.
 ** Dispersed carriers [0/2]
 *** TODO Chirped carrier
 *** TODO Sellmeier equations
-* Envelopes [2/3]
+* TODO Envelopes [2/3]
   The envelopes implemented below are all /amplitude/ envelopes,
   since that is what is being used in calculations. However, they may
   be specified using intensity-related quantities, e.g. Gaussian
@@ -787,7 +819,7 @@ use in calculations.
    #+RESULTS:
    : nothing
 
-* TODO Field arithmetic [1/1]
+* Field arithmetic [1/1]
   For calculations, a time-base is necessary ("normalized time"), with
   respect to which all harmonic motions &c are analyzed.  When
   combining fields of commensurate frequencies, it is easy to
@@ -809,7 +841,7 @@ use in calculations.
    #+BEGIN_SRC julia
      import Base: +
 
-     type SumField <: AbstractField
+     mutable struct SumField <: AbstractField
          a::AbstractField
          b::AbstractField
      end
@@ -866,7 +898,7 @@ use in calculations.
    #+BEGIN_SRC julia
      import Base: -
 
-     type NegatedField <: AbstractField
+     mutable struct NegatedField <: AbstractField
          a::AbstractField
      end
      (f::NegatedField)(t::Unitful.Time) = -f.a(t)
@@ -876,7 +908,7 @@ use in calculations.
        b::AbstractField) = a + NegatedField(b)
      -(a::AbstractField) = NegatedField(a)
 
-     type NegatedCarrier <: AbstractCarrier
+     mutable struct NegatedCarrier <: AbstractCarrier
          carrier::AbstractCarrier
      end
      (carrier::NegatedCarrier)(t::Unitful.Time) = -carrier.carrier(t)
@@ -890,7 +922,7 @@ use in calculations.
 
 ** Delayed fields
    #+BEGIN_SRC julia
-     type DelayedField <: AbstractField
+     mutable struct DelayedField <: AbstractField
          a::AbstractField
          t₀::Number
      end
@@ -902,13 +934,13 @@ use in calculations.
          show(io, f.t₀)
      end
 
-     type DelayedCarrier <: AbstractCarrier
+     mutable struct DelayedCarrier <: AbstractCarrier
          carrier::AbstractCarrier
          t₀::Number
      end
      (carrier::DelayedCarrier)(t::Unitful.Time) = carrier.carrier(t-carrier.t₀)
 
-     type DelayedEnvelope <: AbstractEnvelope
+     mutable struct DelayedEnvelope <: AbstractEnvelope
          env::AbstractEnvelope
          t₀::Number
      end
@@ -1270,11 +1302,11 @@ use in calculations.
   objects.
 
   #+BEGIN_SRC julia
-    import Base: fft
+    import FFTW: fft
     function fft(f::AbstractField,
                  fs::Unitful.Frequency=default_sampling_frequency(f))
         t = timeaxis(f, fs)
-        f_v = f(t)./u"V/m" .|> NoUnits
+        f_v = f(t)./(u"V"*u"m") .|> NoUnits
         fft(f_v)
     end
     spectrum(f::AbstractField,
@@ -1377,7 +1409,7 @@ use in calculations.
   #+BEGIN_SRC julia
     using Sellmeier
 
-    type DispersedField <: AbstractField
+    mutable struct DispersedField <: AbstractField
         a::AbstractField
         m::Medium
         d::Unitful.Length
@@ -1396,7 +1428,7 @@ use in calculations.
 
     function (f::DispersedField)(fs::Unitful.Frequency = default_sampling_frequency(f.a))
         F̂ = fft(f.a, fs)
-        ifft(F̂.*dispersion(f.m, f.d, fftfreq(f.a, fs), frequency(f.a)))*u"V/m"
+        ifft(F̂.*dispersion(f.m, f.d, fftfreq(f.a, fs), frequency(f.a)))*(u"V"*u"m")
     end
 
     max_frequency(f::DispersedField) = max_frequency(f.a)

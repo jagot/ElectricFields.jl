@@ -4,3 +4,5 @@
 /deps/bootstrap.jl
 /src/literate_org_tangled_code.jl
 /test/literate_org_tangled_tests.jl
+/Manifest.toml
+/deps/build.log
