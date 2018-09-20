@@ -464,9 +464,11 @@ use in calculations.
         ceil(Int, fs*abs(-(span(f)...)))
     steps(f::AbstractField, ndt::Integer) = steps(f, ndt/period(f))
 
-    timeaxis(f::AbstractField, fs::Unitful.Frequency=default_sampling_frequency(f)) =
-        linspace(span(f)..., steps(f, fs))
-    timeaxis(f::AbstractField, ndt::Integer) = linspace(span(f)..., steps(f, ndt))
+    function timeaxis(f::AbstractField, fs::Unitful.Frequency=default_sampling_frequency(f))
+        a,b = span(f)
+        range(a, stop=b, length=steps(f, fs))
+    end
+    timeaxis(f::AbstractField, ndt::Integer) = timeaxis(f, ndt/period(f))
 
     export span, steps, timeaxis
   #+END_SRC
