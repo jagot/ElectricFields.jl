@@ -208,9 +208,9 @@ use in calculations.
     encountered.
     #+BEGIN_SRC julia
       test_symbol_walk(node, params) = node
-      test_symbol_walk(node::Symbol, params) = (isdefined(Main, node) ?
-                                                node  : Expr(:call, :in, Expr(:quote, node),
-                                                             Expr(:call, :keys, params)))
+      test_symbol_walk(node::Symbol, params) =
+          isdefined(Main, node) ? node : Expr(:call, :in, Expr(:quote, node),
+                                              Expr(:call, :keys, params))
       test_symbol_walk(node::Expr, params) =
           Expr(node.head, test_symbol_walk.(node.args, Ref(params))...)
     #+END_SRC
@@ -325,6 +325,26 @@ use in calculations.
        end
 
        @test params2[:ν] == 1u"m"^-1
+
+       params3 = Dict{Symbol,Rational}()
+
+       factor = 4
+       @namespace!(params3) do
+           x = 5
+           y = factor*x
+       end
+
+       @test params3[:y] == 20
+
+       for i in 1:8
+           params4 = Dict{Symbol,Rational}()
+           @namespace!(params4) do
+               x = 5
+               y = i*x
+           end
+
+           @test params4[:y] == 5i
+       end
      #+END_SRC
 
      #+RESULTS:
