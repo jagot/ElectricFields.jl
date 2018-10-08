@@ -225,48 +225,47 @@ use in calculations.
     generating dictionary lookups for all symbols encountered, we
     first check if the symbol =isdefined= in the =Main= scope.
     #+BEGIN_SRC julia
-      walk(node, params) = node
-      walk(node::Symbol, params) = node
-
       get_reference(r::Symbol,params) = Expr(:ref, params, Expr(:quote, r))
       get_reference(r,params) = r
 
-      function get_symbol(s::Symbol, params)
+      function get_symbol(s::Symbol, params, escape)
           if isdefined(Main, s)
-              s
+              escape ? esc(s) : s
           else
               test_expression = test_symbol_walk(s, params)
               ref_expression = get_reference(s, params)
-              Expr(:if, test_expression, ref_expression, s)
+              Expr(:if, test_expression, ref_expression, escape ? esc(s) : s)
           end
       end
-      get_symbol(s, params) = s
+      get_symbol(s, params, escape) = s
 
-      function walk(node::Expr, params)
+      walk(node, params, escape) = node
+      walk(node::Symbol, params, escape) = get_symbol(node, params, escape)
+
+      function walk(node::Expr, params, escape)
           if node.head ∈ [:line, :quote, :macrocall]
               node
           elseif node.head ∈ [:if, :elseif]
               # Dispatch "if x" to test_symbol_walk, which checks if :x is
               # present as key in params.
               args = Any[test_symbol_walk(node.args[1], params)]
-              append!(args, [walk(a, params) for a in node.args[2:end]])
+              append!(args, [walk(a, params, escape) for a in node.args[2:end]])
               Expr(node.head, args...)
           else
-              args = [walk(a, params) for a in node.args]
               if node.head == :(=)
-                  r = get_reference(args[1], params)
-                  if typeof(args[1]) == Symbol && args[1] ∈ keys(base_units)
+                  target,expr = node.args
+                  r = get_reference(target, params)
+                  result = walk(expr, params, escape)
+                  if typeof(target) == Symbol && target ∈ keys(base_units)
                       # Generate expression that converts to the correct
                       # base unit.
-                      conv = Expr(:call, :|>, args[2],
-                                  Expr(:ref, base_units,
-                                       Expr(:quote, args[1])))
-                      Expr(node.head, r, conv)
-                  else
-                      Expr(node.head, r, get_symbol(args[2], params))
+                      result = Expr(:call, :|>, result,
+                                    Expr(:ref, base_units,
+                                         Expr(:quote, target)))
                   end
+                  Expr(node.head, r, result)
               else
-                  args = get_symbol.(args, Ref(params))
+                  args = walk.(node.args, Ref(params), Ref(escape))
                   Expr(node.head, args...)
               end
           end
@@ -283,7 +282,7 @@ use in calculations.
     caller, not the global scope.
     #+BEGIN_SRC julia
       macro namespace!(exprs, params)
-          local tree = walk(exprs, params)
+          local tree = walk(exprs, params, false)
           quote
               $(esc(tree))()
           end
@@ -1165,8 +1164,10 @@ use in calculations.
          block.head == :block ||
              error("Expected a block with parameters for definition of the field")
 
-         field_params = parse_block(block, Any)
+         local field_params = Dict{Symbol,Any}()
+         local tree = walk(spec, field_params, true)
          quote
+             $(tree)()
              $(esc(var)) = make_field($field_params)
          end
      end
@@ -1355,7 +1356,40 @@ use in calculations.
     #+RESULTS:
     [[file:../images/summed-fields.svg]]
 
-* Spectra
+** TEST Parametric field creation
+   Test parametric creation of fields, both from inside a function and
+   from global scope.
+   #+BEGIN_SRC julia
+     function test_parametric_fields(l)
+         Is = range(0u"W/cm^2",stop=1e6u"W/cm^2", length=l)
+
+         for (i,I₀) in enumerate(Is)
+             @eval @field(IR) do
+                 λ = 800.0u"nm"
+                 I₀ = $(I₀)
+                 τ = 6.2u"fs"
+                 Tmax = 5
+             end
+             @test intensity(IR) == I₀
+         end
+     end
+     test_parametric_fields(11)
+     test_parametric_fields(8)
+
+     Is = range(0u"W/cm^2",stop=1e6u"W/cm^2", length=11)
+
+     for (i,I₀) in enumerate(Is)
+         @eval @field(IR) do
+             λ = 800.0u"nm"
+             I₀ = $(I₀)
+             τ = 6.2u"fs"
+             Tmax = 5
+         end
+         @test intensity(IR) == I₀
+     end
+   #+END_SRC
+
+* COMMENT Spectra
   We implement the calculation of the spectrum of /an arbitrary/ field
   using the FFT, which requires equidistant samples. For this reason,
   we only allow the evaluation of the spectrum on equidistant
