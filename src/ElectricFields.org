@@ -727,6 +727,9 @@ use in calculations.
 
      continuity(::GaussianEnvelope) = Inf
      span(env::GaussianEnvelope) = (-env.tmax, env.tmax)
+
+     intensity(env::GaussianEnvelope) = env.I₀
+     amplitude(env::GaussianEnvelope) = env.E₀
    #+END_SRC
 
    #+RESULTS:
@@ -822,6 +825,9 @@ use in calculations.
 
      continuity(::TrapezoidalEnvelope) = 0
      span(env::TrapezoidalEnvelope) = (0u"fs", (env.ramp_up + env.flat + env.ramp_down)*env.T)
+
+     intensity(env::TrapezoidalEnvelope) = env.I₀
+     amplitude(env::TrapezoidalEnvelope) = env.E₀
    #+END_SRC
 
    #+RESULTS:
