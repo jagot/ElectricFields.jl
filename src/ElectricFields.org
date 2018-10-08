@@ -576,6 +576,39 @@ use in calculations.
 ** Dispersed carriers [0/2]
 *** TODO Chirped carrier
 *** TODO Sellmeier equations
+** Constant carrier
+   The carrier is constant in the sense that wavelength is infinite
+   and there is no oscillation, but the type still fulfils the carrier
+   interface, such that it can be used to establish a time-base, etc.
+   #+BEGIN_SRC julia
+     struct ConstantCarrier <: AbstractCarrier
+         λ::Unitful.Length
+         T::Unitful.Time
+         ω::Unitful.Frequency
+     end
+
+     (carrier::ConstantCarrier)(t::Unitful.Time) = 1
+
+     carrier_types[:constant] = ConstantCarrier
+
+     wavelength(carrier::ConstantCarrier) = carrier.λ
+     period(carrier::ConstantCarrier) = carrier.T
+
+     frequency(carrier::ConstantCarrier) = 1/carrier.T
+     wavenumber(carrier::ConstantCarrier) = 1/carrier.λ
+     fundamental(carrier::ConstantCarrier) = carrier.ω
+     energy(carrier::ConstantCarrier) = carrier.ω * u"ħ" |> base_units[:ħω]
+
+     function ConstantCarrier(field_params::Dict{Symbol,Any})
+         @unpack λ, T, ω = field_params
+         ConstantCarrier(λ, T, ω)
+     end
+
+     function show(io::IO, carrier::ConstantCarrier)
+         write(io, @sprintf("Constant carrier @ λ = %0.2f %s (T = %0.2f %s)",
+                            usplit(carrier.λ)..., usplit(carrier.T)...))
+     end
+   #+END_SRC
 * TODO Envelopes [2/3]
   The envelopes implemented below are all /amplitude/ envelopes,
   since that is what is being used in calculations. However, they may
