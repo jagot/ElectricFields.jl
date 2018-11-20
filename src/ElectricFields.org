@@ -419,6 +419,7 @@ use in calculations.
      carrier(f::LinearField) = f.carrier
      envelope(f::LinearField) = f.env
      params(f::LinearField) = f.params
+     dimensions(::LinearField) = 2
    #+END_SRC
 
    #+RESULTS:
@@ -432,6 +433,7 @@ use in calculations.
      end
 
      duration(f::TransverseField) = max(duration.((f.z,f.x))...)
+     dimensions(::TransverseField) = 3
    #+END_SRC
 
    #+RESULTS:
@@ -460,7 +462,7 @@ use in calculations.
          envelope,
          intensity, amplitude,
          duration,
-         params,
+         params, dimensions,
          keldysh
    #+END_SRC
 
@@ -1387,6 +1389,15 @@ use in calculations.
          end
          @test intensity(IR) == I₀
      end
+
+     @field(IR) do
+         λ = 800.0u"nm"
+         I₀ = 1e14u"W/cm^2"
+         τ = 6.2u"fs"
+         Tmax = 5
+     end
+
+     @test dimensions(IR) == 2
    #+END_SRC
 
 * COMMENT Spectra
