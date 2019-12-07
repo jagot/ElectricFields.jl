@@ -487,7 +487,15 @@ use in calculations.
 
     function timeaxis(f::AbstractField, fs::Unitful.Frequency=default_sampling_frequency(f))
         a,b = span(f)
-        range(a, stop=b, length=steps(f, fs))
+        num_steps = steps(f, fs)
+        if num_steps > 1
+            range(a, stop=b, length=num_steps)
+        else
+            # This hack is mainly useful for calculations where exactly
+            # one time step should be taken, (b-a) becomes the step
+            # length.
+            a:(b-a):a
+        end
     end
     timeaxis(f::AbstractField, ndt::Integer) = timeaxis(f, ndt/period(f))
 
