@@ -1050,6 +1050,48 @@ use in calculations.
 
     #+RESULTS:
     : nothing
+** Wrapped fields
+   #+BEGIN_SRC julia
+     """
+         WrappedField(field, a, b)
+
+     Wrapper around any electric `field`
+     """
+     abstract type WrappedField <: AbstractField end
+
+     for fun in [:carrier, :envelope, :span]
+         @eval $fun(f::WrappedField, args...) = $fun(parent(f), args...)
+     end
+
+     (f::WrappedField)(t::Unitful.Time) = parent(f)(t)
+     (f::WrappedField)(t::AbstractVector{<:Unitful.Time}) = parent(f).(t)
+   #+END_SRC
+
+** Padded fields
+   #+BEGIN_SRC julia
+     """
+         PaddedField(field, a, b)
+
+     Wrapper around any electric `field`, padded with `a` units of time
+     before, and `b` units of time after the ordinary [`span`](@ref) of the
+     field.
+     """
+     struct PaddedField{Field<:AbstractField,T<:Unitful.Time} <: WrappedField
+         field::Field
+         a::T
+         b::T
+     end
+
+     Base.parent(f::PaddedField) = f.field
+
+     function span(f::PaddedField)
+         a,b = span(f.field)
+         a-f.a, b+f.b
+     end
+
+     export PaddedField
+   #+END_SRC
+
 * Field evaluation
   Here we provide a convenience routine to evaluating fields on a arbitrary time vector.
   #+BEGIN_SRC julia
