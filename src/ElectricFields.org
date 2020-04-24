@@ -694,11 +694,7 @@ use in calculations.
          write(io, @sprintf("I₀ = %0.2g %s Gaussian envelope of duration %0.2g %s (intensity FWHM; ±%0.2fσ) ",
                             usplit(env.I₀)..., usplit(env.τ)..., env.σmax))
 
-     function GaussianEnvelope(field_params::Dict{Symbol,Any})
-         test_field_parameters(field_params, [:T]) # Period time required to round time window up
-         test_field_parameters(field_params, [:τ, :σ, :σ′])
-         test_field_parameters(field_params, [:σmax, :σ′max, :tmax, :Tmax])
-
+     function gaussian_common!(field_params)
          @namespace!(field_params) do
              if τ
                  σ = τ/(2*√(2log(2)))
@@ -725,10 +721,19 @@ use in calculations.
                  elseif Tmax
                      tmax = Tmax*T
                  end
+                 tmax = Tmax*T
              end
              σmax = tmax/σ
              σ′max = tmax/σ′
          end
+     end
+
+     function GaussianEnvelope(field_params::Dict{Symbol,Any})
+         test_field_parameters(field_params, [:T]) # Period time required to round time window up
+         test_field_parameters(field_params, [:τ, :σ, :σ′])
+         test_field_parameters(field_params, [:σmax, :σ′max, :tmax, :Tmax])
+
+         gaussian_common!(field_params)
 
          @unpack τ, σ, σ′, σmax, σ′max, tmax, Tmax, I₀, E₀ = field_params
          GaussianEnvelope(τ, σ, σ′, σmax, σ′max, tmax, Tmax, I₀, E₀)
@@ -773,6 +778,56 @@ use in calculations.
 
     #+RESULTS:
     : spectrum (generic function with 1 method)
+
+** Truncated Gaussian
+   #+BEGIN_SRC julia
+     struct TruncatedGaussianEnvelope <: AbstractEnvelope
+         τ::Unitful.Time # Intensity FWHM
+         σ::Unitful.Time # Intensity std.dev.
+         σ′::Unitful.Time # Envelope std.dev.
+         toff::Unitful.Time # Start of hard turn-off
+         tmax::Unitful.Time # Maximum time; end of hard turn-off. Time window: [-tmax,tmax]
+         Tmax::Integer # Maximum time, in cycles of the fundamental.
+         I₀::Intensity
+         E₀::ElectricField
+     end
+     envelope_types[:trunc_gauss] = TruncatedGaussianEnvelope
+
+     function (env::TruncatedGaussianEnvelope)(t::Unitful.Time)
+         at = abs(t)
+         at > env.tmax && return zero(env.E₀)
+         α = 1/(2env.σ′^2)
+         amp = if at ≤ env.toff
+             exp(-α*t^2)
+         else
+             exp(-α*(env.toff + 2/π*(env.tmax-env.toff)*tan(π/2*(at-env.toff)/(env.tmax-env.toff)))^2)
+         end
+         env.E₀*amp
+     end
+
+     show(io::IO, env::TruncatedGaussianEnvelope) =
+         @printf(io, "I₀ = %0.2g %s truncated Gaussian envelope of duration %0.2g %s (intensity FWHM; turn-off from %0.2g %s to %0.2g %s) ",
+                 usplit(env.I₀)..., usplit(env.τ)..., usplit(env.toff)..., usplit(env.tmax)...)
+
+     function TruncatedGaussianEnvelope(field_params::Dict{Symbol,Any})
+         test_field_parameters(field_params, [:T]) # Period time required to round time window up
+         test_field_parameters(field_params, [:τ, :σ, :σ′])
+         test_field_parameters(field_params, [:toff])
+         test_field_parameters(field_params, [:σmax, :σ′max, :tmax, :Tmax])
+
+         gaussian_common!(field_params)
+
+         @unpack τ, σ, σ′, toff, tmax, Tmax, I₀, E₀ = field_params
+         toff < tmax || throw(ArgumentError("Hard turn-off must occur before end of pulse"))
+         TruncatedGaussianEnvelope(τ, σ, σ′, toff, tmax, Tmax, I₀, E₀)
+     end
+
+     continuity(::TruncatedGaussianEnvelope) = Inf # This is not exactly true
+     span(env::TruncatedGaussianEnvelope) = (-env.tmax, env.tmax)
+
+     intensity(env::TruncatedGaussianEnvelope) = env.I₀
+     amplitude(env::TruncatedGaussianEnvelope) = env.E₀
+   #+END_SRC
 
 ** DONE Trapezoidal
    #+BEGIN_SRC julia
