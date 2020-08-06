@@ -1114,7 +1114,7 @@ use in calculations.
      """
      abstract type WrappedField <: AbstractField end
 
-     for fun in [:carrier, :envelope, :span]
+     for fun in [:params, :carrier, :envelope, :span]
          @eval $fun(f::WrappedField, args...) = $fun(parent(f), args...)
      end
 
