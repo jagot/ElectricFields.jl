@@ -104,6 +104,7 @@ use in calculations.
         :σ′ => u"fs",
         :σmax => NoUnits,
         :σ′max => NoUnits,
+        :toff => u"fs",
         :tmax => u"fs",
         :Tmax => NoUnits,
         :T => u"fs",
