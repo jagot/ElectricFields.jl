@@ -94,4 +94,4 @@ function dispersion(m::Medium, d::Length, f::AbstractVector{F}, f₀::Frequency 
 end
 # * Exports
 
-export Medium, BK7, SiO2, refractive_index, dispersion
+export Medium, BK7, SiO₂, refractive_index, dispersion

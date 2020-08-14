@@ -3,11 +3,11 @@
 
         Bstr = string(BK7.B)
         Cstr = join(string.(BK7.C), ", ")
-        @test string(BK7) == "Medium($(Bstr), [$(Cstr)])"# 
+        @test string(BK7) == "Medium($(Bstr), [$(Cstr)])"
     end
 
     @test BK7(0.5876u"μm") ≈ 1.5168 atol=1e-3
-    @test SiO2(0.5876u"μm") ≈ 1.4585 atol=1e-3# 
+    @test SiO₂(0.5876u"μm") ≈ 1.4585 atol=1e-3
 
     @testset "Dispersion" begin
         # Dispersing a pulse through a positive amount of glass should
@@ -33,6 +33,6 @@
 
         @test argmax(time_domain_envelope(Ê′)) > argmax(time_domain_envelope(Ê))
         @test argmax(time_domain_envelope(Ê′′)) < argmax(time_domain_envelope(Ê))
-        @test argmax(time_domain_envelope(Ê′′′)) == argmax(time_domain_envelope(Ê))# 
+        @test argmax(time_domain_envelope(Ê′′′)) == argmax(time_domain_envelope(Ê))
     end
 end

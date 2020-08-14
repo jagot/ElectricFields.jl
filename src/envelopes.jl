@@ -113,7 +113,7 @@ amplitude(env::GaussianEnvelope) = env.E₀
 @doc raw"""
     spectrum(env::GaussianEnvelope)
 
-Gaussians belong to the [Schwarz
+Gaussians belong to the [Schwartz
 class](https://en.wikipedia.org/wiki/Schwartz_space), i.e. functions
 who, under Fourier transform, are mapped back to the same space. That
 is to say, the Fourier transform of a Gaussian is a Gaussian:
