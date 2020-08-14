@@ -11,8 +11,6 @@
 A small Julian DSL for defining electrical fields, chiefly for use in
 atomic physics calculations.
 
-This is a [[https://github.com/jagot/LiterateOrg.jl][LiterateOrg.jl]] project. The documentation is found [[file:src/ElectricFields.org][within the code]].
-
 
 #+BEGIN_SRC julia :exports none
   using Unitful
