@@ -115,9 +115,10 @@ macro field(spec, var)
     block.head == :block ||
         error("Expected a block with parameters for definition of the field")
 
-    local field_params = Dict{Symbol,Any}()
+    field_params = gensym()
     local tree = walk(spec, field_params, true)
     quote
+        $field_params = Dict{Symbol,Any}()
         $(tree)()
         $(esc(var)) = make_field($field_params)
     end

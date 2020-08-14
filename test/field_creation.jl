@@ -6,9 +6,9 @@
         Is = range(0u"W/cm^2",stop=1e6u"W/cm^2", length=l)
 
         for (i,I₀) in enumerate(Is)
-            @eval @field(IR) do
+            @field(IR) do
                 λ = 800.0u"nm"
-                I₀ = $(I₀)
+                I₀ = I₀
                 τ = 6.2u"fs"
                 Tmax = 5
             end
@@ -21,9 +21,9 @@
     Is = range(0u"W/cm^2",stop=1e6u"W/cm^2", length=11)
 
     for (i,I₀) in enumerate(Is)
-        @eval @field(IR) do
+        @field(IR) do
             λ = 800.0u"nm"
-            I₀ = $(I₀)
+            I₀ = I₀
             τ = 6.2u"fs"
             Tmax = 5
         end
