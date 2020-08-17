@@ -1,4 +1,5 @@
 @derived_dimension ElectricField Unitful.𝐈^-1*Unitful.𝐋*Unitful.𝐌*Unitful.𝐓^-3
+@derived_dimension VectorPotential Unitful.𝐈^-1*Unitful.𝐋*Unitful.𝐌*Unitful.𝐓^-2
 @derived_dimension Intensity Unitful.𝐌*Unitful.𝐓^-3
 
 # Unit arithmetic is performed "outside" of @u_str, to ensure type

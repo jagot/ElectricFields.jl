@@ -49,10 +49,15 @@ struct GaussianEnvelope <: AbstractEnvelope
     Tmax::Integer # Maximum time, in cycles of the fundamental.
     I₀::Number
     E₀::Number
+    A₀::Number
 end
 envelope_types[:gauss] = GaussianEnvelope
 
-(env::GaussianEnvelope)(t::Unitful.Time) = env.E₀*exp(-t^2/(2*env.σ′^2))
+shape(env::GaussianEnvelope, t) = exp(-t^2/(2*env.σ′^2))
+
+(env::GaussianEnvelope)(t::Unitful.Time) = env.E₀*shape(env,t)
+vector_potential(env::GaussianEnvelope, t::Unitful.Time) =
+    env.A₀*shape(env, t)
 
 show(io::IO, env::GaussianEnvelope) =
     write(io, @sprintf("I₀ = %0.2g %s Gaussian envelope of duration %0.2g %s (intensity FWHM; ±%0.2fσ) ",
@@ -99,8 +104,8 @@ function GaussianEnvelope(field_params::Dict{Symbol,Any})
 
     gaussian_common!(field_params)
 
-    @unpack τ, σ, σ′, σmax, σ′max, tmax, Tmax, I₀, E₀ = field_params
-    GaussianEnvelope(τ, σ, σ′, σmax, σ′max, tmax, Tmax, I₀, E₀)
+    @unpack τ, σ, σ′, σmax, σ′max, tmax, Tmax, I₀, E₀, A₀ = field_params
+    GaussianEnvelope(τ, σ, σ′, σmax, σ′max, tmax, Tmax, I₀, E₀, A₀)
 end
 
 continuity(::GaussianEnvelope) = Inf
@@ -155,10 +160,11 @@ struct TruncatedGaussianEnvelope <: AbstractEnvelope
     Tmax::Integer # Maximum time, in cycles of the fundamental.
     I₀::Intensity
     E₀::ElectricField
+    A₀::VectorPotential
 end
 envelope_types[:trunc_gauss] = TruncatedGaussianEnvelope
 
-function (env::TruncatedGaussianEnvelope)(t::Unitful.Time)
+function shape(env::TruncatedGaussianEnvelope, t::Unitful.Time)
     at = abs(t)
     at > env.tmax && return zero(env.E₀)
     α = 1/(2env.σ′^2)
@@ -167,8 +173,10 @@ function (env::TruncatedGaussianEnvelope)(t::Unitful.Time)
     else
         exp(-α*(env.toff + 2/π*(env.tmax-env.toff)*tan(π/2*(at-env.toff)/(env.tmax-env.toff)))^2)
     end
-    env.E₀*amp
 end
+
+(env::TruncatedGaussianEnvelope)(t::Unitful.Time) = env.E₀*shape(env, t)
+vector_potential(env::TruncatedGaussianEnvelope, t::Unitful.Time) = env.A₀*shape(env, t)
 
 show(io::IO, env::TruncatedGaussianEnvelope) =
     @printf(io, "I₀ = %0.2g %s truncated Gaussian envelope of duration %0.2g %s (intensity FWHM; turn-off from %0.2g %s to %0.2g %s) ",
@@ -182,9 +190,9 @@ function TruncatedGaussianEnvelope(field_params::Dict{Symbol,Any})
 
     gaussian_common!(field_params)
 
-    @unpack τ, σ, σ′, toff, tmax, Tmax, I₀, E₀ = field_params
+    @unpack τ, σ, σ′, toff, tmax, Tmax, I₀, E₀, A₀ = field_params
     toff < tmax || throw(ArgumentError("Hard turn-off must occur before end of pulse"))
-    TruncatedGaussianEnvelope(τ, σ, σ′, toff, tmax, Tmax, I₀, E₀)
+    TruncatedGaussianEnvelope(τ, σ, σ′, toff, tmax, Tmax, I₀, E₀, A₀)
 end
 
 continuity(::TruncatedGaussianEnvelope) = Inf # This is not exactly true
@@ -201,15 +209,16 @@ struct TrapezoidalEnvelope <: AbstractEnvelope
     ramp_down::Number
     I₀::Number
     E₀::Number
+    A₀::Number
     T::Unitful.Time
 end
 envelope_types[:trapezoidal] = TrapezoidalEnvelope
 # Common alias
 envelope_types[:tophat] = TrapezoidalEnvelope
 
-function (env::TrapezoidalEnvelope)(t::Unitful.Time)
+function shape(env::TrapezoidalEnvelope, t::Unitful.Time)
     t /= env.T
-    f = if t < 0
+    if t < 0
         0
     elseif t < env.ramp_up
         t/env.ramp_up
@@ -220,8 +229,10 @@ function (env::TrapezoidalEnvelope)(t::Unitful.Time)
     else
         0
     end
-    f*env.E₀
 end
+
+(env::TrapezoidalEnvelope)(t::Unitful.Time) = env.E₀*shape(env, t)
+vector_potential(env::TrapezoidalEnvelope, t::Unitful.Time) = env.A₀*shape(env, t)
 
 show(io::IO, env::TrapezoidalEnvelope) =
     write(io, @sprintf("I₀ = %0.2g %s /%s‾%s‾%s\\ cycles trapezoidal envelope",
@@ -241,14 +252,14 @@ function TrapezoidalEnvelope(field_params::Dict{Symbol,Any})
         end
     end
 
-    @unpack ramp_up, flat, ramp_down, I₀, E₀, T = field_params
+    @unpack ramp_up, flat, ramp_down, I₀, E₀, A₀, T = field_params
 
     ramp_up >= 0 || error("Negative up-ramp not supported")
     flat >= 0 || error("Negative flat region not supported")
     ramp_down >= 0 || error("Negative down-ramp not supported")
     ramp_up + flat + ramp_down > 0 || error("Pulse length must be non-zero")
 
-    TrapezoidalEnvelope(ramp_up, flat, ramp_down, I₀, E₀, T)
+    TrapezoidalEnvelope(ramp_up, flat, ramp_down, I₀, E₀, A₀, T)
 end
 
 continuity(::TrapezoidalEnvelope) = 0
@@ -257,8 +268,52 @@ span(env::TrapezoidalEnvelope) = (0u"fs", (env.ramp_up + env.flat + env.ramp_dow
 intensity(env::TrapezoidalEnvelope) = env.I₀
 amplitude(env::TrapezoidalEnvelope) = env.E₀
 
-# ** TODO Sin2
-#
+# ** Cos²
+
+struct Cos²Envelope <: AbstractEnvelope
+    cycles::Number
+    I₀::Number
+    E₀::Number
+    A₀::Number
+    T::Unitful.Time
+end
+envelope_types[:cos²] = Cos²Envelope
+envelope_types[:cos2] = Cos²Envelope
+
+function shape(env::Cos²Envelope, t::Unitful.Time)
+    t /= (env.cycles*env.T)
+    cos(π*t)^2
+end
+
+(env::Cos²Envelope)(t::Unitful.Time) = env.E₀*shape(env, t)
+vector_potential(env::Cos²Envelope, t::Unitful.Time) = env.A₀*shape(env, t)
+
+show(io::IO, env::Cos²Envelope) =
+    write(io, @sprintf("I₀ = %0.2g %s %s cycles cos² envelope",
+                       usplit(env.I₀)...,
+                       env.cycles))
+
+function Cos²Envelope(field_params::Dict{Symbol,Any})
+    test_field_parameters(field_params, [:T]) # Period time required to relate ramps/flat to cycles
+    test_field_parameters(field_params, [:cycles])
+
+    @unpack cycles, I₀, E₀, A₀, T = field_params
+
+    cycles >= 0 || error("Negative duration not supported")
+
+    Cos²Envelope(cycles, I₀, E₀, A₀, T)
+end
+
+continuity(::Cos²Envelope) = 0
+function span(env::Cos²Envelope)
+    s = env.cycles*env.T/2
+    (-s, s)
+end
+
+intensity(env::Cos²Envelope) = env.I₀
+amplitude(env::Cos²Envelope) = env.E₀
+
+
 # ** CW
 
 struct CWEnvelope <: AbstractEnvelope

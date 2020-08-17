@@ -2,6 +2,7 @@ module ElectricFields
 
 using Unitful
 using FFTW
+using Zygote
 using Parameters
 import Base: show
 using Printf
