@@ -25,7 +25,7 @@ U_p = \frac{I}{4\omega^2}.
 """
 function calc_params!(field_params::Dict{Symbol,Any})
     test_field_parameters(field_params, [:λ, :T, :f, :ν, :ω, :ħω])
-    test_field_parameters(field_params, [:I₀, :E₀, :Uₚ])
+    test_field_parameters(field_params, [:I₀, :E₀, :Uₚ, :A₀])
 
     for k in keys(field_params)
         field_params[k] = get_unitful_quantity(field_params, k)
@@ -68,7 +68,13 @@ function calc_params!(field_params::Dict{Symbol,Any})
                 I₀ = Uₚ / (2*u"q"^2/(u"c"*u"ε0"*u"me")) * 4ω^2
             end
             E₀ = √(2I₀/(u"ε0"*u"c"))
-        elseif E₀
+            A₀ = E₀/ω
+        elseif E₀ || A₀
+            if E₀
+                A₀ = E₀/ω
+            else
+                E₀ = ω*A₀
+            end
             I₀ = u"ε0"*u"c"/2*E₀^2
         end
         if !Uₚ

@@ -2,8 +2,42 @@ abstract type AbstractField end
 abstract type AbstractCarrier end
 abstract type AbstractEnvelope end
 
+Base.Broadcast.broadcastable(c::AbstractCarrier) = Ref(c)
+Base.Broadcast.broadcastable(e::AbstractEnvelope) = Ref(e)
+Base.Broadcast.broadcastable(f::AbstractField) = Ref(f)
+
 (f::AbstractField)(t::Number) = envelope(f)(t)*carrier(f)(t)
 (f::AbstractField)(t::AbstractVector{<:Number}) = f.(t)
+
+vector_potential(f::AbstractField, t) = vector_potential(envelope(f), t)*carrier(f)(t)
+
+@doc raw"""
+    field_amplitude(f, t)
+
+Compute the field amplitude from the [`vector_potential`](@ref)
+``A(t)`` using automatic differentiation according to
+
+```math
+F(t) = -\partial_t A(t).
+```
+
+"""
+field_amplitude(f::AbstractField, t) =
+    -first(Zygote.gradient(Base.Fix1(vector_potential, f), t))
+
+@doc raw"""
+    field_amplitude(f, a, b)
+
+Compute the time integral of the field amplitude according to
+
+```math
+\int_a^b\diff{t}F(t) = -[A(b) - A(a)],
+```
+
+where ``A(t)`` is the [`vector_potential`](@ref).
+"""
+field_amplitude(f::AbstractField, a, b) =
+    -(vector_potential(f, b) - vector_potential(f, a))
 
 wavelength(f::AbstractField) = wavelength(carrier(f))
 period(f::AbstractField) = period(carrier(f))
@@ -44,6 +78,12 @@ envelope(f::LinearField) = f.env
 params(f::LinearField) = f.params
 dimensions(::LinearField) = 2
 
+function phase_shift(f::LinearField, ϕ)
+    p = copy(params(f))
+    p[:ϕ] = ϕ + get(p, :ϕ, zero(ϕ))
+    LinearField(phase_shift(f.carrier, ϕ), f.env, p)
+end
+
 # * Transverse field
 
 struct TransverseField <: AbstractField
@@ -82,5 +122,7 @@ export carrier,
     envelope,
     intensity, amplitude,
     duration,
+    field_amplitude, vector_potential,
     params, dimensions,
+    phase_shift,
     keldysh
