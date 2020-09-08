@@ -53,7 +53,7 @@ show(io::IO, env::GaussianEnvelope) =
     printfmt(io, "Gaussian envelope of duration {1:s} (intensity FWHM; ±{2:0.2f}σ) ",
              au2si_round(env.τ, u"s"), env.σmax)
 
-function gaussian_common!(field_params, carrier; verbosity=1)
+function gaussian_common!(field_params, carrier; verbosity=0)
     @namespace!(field_params) do
         if τ
             σ = τ/(2*√(2log(2)))
