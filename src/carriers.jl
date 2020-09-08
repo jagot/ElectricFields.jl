@@ -26,9 +26,10 @@ frequency(carrier::FixedCarrier) = 1/carrier.T
 wavenumber(carrier::FixedCarrier) = 1/carrier.λ
 fundamental(carrier::FixedCarrier) = carrier.ω
 photon_energy(carrier::FixedCarrier) = carrier.ω * u"ħ" |> base_units[:ħω]
+phase(carrier::FixedCarrier) = carrier.ϕ
 
-phase_shift(c::FixedCarrier, ϕ) =
-    FixedCarrier(c.λ, c.T, c.ω, c.ϕ+ϕ)
+phase_shift(c::FixedCarrier, δϕ) =
+    FixedCarrier(c.λ, c.T, c.ω, c.ϕ+δϕ)
 
 function FixedCarrier(field_params::Dict{Symbol,Any})
     @unpack λ, T, ω = field_params
