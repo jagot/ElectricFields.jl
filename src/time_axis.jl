@@ -7,13 +7,13 @@
 span(f::AbstractField) = span(envelope(f))
 
 const DEFAULT_SAMPLING_FACTOR = 100
-default_sampling_frequency(f::AbstractField) = DEFAULT_SAMPLING_FACTOR*max_frequency(f)
+default_sampling_frequency(f::AbstractField) = DEFAULT_SAMPLING_FACTOR*austrip(max_frequency(f))
 
-steps(f::AbstractField, fs::Unitful.Frequency=default_sampling_frequency(f)) =
+steps(f::AbstractField, fs::Real=default_sampling_frequency(f)) =
     ceil(Int, fs*abs(-(span(f)...)))
-steps(f::AbstractField, ndt::Integer) = steps(f, ndt/period(f))
+steps(f::AbstractField, ndt::Int) = steps(f, ndt/austrip(period(f)))
 
-function timeaxis(f::AbstractField, fs::Unitful.Frequency=default_sampling_frequency(f))
+function timeaxis(f::AbstractField, fs=default_sampling_frequency(f))
     a,b = span(f)
     num_steps = steps(f, fs)
     if num_steps > 1
@@ -25,6 +25,5 @@ function timeaxis(f::AbstractField, fs::Unitful.Frequency=default_sampling_frequ
         a:(b-a):a
     end
 end
-timeaxis(f::AbstractField, ndt::Integer) = timeaxis(f, ndt/period(f))
 
 export span, steps, timeaxis

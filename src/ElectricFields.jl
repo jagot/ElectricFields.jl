@@ -3,11 +3,15 @@ module ElectricFields
 using Unitful
 using UnitfulAtomic
 
-using FFTW
-using Zygote
+# using FFTW
+using ForwardDiff
+using Optim
+
 using Parameters
+
 import Base: show
 using Printf
+using Formatting
 
 include("units.jl")
 include("relation_dsl.jl")
@@ -20,7 +24,7 @@ include("arithmetic.jl")
 
 include("field_dsl.jl")
 
-include("sellmeier.jl")
-include("dispersed_fields.jl")
+# include("sellmeier.jl")
+# include("dispersed_fields.jl")
 
 end # module

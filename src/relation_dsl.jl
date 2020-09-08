@@ -96,13 +96,6 @@ function walk(node::Expr, params, escape)
             target,expr = node.args
             r = get_reference(target, params)
             result = walk(expr, params, escape)
-            if typeof(target) == Symbol && target ∈ keys(base_units)
-                # Generate expression that converts to the correct
-                # base unit.
-                result = Expr(:call, :|>, result,
-                              Expr(:ref, base_units,
-                                   Expr(:quote, target)))
-            end
             Expr(node.head, r, result)
         else
             args = walk.(node.args, Ref(params), Ref(escape))
