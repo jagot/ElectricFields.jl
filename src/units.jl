@@ -24,9 +24,52 @@ const base_units = Dict{Symbol,Unitful.FreeUnits}(
     :Uₚ => u"eV"
 )
 
+const Iau = 3.5094452e16u"W"/u"cm"^2
+
+# We have to use this hack, since UnitfulAtomic does not consider Iau
+# as the atomic unit of intensity (which in itself is a contested name
+# for the quantity in question).
+oneaunit(x) = aunit(x)
+oneaunit(x::Intensity) = Iau
+
 function get_unitful_quantity(field_params::Dict{Symbol,Any}, sym::Symbol)
     v = field_params[sym]
-    typeof(v) <: Quantity || sym ∉ keys(base_units) ? v : v*aunit(base_units[sym])
+    typeof(v) <: Quantity || sym ∉ keys(base_units) ? v : v*oneaunit(1base_units[sym])
 end
 
-usplit(u) = ustrip(u),unit(u)
+function shift_unit(u::U, d, n) where {U<:Unitful.Unit}
+    i₀ = floor(Int, d/n)
+    d = 3i₀
+    iszero(d) && return u,0
+    for (i,tens) in enumerate(Unitful.tens(u) .+ (d:(-3*sign(d)):0))
+        haskey(Unitful.prefixdict, tens) && return U(tens, u.power),i-1 + i₀
+    end
+    u,0
+end
+
+function shift_unit(u::Unitful.FreeUnits, d)
+    tu = typeof(u)
+    us,ds,a = tu.parameters
+
+    uu,i = shift_unit(us[1], d, 3)
+
+    Unitful.FreeUnits{(uu,us[2:end]...), ds, a}(),i
+end
+
+function si_round(q::Quantity; fspec="{1:.4f} {2:s}")
+    v,u = ustrip(q), unit(q)
+    if !iszero(v)
+        u,i = shift_unit(u, log10(abs(v)))
+        q = u(q)
+    end
+    format(fspec, ustrip(q), unit(q))
+end
+
+au2si(v, u) = u(v*aunit(u))
+
+au2si_round(v, u; kwargs...) =
+    si_round(au2si(v, u); kwargs...)
+
+I2si_round(I; kwargs...) = si_round(I*Iau)
+
+Iaustrip(I::Intensity) = NoUnits(I/Iau)

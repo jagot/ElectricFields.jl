@@ -88,30 +88,37 @@ end
 # ** Frontend macro
 
 function make_field(field_params::Dict{Symbol,Any})
-    calc_params!(field_params)
+    kind = get(field_params, :kind, :linear)
+    if kind == :linear
+        calc_params!(field_params)
 
-    # Maybe these two blocks can be implicitly deduced from the passed
-    # parameters? E.g. if a chirp parameter is given, the carrier type
-    # should autmatically be resolved as ChirpedCarrier. Similarly, if
-    # ramp and flat are given, a trapezoidal pulse is requested.
+        # Maybe these two blocks can be implicitly deduced from the passed
+        # parameters? E.g. if a chirp parameter is given, the carrier type
+        # should autmatically be resolved as ChirpedCarrier. Similarly, if
+        # ramp and flat are given, a trapezoidal pulse is requested.
 
-    carrier_sym = get(field_params, :carrier,
-                      :q ∉ keys(field_params) ? :fixed : :harmonic)
-    carrier_sym ∉ keys(carrier_types) &&
-        error("Unknown carrier type $(carrier_sym), valid choices are $(keys(carrier_types))")
-    :q ∈ keys(field_params) && carrier_sym != :harmonic &&
-        error("Invalid carrier type, $(carrier_sym), for field with harmonic components")
-    carrier = carrier_types[carrier_sym](field_params)
+        carrier_sym = get(field_params, :carrier,
+                          :q ∉ keys(field_params) ? :fixed : :harmonic)
+        carrier_sym ∉ keys(carrier_types) &&
+            error("Unknown carrier type $(carrier_sym), valid choices are $(keys(carrier_types))")
+        :q ∈ keys(field_params) && carrier_sym != :harmonic &&
+            error("Invalid carrier type, $(carrier_sym), for field with harmonic components")
+        carrier = carrier_types[carrier_sym](field_params)
 
-    env_sym = get(field_params, :env, :gauss)
-    env_sym ∉ keys(envelope_types) &&
-        error("Unknown envelope type $(env_sym), valid choices are $(keys(envelope_types))")
-    env = envelope_types[env_sym](field_params)
+        env_sym = get(field_params, :env, :gauss)
+        env_sym ∉ keys(envelope_types) &&
+            error("Unknown envelope type $(env_sym), valid choices are $(keys(envelope_types))")
+        env = envelope_types[env_sym](field_params, carrier)
 
-    :ξ in keys(field_params) &&
-        error("Elliptical (transverse) fields not yet supported!")
+        :ξ in keys(field_params) &&
+            error("Elliptical (transverse) fields not yet supported!")
 
-    LinearField(carrier, env, field_params)
+        LinearField(carrier, env, field_params)
+    elseif kind == :constant
+        ConstantField(field_params)
+    else
+        throw(ArgumentError("Unknown field kind $(kind)"))
+    end
 end
 
 macro field(spec, var)
