@@ -52,8 +52,6 @@ wavenumber(f::AbstractField) = wavenumber(carrier(f))
 fundamental(f::AbstractField) = fundamental(carrier(f))
 photon_energy(f::AbstractField) = photon_energy(carrier(f))
 
-intensity(f::AbstractField) = intensity(envelope(f))
-amplitude(f::AbstractField) = amplitude(envelope(f))
 duration(f::AbstractField) = duration(envelope(f))
 continuity(f::AbstractField) = continuity(envelope(f))
 
@@ -75,6 +73,9 @@ function LinearField(carrier, env, params)
 end
 
 vector_potential(f::LinearField, t) = f.A₀*f.env(t)*f.carrier(t)
+
+intensity(f::LinearField) = f.I₀
+amplitude(f::LinearField) = f.E₀
 
 function show(io::IO, f::LinearField)
     printfmt(io, """

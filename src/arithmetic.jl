@@ -151,15 +151,12 @@ export delay
          WrappedField(field, a, b)
 
      Wrapper around any electric `field`
-     """
+"""
 abstract type WrappedField <: AbstractField end
 
-for fun in [:params, :carrier, :envelope, :span]
+for fun in [:params, :carrier, :envelope, :span, :vector_potential, :field_amplitude, :amplitude, :intensity]
     @eval $fun(f::WrappedField, args...) = $fun(parent(f), args...)
 end
-
-(f::WrappedField)(t::Unitful.Time) = parent(f)(t)
-(f::WrappedField)(t::AbstractVector{<:Unitful.Time}) = parent(f).(t)
 
 # ** Padded fields
 
@@ -170,10 +167,16 @@ Wrapper around any electric `field`, padded with `a` units of time
 before, and `b` units of time after the ordinary [`span`](@ref) of the
 field.
 """
-struct PaddedField{Field<:AbstractField,T<:Unitful.Time} <: WrappedField
+struct PaddedField{Field<:AbstractField,T} <: WrappedField
     field::Field
     a::T
     b::T
+
+    PaddedField(field::Field, a::T, b::T) where {Field,T<:Real} =
+        new{Field,T}(field, a, b)
+
+    PaddedField(field, a::Unitful.Time, b::Unitful.Time) =
+        PaddedField(field, austrip(a), austrip(b))
 end
 
 Base.parent(f::PaddedField) = f.field
