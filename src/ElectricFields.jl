@@ -1,6 +1,8 @@
 module ElectricFields
 
 using Unitful
+using UnitfulAtomic
+
 using FFTW
 using Zygote
 using Parameters
