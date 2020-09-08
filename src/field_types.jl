@@ -78,10 +78,11 @@ envelope(f::LinearField) = f.env
 params(f::LinearField) = f.params
 dimensions(::LinearField) = 2
 
-function phase_shift(f::LinearField, ϕ)
+function phase_shift(f::LinearField, δϕ)
+    carrier = phase_shift(f.carrier, δϕ)
     p = copy(params(f))
-    p[:ϕ] = ϕ + get(p, :ϕ, zero(ϕ))
-    LinearField(phase_shift(f.carrier, ϕ), f.env, p)
+    p[:ϕ] = phase(carrier)
+    LinearField(carrier, f.env, p)
 end
 
 # * Transverse field
@@ -124,5 +125,5 @@ export carrier,
     duration,
     field_amplitude, vector_potential,
     params, dimensions,
-    phase_shift,
+    phase_shift, phase,
     keldysh
