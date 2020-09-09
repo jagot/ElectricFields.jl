@@ -187,3 +187,56 @@ function span(f::PaddedField)
 end
 
 export PaddedField
+
+# ** Windowed fields
+
+"""
+    WindowedField(field, a, b)
+
+Wrapper around any electric `field`, windowed such that it is zero
+outside the time interval `a..b`.
+"""
+struct WindowedField{Field<:AbstractField,T} <: WrappedField
+    field::Field
+    a::T
+    b::T
+
+    WindowedField(field::Field, a::T, b::T) where {Field,T<:Real} =
+        new{Field,T}(field, a, b)
+
+    WindowedField(field, a::Unitful.Time, b::Unitful.Time) =
+        WindowedField(field, austrip(a), austrip(b))
+end
+
+Base.parent(f::WindowedField) = f.field
+
+function span(f::WindowedField)
+    a,b = span(f.field)
+    max(a,f.a), min(b,f.b)
+end
+
+phase_shift(f::WindowedField, δϕ) =
+    WindowedField(phase_shift(parent(f), δϕ), f.a, f.b)
+
+for fun in [:vector_potential, :field_amplitude, :intensity]
+    @eval function $fun(f::WindowedField{T}, t) where T
+        v = $fun(parent(f), t)
+        t < f.a || t > f.b ? zero(v) : v
+    end
+end
+
+function field_amplitude(f::WindowedField, a, b)
+    v = field_amplitude(parent(f), max(a, f.a), min(b, f.b))
+    if a ∈ f.a..f.b || b ∈ f.a..f.b
+        v
+    else
+        zero(v)
+    end
+end
+
+function timeaxis(f::WindowedField, fs)
+    t = timeaxis(f.field, fs)
+    t[findall(in(f.a..f.b), t)]
+end
+
+export WindowedField

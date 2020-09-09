@@ -7,6 +7,8 @@ using UnitfulAtomic
 using ForwardDiff
 using Optim
 
+using IntervalSets
+
 using Parameters
 
 import Base: show
