@@ -10,7 +10,6 @@ using Optim
 using Parameters
 
 import Base: show
-using Printf
 using Formatting
 
 include("units.jl")
