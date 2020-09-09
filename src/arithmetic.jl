@@ -208,6 +208,13 @@ struct WindowedField{Field<:AbstractField,T} <: WrappedField
         WindowedField(field, austrip(a), austrip(b))
 end
 
+function show(io::IO, f::WindowedField)
+    printfmtln(io, "Window from {1:.4f} jiffies = {2:s} to {3:.4f} jiffies = {4:s} of",
+               f.a, au2si_round(f.a, u"s"),
+               f.b, au2si_round(f.b, u"s"))
+    show(io, f.field)
+end
+
 Base.parent(f::WindowedField) = f.field
 
 function span(f::WindowedField)

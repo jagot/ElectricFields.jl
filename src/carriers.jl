@@ -38,9 +38,10 @@ function FixedCarrier(field_params::Dict{Symbol,Any})
 end
 
 function show(io::IO, carrier::FixedCarrier)
-    printfmt(io, "Fixed carrier @ λ = {1:s} (T = {2:s})",
-             si_round(carrier.λ),
-             si_round(carrier.T))
+    printfmt(io, "Fixed carrier @ λ = {1:s} (T = {2:s}, ω = {3:.4f} Ha = {4:s})",
+             si_round(u"m"(carrier.λ)),
+             si_round(u"s"(carrier.T)),
+             carrier.ω, au2si_round(carrier.ω, u"eV"))
     !iszero(carrier.ϕ) &&
         printfmt(io, "; CEP = {1:0.2f}π", carrier.ϕ/π)
 end
