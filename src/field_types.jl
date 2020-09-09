@@ -157,7 +157,7 @@ intensity(f::ConstantField, t) = field_amplitude(f, t)^2
 
 function vector_potential(f::ConstantField{T}, t) where T
     t = clamp(t, zero(T), f.tmax)
-    -f.E₀/2*t^2
+    -f.E₀*t
 end
 
 duration(f::ConstantField) = f.tmax
