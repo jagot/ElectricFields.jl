@@ -11,3 +11,13 @@
 
 A small Julian DSL for defining electrical fields, chiefly for use in
 atomic physics calculations.
+
+It is not intended to be used in the computations /of/, but rather
+/with/ electric fields, i.e. the electric fields are input parameters
+to (boundary terms of) a time-dependent calculation. Furthermore, the
+fields are not solutions to the full Maxwell equations, but to the
+paraxial approximation, which means that they are propagating along
+one direction and polarized in a plane transverse to the direction of
+propagation. One may however add multiple fields propagating in
+different directions forming a field vector that is not confined to a
+single plane.
