@@ -98,7 +98,8 @@ mutable struct DelayedField <: AbstractField
     a::AbstractField
     t₀::Number
 end
-(f::DelayedField)(t::Unitful.Time) = f.a(t-f.t₀)
+
+vector_potential(f::DelayedField, t) = vector_potential(f.a, t-f.t₀)
 
 function show(io::IO, f::DelayedField)
     show(io, f.a)

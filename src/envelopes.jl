@@ -264,9 +264,13 @@ end
 envelope_types[:cos²] = Cos²Envelope
 envelope_types[:cos2] = Cos²Envelope
 
-function (env::Cos²Envelope)(t)
+function (env::Cos²Envelope{T})(t) where T
     t /= (env.cycles*env.T)
-    cospi(t)^2
+    if -1 ≤ 2t ≤ 1
+        cospi(t)^2
+    else
+        zero(T)
+    end
 end
 
 show(io::IO, env::Cos²Envelope) =
