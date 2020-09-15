@@ -1,5 +1,9 @@
 abstract type AbstractField end
+
 abstract type AbstractCarrier end
+abstract type LinearCarrier <: AbstractCarrier end
+abstract type TransverseCarrier <: AbstractCarrier end
+
 abstract type AbstractEnvelope end
 
 Base.Broadcast.broadcastable(c::AbstractCarrier) = Ref(c)
@@ -57,7 +61,7 @@ continuity(f::AbstractField) = continuity(envelope(f))
 
 # * Linear field
 
-struct LinearField{Carrier,Envelope,T} <: AbstractField
+struct LinearField{Carrier<:LinearCarrier,Envelope,T} <: AbstractField
     carrier::Carrier
     env::Envelope # Amplitude envelope
     I₀::T
@@ -95,7 +99,7 @@ end
 carrier(f::LinearField) = f.carrier
 envelope(f::LinearField) = f.env
 params(f::LinearField) = f.params
-dimensions(::LinearField) = 2
+dimensions(::LinearField) = 1
 
 function phase_shift(f::LinearField, δϕ)
     carrier = phase_shift(f.carrier, δϕ)
@@ -106,13 +110,38 @@ end
 
 # * Transverse field
 
-struct TransverseField <: AbstractField
-    z::LinearField
-    x::LinearField
+struct TransverseField{Carrier<:TransverseCarrier,Envelope,Rotation,T} <: AbstractField
+    carrier::Carrier
+    env::Envelope # Amplitude envelope
+    I₀::T
+    E₀::T
+    A₀::T
+    R::Rotation
+    params::Dict{Symbol, Any}
 end
 
-duration(f::TransverseField) = max(duration.((f.z,f.x))...)
+function TransverseField(carrier, env, params)
+    @unpack I₀, E₀, A₀, R = params
+
+    TransverseField(carrier, env, Iaustrip(I₀), austrip(E₀), austrip(A₀), R, params)
+end
+
+vector_potential(f::TransverseField, t) = f.A₀*f.env(t)*(f.R*f.carrier(t))
+
+intensity(f::TransverseField) = f.I₀
+amplitude(f::TransverseField) = f.E₀
+
+carrier(f::TransverseField) = f.carrier
+envelope(f::TransverseField) = f.env
+params(f::TransverseField) = f.params
 dimensions(::TransverseField) = 3
+
+function phase_shift(f::TransverseField, δϕ)
+    carrier = phase_shift(f.carrier, δϕ)
+    p = copy(params(f))
+    p[:ϕ] = phase(carrier)
+    TransverseField(carrier, f.env, f.I₀, f.E₀, f.A₀, f.R, p)
+end
 
 # * Constant field
 

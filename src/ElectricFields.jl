@@ -1,5 +1,8 @@
 module ElectricFields
 
+using LinearAlgebra
+using StaticArrays
+
 using Unitful
 using UnitfulAtomic
 

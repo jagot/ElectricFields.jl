@@ -1,4 +1,17 @@
 # * Field creation
+
+compute_rotation(::Nothing) = I
+function compute_rotation((ϕ,u)::Tuple{<:Real,<:AbstractVector{<:Real}})
+    @assert length(u) == 3
+    s,c = sincos(ϕ)
+    # https://en.wikipedia.org/wiki/Cross_product#Conversion_to_matrix_multiplication
+    ucross = [0    -u[3]  u[2]
+              u[3]  0    -u[1]
+              -u[2] u[1]  0]
+    # https://en.wikipedia.org/wiki/Rotation_matrix#Rotation_matrix_from_axis_and_angle
+    c*I + s*ucross + (1-c)*(u*u')
+end
+
 # ** Parameter calculation
 
 @doc raw"""
@@ -82,13 +95,19 @@ function calc_params!(field_params::Dict{Symbol,Any})
         end
     end
 
+    if get(field_params, :kind, :linear) == :transverse
+        field_params[:R] = compute_rotation(get(field_params, :rotation, nothing))
+    end
+
     field_params
 end
 
 # ** Frontend macro
 
 function make_field(field_params::Dict{Symbol,Any})
-    kind = get(field_params, :kind, :linear)
+    is_transverse = :ξ ∈ keys(field_params) || get(field_params, :carrier, :fixed) ∈ [:linear, :elliptical, :circular]
+    kind = get(field_params, :kind, is_transverse ? :linear : :transverse)
+
     if kind == :linear
         calc_params!(field_params)
 
@@ -111,9 +130,26 @@ function make_field(field_params::Dict{Symbol,Any})
         env = envelope_types[env_sym](field_params, carrier)
 
         :ξ in keys(field_params) &&
-            error("Elliptical (transverse) fields not yet supported!")
+            error("Elliptical (transverse) fields are not linear!")
 
         LinearField(carrier, env, field_params)
+    elseif kind == :transverse
+        field_params[:kind] = :transverse
+        calc_params!(field_params)
+
+        carrier_sym = get(field_params, :carrier, :ξ ∉ keys(field_params) ? :linear : :elliptical)
+        carrier_sym ∉ keys(carrier_types) &&
+            error("Unknown carrier type $(carrier_sym), valid choices are $(keys(carrier_types))")
+        :ξ ∈ keys(field_params) && carrier_sym != :elliptical &&
+            error("Invalid carrier type, $(carrier_sym), for field with elliptical polarization")
+        carrier = carrier_types[carrier_sym](field_params)
+
+        env_sym = get(field_params, :env, :gauss)
+        env_sym ∉ keys(envelope_types) &&
+            error("Unknown envelope type $(env_sym), valid choices are $(keys(envelope_types))")
+        env = envelope_types[env_sym](field_params, carrier)
+
+        TransverseField(carrier, env, field_params)
     elseif kind == :constant
         ConstantField(field_params)
     else

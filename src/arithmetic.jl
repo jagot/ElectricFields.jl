@@ -43,8 +43,8 @@ end
 +(a::AbstractField,
   b::AbstractField) = SumField(a, b)
 
-(f::SumField)(t::Unitful.Time) = f.a(t) + f.b(t)
-(f::SumField)(fs::Unitful.Frequency=default_sampling_frequency(f)) = f.a(fs) + f.b(fs)
+vector_potential(f::SumField, args...) =
+    vector_potential(f.a, args...) + vector_potential(f.b, args...)
 
 function span(f::SumField)
     sa = span(f.a)

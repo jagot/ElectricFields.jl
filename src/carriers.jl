@@ -8,7 +8,7 @@ max_frequency(carrier::AbstractCarrier) = frequency(carrier)
 #    The carrier is fixed in the sense that the instantaneous frequency
 #    is constant throughout the pulse.
 
-struct FixedCarrier{Λ,Tt,Ω,Φ} <: AbstractCarrier
+struct FixedCarrier{Λ,Tt,Ω,Φ} <: LinearCarrier
     λ::Λ
     T::Tt
     ω::Ω
@@ -45,3 +45,63 @@ function show(io::IO, carrier::FixedCarrier)
     !iszero(carrier.ϕ) &&
         printfmt(io, "; CEP = {1:0.2f}π", carrier.ϕ/π)
 end
+
+# ** Transverse carriers
+
+# *** Linear
+
+struct LinearTransverseCarrier{Carrier<:LinearCarrier} <: TransverseCarrier
+    carrier::Carrier
+end
+
+LinearTransverseCarrier(field_params::Dict{Symbol,Any}) =
+    LinearTransverseCarrier(FixedCarrier(field_params))
+
+(carrier::LinearTransverseCarrier)(t) = SVector(0, 0, carrier.carrier(t))
+
+carrier_types[:linear] = LinearTransverseCarrier
+
+for fun in [:wavelength, :period, :frequency, :wavenumber, :fundamental, :photon_energy, :phase]
+    @eval $fun(carrier::LinearTransverseCarrier) = $fun(carrier.carrier)
+end
+
+phase_shift(c::LinearTransverseCarrier, δϕ) =
+    LinearTransverseCarrier(phase_shift(c.carrier, δϕ))
+
+# *** Elliptical
+
+struct EllipticalCarrier{Λ,Tt,Ω,Φ,Ξ} <: TransverseCarrier
+    λ::Λ
+    T::Tt
+    ω::Ω
+    ϕ::Φ # Carrier–envelope phase, in radians
+    ξ::Ξ # Amount of ellipticity, minor/major axis ratio
+end
+
+function EllipticalCarrier(field_params::Dict{Symbol,Any})
+    @unpack λ, T, ω = field_params
+    ϕ = get(field_params, :ϕ, 0)
+    ξ = get(field_params, :ξ, 0)
+    EllipticalCarrier(λ, T, austrip(ω), ϕ, ξ)
+end
+
+function (carrier::EllipticalCarrier)(t)
+    ξ = carrier.ξ
+    ϕ = carrier.ω*t + carrier.ϕ
+    s,c = sincos(ϕ)
+    SVector(ξ*c, 0, s)/√(1 + ξ^2)
+end
+
+carrier_types[:elliptical] = EllipticalCarrier
+
+wavelength(carrier::EllipticalCarrier) = carrier.λ
+period(carrier::EllipticalCarrier) = carrier.T
+
+frequency(carrier::EllipticalCarrier) = 1/carrier.T
+wavenumber(carrier::EllipticalCarrier) = 1/carrier.λ
+fundamental(carrier::EllipticalCarrier) = carrier.ω
+photon_energy(carrier::EllipticalCarrier) = carrier.ω
+phase(carrier::EllipticalCarrier) = carrier.ϕ
+
+phase_shift(c::EllipticalCarrier, δϕ) =
+    EllipticalCarrier(c.λ, c.T, c.ω, c.ϕ+δϕ, c.ξ)
