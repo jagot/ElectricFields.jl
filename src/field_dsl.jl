@@ -106,7 +106,7 @@ end
 
 function make_field(field_params::Dict{Symbol,Any})
     is_transverse = :ξ ∈ keys(field_params) || get(field_params, :carrier, :fixed) ∈ [:linear, :elliptical, :circular]
-    kind = get(field_params, :kind, is_transverse ? :linear : :transverse)
+    kind = get(field_params, :kind, is_transverse ? :transverse : :linear)
 
     if kind == :linear
         calc_params!(field_params)
