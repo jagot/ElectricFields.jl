@@ -20,9 +20,16 @@
 
 import Base: +
 
-mutable struct SumField <: AbstractField
-    a::AbstractField
-    b::AbstractField
+mutable struct SumField{A,B} <: AbstractField
+    a::A
+    b::B
+    function SumField(a::A, b::B) where {A<:AbstractField, B<:AbstractField}
+        da = dimensions(a)
+        db = dimensions(b)
+        da == db ||
+            throw(ArgumentError("Cannot add fields of different dimensionality, got $(da) and $(db)"))
+        new{A,B}(a, b)
+    end
 end
 
 function show(io::IO, f::SumField)
@@ -69,12 +76,32 @@ max_frequency(f::SumField) =
 continuity(f::SumField) =
     min(continuity(f.a), continuity(f.b))
 
+dimensions(f::SumField) = dimensions(f.a)
+
+# ** Wrapped fields
+
+"""
+         WrappedField(field, a, b)
+
+     Wrapper around any electric `field`
+"""
+abstract type WrappedField <: AbstractField end
+
+for fun in [:params, :carrier, :envelope,
+            :wavelength, :period, :frequency, :max_frequency,
+            :wavenumber, :fundamental, :photon_energy,
+            :intensity, :amplitude, :duration, :continuity,
+            :span, :steps, :dimensions]
+    @eval $fun(f::WrappedField, args...) = $fun(parent(f), args...)
+end
+# [:vector_potential, :field_amplitude], should these be explicitly forwarded?
+
 # ** Negated fields
 
 import Base: -
 
-mutable struct NegatedField <: AbstractField
-    a::AbstractField
+mutable struct NegatedField{F<:AbstractField} <: WrappedField
+    a::F
 end
 
 (f::NegatedField)(t::Unitful.Time) = -f.a(t)
@@ -96,44 +123,20 @@ Base.parent(f::NegatedField) = f.a
 
 # ** Delayed fields
 
-mutable struct DelayedField <: AbstractField
-    a::AbstractField
-    t₀::Number
+mutable struct DelayedField{F<:AbstractField,T} <: WrappedField
+    a::F
+    t₀::T
 end
 
 vector_potential(f::DelayedField, t) = vector_potential(f.a, t-f.t₀)
 
 function show(io::IO, f::DelayedField)
     show(io, f.a)
-    write(io, "\n  – delayed by ")
-    show(io, f.t₀)
+    printfmt(io, "\n  – delayed by {1:.4f} jiffies = {2:s}",
+             f.t₀, au2si_round(f.t₀, u"s"))
 end
 
-mutable struct DelayedCarrier <: AbstractCarrier
-    carrier::AbstractCarrier
-    t₀::Number
-end
-(carrier::DelayedCarrier)(t::Unitful.Time) = carrier.carrier(t-carrier.t₀)
-
-mutable struct DelayedEnvelope <: AbstractEnvelope
-    env::AbstractEnvelope
-    t₀::Number
-end
-(envelope::DelayedEnvelope)(t::Unitful.Time) = envelope.env(t-envelope.t₀)
-
-carrier(f::DelayedField) = DelayedCarrier(carrier(f.a), f.t₀)
-envelope(f::DelayedField) = DelayedEnvelope(envelope(f.a), f.t₀)
-
-span(env::DelayedEnvelope) = span(env.env) .+ env.t₀
-
-for FieldType in [:NegatedField, :DelayedField]
-    for fun in [:wavelength, :period, :frequency, :max_frequency,
-                :wavenumber, :fundamental, :photon_energy,
-                :intensity, :amplitude, :duration, :continuity,
-                :span, :steps]
-        @eval ($fun)(f::($FieldType)) = ($fun)(f.a)
-    end
-end
+span(f::DelayedField) = span(parent(f)) .+ env.t₀
 
 Base.parent(f::DelayedField) = f.a
 
@@ -141,27 +144,14 @@ Base.parent(f::DelayedField) = f.a
 #     Convention for delayed fields: a field delayed by a /positive/
 #     time, comes /later/, i.e. we write \(f(t-\delta t)\).
 
-delay(a::AbstractField, t₀::Unitful.Time) = DelayedField(a, t₀)
+delay(a::AbstractField, t₀::Unitful.Time) = DelayedField(a, austrip(t₀))
 delay(a::AbstractField, nT::Real) = delay(a, nT*period(a))
 delay(a::AbstractField, ϕ::Quantity{Float64, Unitful.Dimensions{()}}) = delay(a, ϕ/(2π*u"rad"))
 
 delay(a::DelayedField) = a.t₀
-delay(a::AbstractField) = 0u"s"
+delay(a::AbstractField) = 0
 
 export delay
-
-# ** Wrapped fields
-
-"""
-         WrappedField(field, a, b)
-
-     Wrapper around any electric `field`
-"""
-abstract type WrappedField <: AbstractField end
-
-for fun in [:params, :carrier, :envelope, :span, :vector_potential, :field_amplitude, :amplitude, :intensity]
-    @eval $fun(f::WrappedField, args...) = $fun(parent(f), args...)
-end
 
 # ** Padded fields
 
