@@ -92,6 +92,8 @@ end
 carrier(f::NegatedField) = NegatedCarrier(carrier(f.a), f.t₀)
 envelope(f::NegatedField) = envelope(f.a)
 
+Base.parent(f::NegatedField) = f.a
+
 # ** Delayed fields
 
 mutable struct DelayedField <: AbstractField
@@ -132,6 +134,8 @@ for FieldType in [:NegatedField, :DelayedField]
         @eval ($fun)(f::($FieldType)) = ($fun)(f.a)
     end
 end
+
+Base.parent(f::DelayedField) = f.a
 
 # *** DONE Delay operators
 #     Convention for delayed fields: a field delayed by a /positive/
