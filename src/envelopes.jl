@@ -98,7 +98,7 @@ function gaussian_common!(field_params, carrier; verbosity=0)
         abs2(intensity(field, τ/2) - ω^2/2)
     end
     verbosity > 0 && @info "Finding optimal vector potential coefficient"
-    res = @time optimize(f, [α], BFGS())
+    res = optimize(f, [α], BFGS())
     verbosity > 0 && display(res)
 
     field_params[:α] = res.minimizer[1]
