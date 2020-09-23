@@ -31,4 +31,6 @@ include("field_dsl.jl")
 # include("sellmeier.jl")
 # include("dispersed_fields.jl")
 
+include("strong_field_properties.jl")
+
 end # module
