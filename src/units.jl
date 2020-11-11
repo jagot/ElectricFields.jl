@@ -66,6 +66,7 @@ function si_round(q::Quantity; fspec="{1:.4f} {2:s}")
 end
 
 au2si(v, u) = u(v*aunit(u))
+au2si(u::Unitful.Units)= au2si(1, u)
 
 au2si_round(v, u; kwargs...) =
     si_round(au2si(v, u); kwargs...)
