@@ -1,5 +1,9 @@
 abstract type AbstractField end
 
+abstract type Polarization end
+struct LinearPolarization <: Polarization end
+struct ArbitraryPolarization <: Polarization end
+
 abstract type AbstractCarrier end
 abstract type LinearCarrier <: AbstractCarrier end
 abstract type TransverseCarrier <: AbstractCarrier end
@@ -96,6 +100,8 @@ Linearly polarized field with
     show(io, f.env)
 end
 
+polarization(::LinearField) = LinearPolarization()
+
 carrier(f::LinearField) = f.carrier
 envelope(f::LinearField) = f.env
 params(f::LinearField) = f.params
@@ -130,6 +136,8 @@ vector_potential(f::TransverseField, t) = f.A₀*f.env(t)*(f.R*f.carrier(t))
 
 intensity(f::TransverseField) = f.I₀
 amplitude(f::TransverseField) = f.E₀
+
+polarization(::TransverseField) = ArbitraryPolarization()
 
 carrier(f::TransverseField) = f.carrier
 envelope(f::TransverseField) = f.env
@@ -189,6 +197,8 @@ function vector_potential(f::ConstantField{T}, t) where T
     -f.E₀*t
 end
 
+polarization(::ConstantField) = LinearPolarization()
+
 duration(f::ConstantField) = f.tmax
 span(f::ConstantField{T}) where T = (zero(T), f.tmax)
 
@@ -202,7 +212,8 @@ dimensions(::ConstantField) = 1
 
 # * Exports
 
-export carrier,
+export LinearPolarization, ArbitraryPolarization, polarization,
+    carrier,
     wavelength, period,
     frequency, max_frequency, wavenumber, fundamental, photon_energy,
     envelope,
