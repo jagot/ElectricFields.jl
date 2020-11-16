@@ -142,7 +142,7 @@ function show(io::IO, f::DelayedField)
              f.t₀, au2si_round(f.t₀, u"s"))
 end
 
-span(f::DelayedField) = span(parent(f)) .+ env.t₀
+span(f::DelayedField) = span(parent(f)) .+ f.t₀
 
 Base.parent(f::DelayedField) = f.a
 
