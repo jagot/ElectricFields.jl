@@ -94,7 +94,7 @@ function gaussian_common!(field_params, carrier; verbosity=0)
         # x-components, which will conceivably require another
         # exponential coefficient for the vector potential to yield
         # the desired FWHM.
-        field = LinearField(carrier, env, 1, 1, 1, field_params)
+        field = make_temp_field(carrier, env, field_params)
         abs2(intensity(field, τ/2) - ω^2/2)
     end
     verbosity > 0 && @info "Finding optimal vector potential coefficient"
@@ -117,6 +117,8 @@ end
 
 continuity(::GaussianEnvelope) = Inf
 span(env::GaussianEnvelope) = (-env.tmax, env.tmax)
+
+time_integral(env::GaussianEnvelope) = env.σ*√(2π)
 
 # *** Spectrum
 @doc raw"""
@@ -196,6 +198,9 @@ end
 
 continuity(::TruncatedGaussianEnvelope) = Inf # This is not exactly true
 span(env::TruncatedGaussianEnvelope) = (-env.tmax, env.tmax)
+
+# TODO: Take truncation into account
+time_integral(env::TruncatedGaussianEnvelope) = env.σ*√(2π)
 
 # ** DONE Trapezoidal
 
