@@ -47,11 +47,16 @@ function show(io::IO, f::SumField)
     end
 end
 
-+(a::AbstractField,
-  b::AbstractField) = SumField(a, b)
+function +(a::AbstractField, b::AbstractField)
+    polarization(a) == polarization(b) ||
+        throw(ArgumentError("Cannot add fields of different polarization"))
+    SumField(a, b)
+end
 
 vector_potential(f::SumField, args...) =
     vector_potential(f.a, args...) + vector_potential(f.b, args...)
+
+polarization(f::SumField) = polarization(f.a)
 
 function span(f::SumField)
     sa = span(f.a)
@@ -87,7 +92,7 @@ dimensions(f::SumField) = dimensions(f.a)
 """
 abstract type WrappedField <: AbstractField end
 
-for fun in [:params, :carrier, :envelope,
+for fun in [:params, :carrier, :envelope, :polarization,
             :wavelength, :period, :frequency, :max_frequency,
             :wavenumber, :fundamental, :photon_energy,
             :intensity, :amplitude, :duration, :continuity,
