@@ -63,13 +63,14 @@ function span(f::SumField)
     sb = span(f.b)
     (min(sa[1], sb[1]), max(sa[2],sb[2]))
 end
+steps(f::SumField, ndt::Int) = steps(f, ndt/min(austrip.(period.((f.a,f.b)))...))
 
 for fun in [:wavelength, :period, :frequency, :wavenumber, :fundamental, :photon_energy]
     @eval begin
         function ($fun)(f::SumField)
             a = ($fun)(f.a)
             b = ($fun)(f.b)
-            a != b && error("$(ucfirst(string($fun))) differs between SumField composants!")
+            a != b && error("$(titlecase(string($fun))) differs between SumField composants!")
             a
         end
     end
@@ -96,7 +97,7 @@ for fun in [:params, :carrier, :envelope, :polarization,
             :wavelength, :period, :frequency, :max_frequency,
             :wavenumber, :fundamental, :photon_energy,
             :intensity, :amplitude, :duration, :continuity,
-            :span, :steps, :dimensions]
+            :span, :dimensions]
     @eval $fun(f::WrappedField, args...) = $fun(parent(f), args...)
 end
 # [:vector_potential, :field_amplitude], should these be explicitly forwarded?
