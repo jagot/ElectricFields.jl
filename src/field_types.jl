@@ -42,7 +42,7 @@ where ``A(t)`` is the [`vector_potential`](@ref).
 field_amplitude(f::AbstractField, a, b) =
     -(vector_potential(f, b) - vector_potential(f, a))
 
-instantaneous_intensity(f::AbstractField, t) = field_amplitude(f, t)^2
+instantaneous_intensity(f::AbstractField, t) = norm(field_amplitude(f, t))^2
 function intensity(f::AbstractField, t; kwargs...)
     fun = ϕ -> -instantaneous_intensity(phase_shift(f, ϕ), t)
     res = optimize(fun, 0.0, 2π; kwargs...)
@@ -62,6 +62,13 @@ photon_energy(f::AbstractField) = photon_energy(carrier(f))
 
 duration(f::AbstractField) = duration(envelope(f))
 continuity(f::AbstractField) = continuity(envelope(f))
+
+function fluence(F::AbstractField)
+    ∫t = time_integral(F)
+    Iau = austrip(3.5094452e16*u"W"/(u"cm"^2))
+
+    ∫t*Iau*intensity(F)/photon_energy(F)
+end
 
 # * Linear field
 
@@ -114,6 +121,11 @@ function phase_shift(f::LinearField, δϕ)
     LinearField(carrier, f.env, f.I₀, f.E₀, f.A₀, p)
 end
 
+time_integral(f::LinearField) = time_integral(envelope(f))
+
+make_temp_field(carrier::LinearCarrier, env, params) =
+    LinearField(carrier, env, 1, 1, 1, params)
+
 # * Transverse field
 
 struct TransverseField{Carrier<:TransverseCarrier,Envelope,Rotation,T} <: AbstractField
@@ -150,6 +162,11 @@ function phase_shift(f::TransverseField, δϕ)
     p[:ϕ] = phase(carrier)
     TransverseField(carrier, f.env, f.I₀, f.E₀, f.A₀, f.R, p)
 end
+
+time_integral(f::TransverseField) = time_integral(envelope(f))
+
+make_temp_field(carrier::TransverseCarrier, env, params,) =
+    TransverseField(carrier, env, 1, 1, 1, I, params)
 
 # * Constant field
 
@@ -197,6 +214,9 @@ function vector_potential(f::ConstantField{T}, t) where T
     -f.E₀*t
 end
 
+intensity(f::ConstantField) = f.E₀^2
+amplitude(f::ConstantField) = f.E₀
+
 polarization(::ConstantField) = LinearPolarization()
 
 duration(f::ConstantField) = f.tmax
@@ -217,7 +237,7 @@ export LinearPolarization, ArbitraryPolarization, polarization,
     wavelength, period,
     frequency, max_frequency, wavenumber, fundamental, photon_energy,
     envelope,
-    intensity, amplitude,
+    intensity, amplitude, fluence,
     duration,
     field_amplitude, vector_potential, instantaneous_intensity,
     params, dimensions,
