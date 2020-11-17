@@ -36,13 +36,13 @@ function show(io::IO, f::SumField)
     a_str = split(string(f.a), "\n")
     b_str = split(string(f.b), "\n")
 
-    for (s,l) in zip("⌈" * repeat("|", length(a_str)-1), a_str)
+    for (s,l) in zip("┌" * repeat("│", length(a_str)-1), a_str)
         write(io, "$s $l\n")
     end
 
     write(io, "⊕\n")
 
-    for (s,l) in zip(repeat("|", length(b_str)-1) * "⌊", b_str)
+    for (s,l) in zip(repeat("│", length(b_str)-1) * "└", b_str)
         write(io, "$s $l\n")
     end
 end
