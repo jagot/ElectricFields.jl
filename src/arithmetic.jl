@@ -84,6 +84,9 @@ continuity(f::SumField) =
 
 dimensions(f::SumField) = dimensions(f.a)
 
+phase_shift(f::SumField, ϕ) =
+    SumField(phase_shift(f.a, ϕ), phase_shift(f.b, ϕ))
+
 # ** Wrapped fields
 
 """
