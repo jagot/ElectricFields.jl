@@ -43,11 +43,6 @@ field_amplitude(f::AbstractField, a, b) =
     -(vector_potential(f, b) - vector_potential(f, a))
 
 instantaneous_intensity(f::AbstractField, t) = norm(field_amplitude(f, t))^2
-function intensity(f::AbstractField, t; kwargs...)
-    fun = ϕ -> -instantaneous_intensity(phase_shift(f, ϕ), t)
-    res = optimize(fun, 0.0, 2π; kwargs...)
-    -Optim.minimum(res)
-end
 
 field_envelope(f::AbstractField, t) = √(intensity(f, t))
 
@@ -126,6 +121,12 @@ time_integral(f::LinearField) = time_integral(envelope(f))
 make_temp_field(carrier::LinearCarrier, env, params) =
     LinearField(carrier, env, 1, 1, 1, params)
 
+function intensity(f::LinearField, t; kwargs...)
+    fun = ϕ -> -instantaneous_intensity(phase_shift(f, ϕ), t)
+    res = optimize(fun, 0.0, 2π; kwargs...)
+    -Optim.minimum(res)
+end
+
 # * Transverse field
 
 struct TransverseField{Carrier<:TransverseCarrier,Envelope,Rotation,T} <: AbstractField
@@ -167,6 +168,15 @@ time_integral(f::TransverseField) = time_integral(envelope(f))
 
 make_temp_field(carrier::TransverseCarrier, env, params,) =
     TransverseField(carrier, env, 1, 1, 1, I, params)
+
+function intensity(f::TransverseField, t; kwargs...)
+    cf = d -> begin
+        fun = ϕ -> -abs2(field_amplitude(phase_shift(f, ϕ), t)[d])
+        res = optimize(fun, 0.0, 2π; kwargs...)
+        -Optim.minimum(res)
+    end
+    sum(cf, 1:3)
+end
 
 # * Constant field
 

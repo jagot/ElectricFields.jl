@@ -3,6 +3,7 @@
 compute_rotation(::Nothing) = I
 function compute_rotation((ϕ,u)::Tuple{<:Real,<:AbstractVector{<:Real}})
     @assert length(u) == 3
+    u = normalize(u)
     s,c = sincos(ϕ)
     # https://en.wikipedia.org/wiki/Cross_product#Conversion_to_matrix_multiplication
     ucross = [0    -u[3]  u[2]
