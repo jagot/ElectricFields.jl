@@ -14,6 +14,20 @@ Base.Broadcast.broadcastable(c::AbstractCarrier) = Ref(c)
 Base.Broadcast.broadcastable(e::AbstractEnvelope) = Ref(e)
 Base.Broadcast.broadcastable(f::AbstractField) = Ref(f)
 
+vector_potential(::LinearPolarization, f, t::AbstractVector) =
+    vector_potential.(f, t)
+vector_potential(::ArbitraryPolarization, f, t::AbstractVector) =
+    transpose(reduce(hcat, vector_potential.(f, t)))
+vector_potential(f::AbstractField, t::AbstractVector) =
+    vector_potential(polarization(f), f, t)
+
+field_amplitude(::LinearPolarization, f, t::AbstractVector) =
+    field_amplitude.(f, t)
+field_amplitude(::ArbitraryPolarization, f, t::AbstractVector) =
+    transpose(reduce(hcat, field_amplitude.(f, t)))
+field_amplitude(f::AbstractField, t::AbstractVector) =
+    field_amplitude(polarization(f), f, t)
+
 @doc raw"""
     field_amplitude(f, t)
 
@@ -25,7 +39,7 @@ F(t) = -\partial_t A(t).
 ```
 
 """
-field_amplitude(f::AbstractField, t) =
+field_amplitude(f::AbstractField, t::Number) =
     -ForwardDiff.derivative(Base.Fix1(vector_potential, f), t)
 
 @doc raw"""
@@ -99,7 +113,7 @@ function LinearField(carrier, env, params)
     LinearField(carrier, env, Iaustrip(I₀), austrip(E₀), austrip(A₀), params)
 end
 
-vector_potential(f::LinearField, t) = f.A₀*f.env(t)*f.carrier(t)
+vector_potential(f::LinearField, t::Number) = f.A₀*f.env(t)*f.carrier(t)
 
 intensity(f::LinearField) = f.I₀
 amplitude(f::LinearField) = f.E₀
@@ -156,7 +170,7 @@ function TransverseField(carrier, env, params)
     TransverseField(carrier, env, Iaustrip(I₀), austrip(E₀), austrip(A₀), R, params)
 end
 
-vector_potential(f::TransverseField, t) = f.A₀*f.env(t)*(f.R*f.carrier(t))
+vector_potential(f::TransverseField, t::Number) = f.A₀*f.env(t)*(f.R*f.carrier(t))
 
 intensity(f::TransverseField) = f.I₀
 amplitude(f::TransverseField) = f.E₀
@@ -247,12 +261,12 @@ Constant field of
              f.E₀, au2si(f.E₀, u"V/m"))
 end
 
-field_amplitude(f::ConstantField, t) =
+field_amplitude(f::ConstantField, t::Number) =
     f.E₀*(0 ≤ t && t ≤ f.tmax)
 
 intensity(f::ConstantField, t) = field_amplitude(f, t)^2
 
-function vector_potential(f::ConstantField{T}, t) where T
+function vector_potential(f::ConstantField{T}, t::Number) where T
     t = clamp(t, zero(T), f.tmax)
     -f.E₀*t
 end
