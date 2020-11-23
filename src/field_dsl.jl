@@ -1,16 +1,33 @@
 # * Field creation
 
 compute_rotation(::Nothing) = I
+compute_rotation(I::UniformScaling) = I/opnorm(I)
+
 function compute_rotation((ϕ,u)::Tuple{<:Real,<:AbstractVector{<:Real}})
     @assert length(u) == 3
-    u = normalize(u)
+    u = SVector{3}(normalize(u))
     s,c = sincos(ϕ)
     # https://en.wikipedia.org/wiki/Cross_product#Conversion_to_matrix_multiplication
-    ucross = [0    -u[3]  u[2]
-              u[3]  0    -u[1]
-              -u[2] u[1]  0]
+    ucross = SMatrix{3,3}([0    -u[3]  u[2]
+                           u[3]  0    -u[1]
+                           -u[2] u[1]  0])
     # https://en.wikipedia.org/wiki/Rotation_matrix#Rotation_matrix_from_axis_and_angle
-    c*I + s*ucross + (1-c)*(u*u')
+    R = c*I + s*ucross + (1-c)*(u*u')
+    R/opnorm(R)
+end
+
+function compute_rotation(R::AbstractMatrix{T}) where {T<:Real}
+    size(R) == (3,3) ||
+        throw(DimensionMismatch("Rotation matrix must have dimensions 3×3"))
+    opnorm(R) < eps(T) &&
+        throw(ArgumentError("Rotation matrix singular"))
+    R = copy(R)
+    for i = 2:3
+        for j = 1:i-1
+            R[:,i] -= dot(R[:,j],R[:,i])*R[:,j]
+        end
+    end
+    SMatrix{3,3}(R/opnorm(R))
 end
 
 # ** Parameter calculation
@@ -106,7 +123,9 @@ end
 # ** Frontend macro
 
 function make_field(field_params::Dict{Symbol,Any})
-    is_transverse = :ξ ∈ keys(field_params) || get(field_params, :carrier, :fixed) ∈ [:linear, :elliptical, :circular]
+    is_transverse = (:ξ ∈ keys(field_params) ||
+                     :rotation ∈ keys(field_params) ||
+                     get(field_params, :carrier, :fixed) ∈ [:linear, :elliptical, :circular])
     kind = get(field_params, :kind, is_transverse ? :transverse : :linear)
 
     if kind == :linear
@@ -130,7 +149,7 @@ function make_field(field_params::Dict{Symbol,Any})
             error("Unknown envelope type $(env_sym), valid choices are $(keys(envelope_types))")
         env = envelope_types[env_sym](field_params, carrier)
 
-        :ξ in keys(field_params) &&
+        :ξ in keys(field_params) || :rotation in keys(field_params) &&
             error("Elliptical (transverse) fields are not linear!")
 
         LinearField(carrier, env, field_params)
