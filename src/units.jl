@@ -50,10 +50,11 @@ end
 function shift_unit(u::Unitful.FreeUnits, d)
     tu = typeof(u)
     us,ds,a = tu.parameters
+    ui = findfirst(u -> u.power>0, us)
 
-    uu,i = shift_unit(us[1], d, 3)
+    uu,i = shift_unit(us[ui], d, 3)
 
-    Unitful.FreeUnits{(uu,us[2:end]...), ds, a}(),i
+    Unitful.FreeUnits{(us[1:ui-1]...,uu,us[ui+1:end]...), ds, a}(),i
 end
 
 function si_round(q::Quantity; fspec="{1:.4f} {2:s}")
