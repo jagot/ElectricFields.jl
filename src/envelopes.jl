@@ -179,7 +179,7 @@ function (env::TruncatedGaussianEnvelope{T})(t) where T
 end
 
 show(io::IO, env::TruncatedGaussianEnvelope) =
-    printfmt(io, "Truncated Gaussian envelope of duration {1:s} jiffies = {2:s} (intensity FWHM; turn-off from {3:s} to {4:s}) ",
+    printfmt(io, "Truncated Gaussian envelope of duration {1:.4f} jiffies = {2:s} (intensity FWHM; turn-off from {3:s} to {4:s}) ",
              env.τ, au2si_round(env.τ, u"s"),
              au2si_round(env.toff, u"s"), au2si_round(env.tmax, u"s"))
 

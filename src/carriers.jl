@@ -57,6 +57,11 @@ end
 LinearTransverseCarrier(field_params::Dict{Symbol,Any}) =
     LinearTransverseCarrier(FixedCarrier(field_params))
 
+function show(io::IO, carrier::LinearTransverseCarrier)
+    write(io, "LinearTransverseCarrier: ")
+    show(io, carrier.carrier)
+end
+
 (carrier::LinearTransverseCarrier)(t) = SVector(0, 0, carrier.carrier(t))
 
 carrier_types[:linear] = LinearTransverseCarrier
@@ -83,6 +88,28 @@ function EllipticalCarrier(field_params::Dict{Symbol,Any})
     ϕ = get(field_params, :ϕ, 0)
     ξ = get(field_params, :ξ, 0)
     EllipticalCarrier(λ, T, austrip(ω), ϕ, ξ)
+end
+
+function show(io::IO, carrier::EllipticalCarrier)
+    ξ = carrier.ξ
+    pol = if iszero(ξ)
+        ""
+    elseif ξ == 1
+        " (RCP)"
+    elseif ξ == -1
+        " (LCP)"
+    elseif ξ > 0
+        " (right)"
+    else
+        " (left)"
+    end
+    printfmt(io, "Elliptical carrier with ξ = {1:.2f}{2:s} @ λ = {3:s} (T = {4:s}, ω = {5:.4f} Ha = {6:s})",
+             ξ, pol,
+             si_round(u"m"(carrier.λ)),
+             si_round(u"s"(carrier.T)),
+             carrier.ω, au2si_round(carrier.ω, u"eV"))
+    !iszero(carrier.ϕ) &&
+        printfmt(io, "; CEP = {1:0.2f}π", carrier.ϕ/π)
 end
 
 function (carrier::EllipticalCarrier)(t)

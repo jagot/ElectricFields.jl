@@ -112,7 +112,7 @@ Linearly polarized field with
     - A₀ = {5:.4f} au
   – a """,
              f.I₀, Iau*f.I₀,
-             f.E₀, au2si(f.E₀, u"V/m"),
+             f.E₀, au2si_round(f.E₀, u"V/m"),
              f.A₀)
     show(io, f.carrier)
     write(io, " \n  – and a ")
@@ -160,6 +160,37 @@ vector_potential(f::TransverseField, t) = f.A₀*f.env(t)*(f.R*f.carrier(t))
 
 intensity(f::TransverseField) = f.I₀
 amplitude(f::TransverseField) = f.E₀
+
+rotation_angle(R::AbstractMatrix) = acos(clamp((tr(R) - 1)/2, -1, 1))
+# https://en.wikipedia.org/wiki/Rotation_matrix#Determining_the_axis
+function rotation_axis(R::AbstractMatrix)
+    ee = eigen(R)
+    i = argmin(abs.(ee.values) .- 1)
+    normalize(real(ee.vectors[:,i]))
+end
+
+function show(io::IO, f::TransverseField)
+    printfmt(io, """
+Transversely polarized field with
+  - I₀ = {1:.4e} au = {2:s} =>
+    - E₀ = {3:.4e} au = {4:s}
+    - A₀ = {5:.4f} au
+  – a """,
+             f.I₀, Iau*f.I₀,
+             f.E₀, au2si_round(f.E₀, u"V/m"),
+             f.A₀)
+    show(io, f.carrier)
+    isrotated = f.R isa AbstractMatrix
+    if isrotated
+        write(io, " \n  – a ")
+        show(io, f.env)
+        printfmt(io, " \n  – and a rotation of {1:.2f}π about [{2:.3f}, {3:.3f}, {4:.3f}]",
+                 rotation_angle(f.R)/π, rotation_axis(f.R)...)
+    else
+        write(io, " \n  – and a ")
+        show(io, f.env)
+    end
+end
 
 polarization(::TransverseField) = ArbitraryPolarization()
 
