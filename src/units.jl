@@ -8,6 +8,7 @@ const base_units = Dict{Symbol,Unitful.FreeUnits}(
     :λ => u"nm",
     :I₀ => u"W"/u"cm"^2,
     :E₀ => u"V"/u"m",
+    :A₀ => (u"V"/u"m")/(u"rad"/u"s"),
     :τ => u"fs",
     :σ => u"fs",
     :σ′ => u"fs",
