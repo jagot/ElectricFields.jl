@@ -1,3 +1,10 @@
+# * Ponderomotive potential
+ponderomotive_potential(f::Union{LinearField,TransverseField,WrappedField}) =
+    params(f)[:Uₚ]
+
+ponderomotive_potential(f::SumField) =
+    ponderomotive_potential(f.a) + ponderomotive_potential(f.b)
+
 # * Keldysh parameter
 
 @doc raw"""
@@ -16,7 +23,7 @@ where ``I_p`` is the ionization potential of the atom and ``U_p`` is
 the ponderomotive potential of the dynamic field.
 """
 keldysh(f::AbstractField, Iₚ::Unitful.Energy) =
-    √(Iₚ/2params(f)[:Uₚ]) |> NoUnits
+    √(Iₚ/2ponderomotive_potential(f)) |> NoUnits
 
 # * Free oscillation amplitude
 
@@ -44,9 +51,9 @@ free_oscillation_amplitude(F::Union{WrappedField,NegatedField,DelayedField}) =
 # frequency, but exactly out of phase, the free oscillation amplitude
 # is actually zero.
 free_oscillation_amplitude(F::SumField) =
-    free_oscillation_amplitude(F.a) + 
+    free_oscillation_amplitude(F.a) +
     free_oscillation_amplitude(F.b)
 
 # * Exports
 
-export keldysh, free_oscillation_amplitude
+export ponderomotive_potential, keldysh, free_oscillation_amplitude
