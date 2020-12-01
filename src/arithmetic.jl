@@ -53,8 +53,8 @@ function +(a::AbstractField, b::AbstractField)
     SumField(a, b)
 end
 
-vector_potential(f::SumField, args...) =
-    vector_potential(f.a, args...) + vector_potential(f.b, args...)
+vector_potential(f::SumField, t::Number) =
+    vector_potential(f.a, t) + vector_potential(f.b, t)
 
 polarization(f::SumField) = polarization(f.a)
 
@@ -137,7 +137,7 @@ mutable struct DelayedField{F<:AbstractField,T} <: WrappedField
     t₀::T
 end
 
-vector_potential(f::DelayedField, t) = vector_potential(f.a, t-f.t₀)
+vector_potential(f::DelayedField, t::Number) = vector_potential(f.a, t-f.t₀)
 
 function show(io::IO, f::DelayedField)
     show(io, f.a)
