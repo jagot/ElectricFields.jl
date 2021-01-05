@@ -113,7 +113,7 @@ function GaussianEnvelope(field_params::Dict{Symbol,Any}, carrier)
     gaussian_common!(field_params, carrier)
 
     @unpack τ, α, σmax, tmax = field_params
-    GaussianEnvelope(austrip(τ), α, σmax, austrip(tmax))
+    GaussianEnvelope(austrip(τ), α, austrip(σmax), austrip(tmax))
 end
 
 continuity(::GaussianEnvelope) = Inf
