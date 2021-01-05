@@ -53,7 +53,8 @@ show(io::IO, env::GaussianEnvelope) =
     printfmt(io, "Gaussian envelope of duration {1:s} (intensity FWHM; ±{2:0.2f}σ) ",
              au2si_round(env.τ, u"s"), env.σmax)
 
-function gaussian_common!(field_params, carrier; verbosity=0)
+function gaussian_common!(field_params, carrier;
+                          Tmax_rounder = Base.Fix1(ceil, Int), verbosity=0)
     @namespace!(field_params) do
         if τ
             σ = τ/(2*√(2log(2)))
@@ -62,11 +63,11 @@ function gaussian_common!(field_params, carrier; verbosity=0)
         end
 
         if σmax
-            Tmax = ceil(Int, σmax*σ/T)
+            Tmax = Tmax_rounder(σmax*σ/T)
             tmax = Tmax*T
         else
             if tmax
-                Tmax = ceil(Int, tmax/T)
+                Tmax = Tmax_rounder(tmax/T)
             elseif Tmax
                 tmax = Tmax*T
             end
@@ -163,7 +164,7 @@ struct TruncatedGaussianEnvelope{T} <: AbstractEnvelope
     α::T # Vector potential exponential coefficent
     toff::T # Start of hard turn-off
     tmax::T # Maximum time; end of hard turn-off. Time window: [-tmax,tmax]
-    Tmax::Int # Maximum time, in cycles of the fundamental.
+    Tmax::T # Maximum time, in cycles of the fundamental.
 end
 envelope_types[:trunc_gauss] = TruncatedGaussianEnvelope
 
@@ -189,7 +190,7 @@ function TruncatedGaussianEnvelope(field_params::Dict{Symbol,Any}, carrier)
     test_field_parameters(field_params, [:toff])
     test_field_parameters(field_params, [:σmax, :tmax, :Tmax])
 
-    gaussian_common!(field_params, carrier)
+    gaussian_common!(field_params, carrier, Tmax_rounder=NoUnits)
 
     @unpack τ, σ, α, toff, tmax, Tmax = field_params
     toff < tmax || throw(ArgumentError("Hard turn-off must occur before end of pulse"))
