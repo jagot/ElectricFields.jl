@@ -176,8 +176,11 @@ struct PaddedField{Field<:AbstractField,T} <: WrappedField
     a::T
     b::T
 
-    PaddedField(field::Field, a::T, b::T) where {Field,T<:Real} =
+    function PaddedField(field::Field, a::T, b::T) where {Field,T<:Real}
+        (a < 0 || b < 0) &&
+            throw(ArgumentError("Padding must be non-negative"))
         new{Field,T}(field, a, b)
+    end
 
     PaddedField(field, a::Unitful.Time, b::Unitful.Time) =
         PaddedField(field, austrip(a), austrip(b))
@@ -185,10 +188,22 @@ end
 
 Base.parent(f::PaddedField) = f.field
 
+function vector_potential(f::PaddedField, t::T) where {T<:Number}
+    a,b = span(f.field)
+    if t < a || t > b
+        zero(T)
+    else
+        vector_potential(f.field, t)
+    end
+end
+
 function span(f::PaddedField)
     a,b = span(f.field)
     a-f.a, b+f.b
 end
+
+time_integral(f::PaddedField) =
+    time_integral(parent(f))
 
 export PaddedField
 
