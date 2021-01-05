@@ -13,7 +13,7 @@ steps(f::AbstractField, fs::Real=default_sampling_frequency(f)) =
     ceil(Int, fs*abs(-(span(f)...)))
 steps(f::AbstractField, ndt::Int) = steps(f, ndt/austrip(period(f)))
 
-function timeaxis(f::AbstractField, fs=default_sampling_frequency(f))
+function timeaxis(f::AbstractField, fs::Number=default_sampling_frequency(f))
     a,b = span(f)
     num_steps = steps(f, fs)
     if num_steps > 1
@@ -24,6 +24,13 @@ function timeaxis(f::AbstractField, fs=default_sampling_frequency(f))
         # length.
         a:(b-a):a
     end
+end
+
+function timeaxis(f::AbstractField, (N,dt)::Tuple{<:Integer,<:Real})
+    a,b = span(f)
+    t = range(a, length=N, step=dt)
+    t[end] < b && @warn "$(N) steps of $(dt) jiffies does not cover the span of the field, $(b) ∉ $(t)"
+    t
 end
 
 export span, steps, timeaxis
