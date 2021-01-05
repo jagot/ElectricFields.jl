@@ -3,6 +3,7 @@ abstract type AbstractField end
 abstract type Polarization end
 struct LinearPolarization <: Polarization end
 struct ArbitraryPolarization <: Polarization end
+Base.Broadcast.broadcastable(p::Polarization) = Ref(p)
 
 abstract type AbstractCarrier end
 abstract type LinearCarrier <: AbstractCarrier end
@@ -27,6 +28,9 @@ field_amplitude(::ArbitraryPolarization, f, t::AbstractVector) =
     transpose(reduce(hcat, field_amplitude.(f, t)))
 field_amplitude(f::AbstractField, t::AbstractVector) =
     field_amplitude(polarization(f), f, t)
+
+intensity(f::AbstractField, t::AbstractVector) =
+    intensity.(f, t)
 
 @doc raw"""
     field_amplitude(f, t)
@@ -58,13 +62,13 @@ field_amplitude(f::AbstractField, a, b) =
 
 instantaneous_intensity(f::AbstractField, t) = norm(field_amplitude(f, t))^2
 
-function intensity(::LinearPolarization, f, t; kwargs...)
+function intensity(::LinearPolarization, f, t::Number; kwargs...)
     fun = ϕ -> -instantaneous_intensity(phase_shift(f, ϕ), t)
     res = optimize(fun, 0.0, 2π; kwargs...)
     -Optim.minimum(res)
 end
 
-function intensity(::ArbitraryPolarization, f, t; kwargs...)
+function intensity(::ArbitraryPolarization, f, t::Number; kwargs...)
     cf = d -> begin
         fun = ϕ -> -abs2(field_amplitude(phase_shift(f, ϕ), t)[d])
         res = optimize(fun, 0.0, 2π; kwargs...)
@@ -73,7 +77,7 @@ function intensity(::ArbitraryPolarization, f, t; kwargs...)
     sum(cf, 1:3)
 end
 
-intensity(f::AbstractField, t) = intensity(polarization(f), f, t)
+intensity(f::AbstractField, t::Number) = intensity(polarization(f), f, t)
 
 field_envelope(f::AbstractField, t) = √(intensity(f, t))
 
