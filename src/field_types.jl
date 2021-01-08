@@ -1,5 +1,7 @@
 abstract type AbstractField end
 
+Base.parent(f::AbstractField) = f
+
 abstract type Polarization end
 struct LinearPolarization <: Polarization end
 struct ArbitraryPolarization <: Polarization end
@@ -156,6 +158,8 @@ time_integral(f::LinearField) = time_integral(envelope(f))
 make_temp_field(carrier::LinearCarrier, env, params) =
     LinearField(carrier, env, 1, 1, 1, params)
 
+rotation_matrix(f::LinearField{<:Any,<:Any,T}) where T = SMatrix{3,3,T}(I)
+
 # * Transverse field
 
 struct TransverseField{Carrier<:TransverseCarrier,Envelope,Rotation,T} <: AbstractField
@@ -186,6 +190,8 @@ function rotation_axis(R::AbstractMatrix)
     i = argmin(abs.(ee.values) .- 1)
     normalize(real(ee.vectors[:,i]))
 end
+
+rotation_matrix(f::TransverseField) = f.R
 
 function show(io::IO, f::TransverseField)
     printfmt(io, """
