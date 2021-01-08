@@ -188,13 +188,17 @@ end
 
 Base.parent(f::PaddedField) = f.field
 
+function show(io::IO, f::PaddedField)
+    printfmtln(io, "Padding before {1:.4f} jiffies = {2:s} and after {3:.4f} jiffies = {4:s} of",
+               f.a, au2si_round(f.a, u"s"),
+               f.b, au2si_round(f.b, u"s"))
+    show(io, f.field)
+end
+
 function vector_potential(f::PaddedField, t::T) where {T<:Number}
     a,b = span(f.field)
-    if t < a || t > b
-        zero(T)
-    else
-        vector_potential(f.field, t)
-    end
+    v = vector_potential(parent(f), min(max(t, a), b))
+    a ≤ t ≤ b ? v : zero(v)
 end
 
 function span(f::PaddedField)
