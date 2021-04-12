@@ -34,6 +34,22 @@ field_amplitude(f::AbstractField, t::AbstractVector) =
 intensity(f::AbstractField, t::AbstractVector) =
     intensity.(f, t)
 
+complex_derivative(f::Function, t::Real) = ForwardDiff.derivative(f, t)
+
+function complex_derivative(f::Function, z::Complex)
+    # https://discourse.julialang.org/t/automatic-differentiation-of-complex-valued-functions/30263/3
+    ff = ((x,y),) -> begin
+        fz = f(complex(x,y))
+        [real(fz), imag(fz)]
+    end
+    J = ForwardDiff.jacobian(ff, [real(z), imag(z)])
+    # Complex derivative for an analytic function
+    #   f(x + im*y) = u(x,y) + im*v(x,y)
+    # is given by
+    #   f′(x + im*y) = uₓ + im*vₓ = v_y - im*u_y
+    J[1,1] + im*J[2,1]
+end
+
 @doc raw"""
     field_amplitude(f, t)
 
@@ -45,8 +61,8 @@ F(t) = -\partial_t A(t).
 ```
 
 """
-field_amplitude(f::AbstractField, t::Number) =
-    -ForwardDiff.derivative(Base.Fix1(vector_potential, f), t)
+field_amplitude(f::AbstractField, t) =
+    -complex_derivative(Base.Fix1(vector_potential, f), t)
 
 @doc raw"""
     field_amplitude(f, a, b)
