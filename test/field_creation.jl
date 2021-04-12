@@ -1,3 +1,5 @@
+import ElectricFields: Iaustrip
+
 @testset "Parametric field creation" begin
     #    Test parametric creation of fields, both from inside a function and
     #    from global scope.
@@ -12,7 +14,7 @@
                 τ = 6.2u"fs"
                 Tmax = 5
             end
-            @test intensity(IR) == I₀
+            @test intensity(IR) == Iaustrip(I₀)
         end
     end
     test_parametric_fields(11)
@@ -27,7 +29,7 @@
             τ = 6.2u"fs"
             Tmax = 5
         end
-        @test intensity(IR) == I₀
+        @test intensity(IR) == Iaustrip(I₀)
     end
 
     @field(IR) do
@@ -37,5 +39,15 @@
         Tmax = 5
     end
 
-    @test dimensions(IR) == 2
+    @test dimensions(IR) == 1
+
+    @field(IR2) do
+        λ = 800.0u"nm"
+        I₀ = 1e14u"W/cm^2"
+        τ = 6.2u"fs"
+        Tmax = 5
+        ξ = 0.4
+    end
+
+    @test dimensions(IR2) == 3
 end
