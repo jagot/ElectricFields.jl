@@ -15,7 +15,7 @@ scale.
 
 The package provides a simple DSL that requires just a handful of
 parameters, that can be given in _any_ unit system (thanks to
-[Unitful.jl](https://github.com/ajkeller34/Unitful.jl)). Different
+[Unitful.jl](https://github.com/PainterQubits/Unitful.jl)). Different
 fields can be combined in any way that is physically reasonable, to
 recreate complicated experimental situations. Everything can then be
 converted to normalized time, for use in calculations.

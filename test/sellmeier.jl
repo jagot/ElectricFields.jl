@@ -1,6 +1,5 @@
 @testset "Sellmeier" begin
     @testset "String representation" begin
-
         Bstr = string(BK7.B)
         Cstr = join(string.(BK7.C), ", ")
         @test string(BK7) == "Medium($(Bstr), [$(Cstr)])"
