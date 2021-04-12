@@ -8,7 +8,7 @@ makedocs(;
     sitename="ElectricFields.jl",
     format=Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true",
-        canonical="https://jagot.github.io/ElectricFields.jl",
+        canonical="https://www.tipota.org/ElectricFields.jl",
         assets=String[],
     ),
     pages=[
