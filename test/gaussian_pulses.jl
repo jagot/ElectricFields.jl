@@ -86,5 +86,7 @@ import ElectricFields: time_integral
         for t = -3.5:0.5:3.5
             @test env(t) ≈ exp(-α*t^2) rtol=1e-12
         end
+
+        @test span(F) == (-5,5)
     end
 end

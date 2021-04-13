@@ -264,13 +264,11 @@ Return a new field whose [`carrier`](@ref) has been phase-shifted by
 function phase_shift end
 
 """
-    dimension(f)
+    dimensions(f)
 
 Return the number of dimensions of the field `f`.
 """
 function dimensions end
-
-
 
 # * Linear field
 

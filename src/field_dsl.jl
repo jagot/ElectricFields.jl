@@ -6,22 +6,6 @@
 
 This function performs the calculation of different quantities from
 the information provided.
-
-The [ponderomotive
-potential](https://en.wikipedia.org/wiki/Ponderomotive_energy) ``U_p``
-is the cycle-average quiver energy of a free electron in an
-electromagnetic field. It is given by
-
-```math
-U_p =
-\frac{e^2E_0^2}{4m\omega^2}=\frac{2e^2}{c\varepsilon_0m}\times\frac{I}{4\omega^2},
-```
-
-or, in atomic units,
-
-```math
-U_p = \frac{I}{4\omega^2}.
-```
 """
 function calc_params!(field_params::Dict{Symbol,Any})
     test_field_parameters(field_params, [:λ, :T, :f, :ν, :ω, :ħω])

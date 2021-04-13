@@ -33,6 +33,7 @@ makedocs(;
         "Field types" => "field_types.md",
         "Envelopes" => "envelopes.md",
         "Carriers" => "carriers.md",
+        "Field properties" => "properties.md",
         "Reference" => "reference.md",
     ],
     doctest=false
