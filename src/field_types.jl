@@ -538,8 +538,8 @@ julia> @field(F) do
        kind = :constant
        end
 Constant field of
-  - 124.02412000600552 jiffies = 3.0000 fs duration, and
-  - E₀ = 1.6880e-02 au = 8.680210982018475e9 V m⁻¹
+  - 124.0241 jiffies = 3.0000 fs duration, and
+  - E₀ = 1.6880e-02 au = 8.6802 GV m⁻¹
 ```
 """
 struct ConstantField{T} <: AbstractField
@@ -570,16 +570,16 @@ end
 function show(io::IO, f::ConstantField)
     printfmt(io, """
 Constant field of
-  - {1:s} jiffies = {2:s} duration, and
+  - {1:.4f} jiffies = {2:s} duration, and
   - E₀ = {3:.4e} au = {4:s}""",
              f.tmax, au2si_round(f.tmax, u"s"),
-             f.E₀, au2si(f.E₀, u"V/m"))
+             f.E₀, au2si_round(f.E₀, u"V/m"))
 end
 
 field_amplitude(f::ConstantField, t::Number) =
     f.E₀*(0 ≤ t && t ≤ f.tmax)
 
-intensity(f::ConstantField, t) = field_amplitude(f, t)^2
+intensity(f::ConstantField, t::Number) = field_amplitude(f, t)^2
 
 function vector_potential(f::ConstantField{T}, t::Number) where T
     t = clamp(t, zero(T), f.tmax)
