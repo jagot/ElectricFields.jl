@@ -78,7 +78,16 @@ where ``A(t)`` is the [`vector_potential`](@ref).
 field_amplitude(f::AbstractField, a, b) =
     -(vector_potential(f, b) - vector_potential(f, a))
 
-instantaneous_intensity(f::AbstractField, t) = norm(field_amplitude(f, t))^2
+@doc raw"""
+    instantaneous_intensity(f, t)
+
+Compute the instantaneous intensity of the field `f` as
+
+```math
+I_i(t) = \abs{F(t)}^2 = \abs{-\partial_t A(t)}^2.
+```
+"""
+instantaneous_intensity(f::AbstractField, t::Number) = norm(field_amplitude(f, t))^2
 
 function intensity(::LinearPolarization, f, t::Number; kwargs...)
     fun = ϕ -> -instantaneous_intensity(phase_shift(f, ϕ), t)
@@ -95,9 +104,22 @@ function intensity(::ArbitraryPolarization, f, t::Number; kwargs...)
     sum(cf, 1:3)
 end
 
+"""
+    intensity(f, t)
+
+Compute the intensity _envelope_ of the field `f` at time `t` by
+applying [`phase_shift`](@ref) to the [`carrier`](@ref) and looking
+for the maximum.
+"""
 intensity(f::AbstractField, t::Number) = intensity(polarization(f), f, t)
 
-field_envelope(f::AbstractField, t) = √(intensity(f, t))
+"""
+    field_envelope(f, t)
+
+Compute the field amplitude envelope as the square root of
+[`field_envelope`](@ref).
+"""
+field_envelope(f::AbstractField, t::Number) = √(intensity(f, t))
 
 wavelength(f::AbstractField) = wavelength(carrier(f))
 period(f::AbstractField) = period(carrier(f))
@@ -323,5 +345,6 @@ export LinearPolarization, ArbitraryPolarization, polarization,
     intensity, amplitude, fluence,
     duration,
     field_amplitude, vector_potential, instantaneous_intensity,
+    field_envelope,
     params, dimensions,
     phase_shift, phase

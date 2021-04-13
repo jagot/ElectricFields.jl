@@ -90,9 +90,9 @@ phase_shift(f::SumField, ϕ) =
 # ** Wrapped fields
 
 """
-         WrappedField(field, a, b)
+    WrappedField
 
-     Wrapper around any electric `field`
+Wrapper around any electric `field`
 """
 abstract type WrappedField <: AbstractField end
 

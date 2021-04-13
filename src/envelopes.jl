@@ -1,4 +1,4 @@
-# * TODO Envelopes [2/3]
+# * Envelopes
 #   The envelopes implemented below are all /amplitude/ envelopes,
 #   since that is what is being used in calculations. However, they may
 #   be specified using intensity-related quantities, e.g. Gaussian
@@ -8,14 +8,14 @@
 
 envelope_types = Dict{Symbol,Any}()
 
-# ** DONE Gaussian
+# ** Gaussian
 @doc raw"""
     GaussianEnvelope
 
 A Gaussian pulse is given by
 
 ```math
-I_0\exp\left(-\frac{t^2}{2\sigma^2}\right),
+f(t) = \exp\left(-\frac{t^2}{2\sigma^2}\right),
 ```
 
 where the standard deviation ``σ`` is related to the FWHM duration τ
@@ -25,22 +25,34 @@ of the intensity envelope as
 \sigma = \frac{\tau}{2\sqrt{2\ln 2}}.
 ```
 
-Furthermore, the _amplitude_ standard deviation ``σ′`` is proportional
-to the intensity ditto: ``\sigma' = \sqrt{2}\sigma``. Therefore, the
-amplitude envelope is given by
+Since we define all fields in terms of the vector potential ``A(t)``,
+and the [`instantaneous_intensity`](@ref) is given by
+``\abs{-\partial_t A(t)}^2``, we have to find a coefficient ``α`` such
+that the field amplitude
 
 ```math
-E_0\exp\left(-\frac{t^2}{2{\sigma'}^2}\right)
-=E_0\exp\left(-\frac{t^2}{4\sigma^2}\right)
-=E_0\exp\left(-\frac{2\ln2t^2}{\tau^2}\right).
+F(t) \sim -\partial_t \exp(-\alpha t^2) \sin(\omega t + \phi)
 ```
+
+has an _intensity envelope_ with the desired FWHM; we do this
+iteratively in [`gaussian_common!`](@ref). This is mainly important
+for ultrashort pulses, since for long pulse durations we can
+approximate ``\exp(-\alpha t^2) \sim 1`` such that only the carrier
+contributes to the time derivative.
 
 Since a Gaussian never ends, we specify how many ``σ`` we require; the
 resulting time window will be rounded up to an integer amount of
 cycles of the fundamental.
+
+Required parameters:
+- `λ|T|f|ν|ω|ħω`,
+- `τ|σ`,
+- `σmax|tmax|Tmax`,
+- `env=:gauss` (optional, since [`GaussianEnvelope`](@ref) is the default envelope).
 """
 struct GaussianEnvelope{T} <: AbstractEnvelope
     τ::T # Intensity FWHM
+    σ::T # Intensity std.dev.
     α::T # Vector potential exponential coefficient
     σmax::T
     tmax::T # Maximum time. Time window: [-tmax,tmax]
@@ -50,7 +62,7 @@ envelope_types[:gauss] = GaussianEnvelope
 (env::GaussianEnvelope)(t) = exp(-env.α*t^2)
 
 show(io::IO, env::GaussianEnvelope) =
-    printfmt(io, "Gaussian envelope of duration {1:s} (intensity FWHM; ±{2:0.2f}σ) ",
+    printfmt(io, "Gaussian envelope of duration {1:s} (intensity FWHM; ±{2:0.2f}σ)",
              au2si_round(env.τ, u"s"), env.σmax)
 
 function gaussian_common!(field_params, carrier;
@@ -76,6 +88,7 @@ function gaussian_common!(field_params, carrier;
         σmax = tmax/σ
     end
     τ = austrip(field_params[:τ])
+    σ = austrip(field_params[:σ])
     α = 2log(2)/τ^2
     period = austrip(field_params[:T])
     ω = austrip(field_params[:ω])
@@ -89,12 +102,7 @@ function gaussian_common!(field_params, carrier;
     # Find the exponential coefficient for the vector potential that
     # will give the desired FWHM for the intensity profile.
     f = α -> begin
-        env = GaussianEnvelope(τ, α[1], σmax, tmax)
-        # TODO: This is not valid for e.g. elliptical fields, since
-        # the intensity is given as a sum(abs2, ...) over the z- and
-        # x-components, which will conceivably require another
-        # exponential coefficient for the vector potential to yield
-        # the desired FWHM.
+        env = GaussianEnvelope(τ, σ, α[1], σmax, tmax)
         field = make_temp_field(carrier, env, field_params)
         abs2(intensity(field, τ/2) - ω^2/2)
     end
@@ -112,8 +120,8 @@ function GaussianEnvelope(field_params::Dict{Symbol,Any}, carrier)
 
     gaussian_common!(field_params, carrier)
 
-    @unpack τ, α, σmax, tmax = field_params
-    GaussianEnvelope(austrip(τ), α, austrip(σmax), austrip(tmax))
+    @unpack τ, σ, α, σmax, tmax = field_params
+    GaussianEnvelope(austrip(τ), austrip(σ), α, austrip(σmax), austrip(tmax))
 end
 
 continuity(::GaussianEnvelope) = Inf
@@ -158,6 +166,46 @@ end
 
 # ** Truncated Gaussian
 
+@doc raw"""
+    TruncatedGaussianEnvelope
+
+Since a Gaussian function never ends, this envelope adds a soft truncation over a time interval:
+
+```math
+f(t)=
+\begin{cases}
+\exp(-\alpha t^2), & \abs{t} \leq t_{\textrm{off}},\\
+\exp\left\{
+-\alpha\left[
+t_{\textrm{off}} + \frac{2}{\pi}(t_{\textrm{max}} - t_{\textrm{off}})
+\tan\left(
+\frac{\pi}{2}
+\frac{\abs{t} - t_{\textrm{off}}}{t_{\textrm{max}} - t_{\textrm{off}}}
+\right)
+\right]^2
+\right\},
+& t_{\textrm{off}} < \abs{t} \leq t_{\textrm{max}}, \\
+0, & t_{\textrm{max}} < \abs{t}.
+\end{cases}
+```
+This is Eq. (72) of
+
+- Patchkovskii, S., & Muller, H. (2016). Simple, accurate, and
+  efficient implementation of 1-electron atomic time-dependent
+  Schrödinger equation in spherical coordinates. Computer Physics
+  Communications, 199,
+  153–169. [10.1016/j.cpc.2015.10.014](http://dx.doi.org/10.1016/j.cpc.2015.10.014)
+
+Required parameters:
+- `λ|T|f|ν|ω|ħω`,
+- `τ|σ`,
+- `toff`,
+- `σmax|tmax|Tmax`,
+`env=:trunc_gauss`.
+
+Beyond this, everything else is the same as for
+[`GaussianEnvelope`](@ref).
+"""
 struct TruncatedGaussianEnvelope{T} <: AbstractEnvelope
     τ::T # Intensity FWHM
     σ::T # Intensity std.dev.
@@ -180,7 +228,7 @@ function (env::TruncatedGaussianEnvelope{T})(t) where T
 end
 
 show(io::IO, env::TruncatedGaussianEnvelope) =
-    printfmt(io, "Truncated Gaussian envelope of duration {1:.4f} jiffies = {2:s} (intensity FWHM; turn-off from {3:s} to {4:s}) ",
+    printfmt(io, "Truncated Gaussian envelope of duration {1:.4f} jiffies = {2:s} (intensity FWHM; turn-off from {3:s} to {4:s})",
              env.τ, au2si_round(env.τ, u"s"),
              au2si_round(env.toff, u"s"), au2si_round(env.tmax, u"s"))
 
@@ -203,8 +251,33 @@ span(env::TruncatedGaussianEnvelope) = (-env.tmax, env.tmax)
 # TODO: Take truncation into account
 time_integral(env::TruncatedGaussianEnvelope) = env.σ*√(2π)
 
-# ** DONE Trapezoidal
+# ** Trapezoidal
 
+@doc raw"""
+    TrapezoidalEnvelope
+
+This is a very simple piecewise linear function:
+
+```math
+f(t)=
+\begin{cases}
+t/r_{\textrm{up}},
+& 0 \leq t < r_{\textrm{up}},\\
+1,
+& r_{\textrm{up}} \leq t < r_{\textrm{up}} + r_{\textrm{flat}}, \\
+1 - \frac{t-r_{\textrm{up}}-r_{\textrm{flat}}}{r_{\textrm{down}}},
+& r_{\textrm{up}} + r_{\textrm{flat}} \leq t < r_{\textrm{up}} + r_{\textrm{flat}} + r_{\textrm{down}}, \\
+0,
+& \textrm{else}.
+\end{cases}
+```
+
+Required parameters:
+- `λ|T|f|ν|ω|ħω`,
+- `ramp | (ramp_up & ramp_down)`,
+- `flat`,
+- `env=:trapezoidal | env=:tophat`.
+"""
 struct TrapezoidalEnvelope{T} <: AbstractEnvelope
     ramp_up::T
     flat::T
@@ -263,6 +336,24 @@ span(env::TrapezoidalEnvelope{T}) where T =
 
 # ** Cos²
 
+@doc raw"""
+    Cos²Envelope
+
+```math
+f(t) = \begin{cases}
+\cos^2 \left(\frac{\pi t}{cT}\right),
+& -1 \leq t/(cT) \leq 1,\\
+0, & \textrm{else},
+\end{cases}
+```
+where ``c`` is the number of cycles from zero to zero of the
+``\cos^2`` envelope and ``T`` the period time.
+
+Required parameters:
+- `λ|T|f|ν|ω|ħω`,
+- `cycles`,
+- `env=:cos² | env=:cos2`.
+"""
 struct Cos²Envelope{T} <: AbstractEnvelope
     cycles::T
     T::T
@@ -272,8 +363,8 @@ envelope_types[:cos2] = Cos²Envelope
 
 function (env::Cos²Envelope{T})(t) where T
     t /= (env.cycles*env.T)
-    if -1 ≤ 2t ≤ 1
-        cospi(t)^2
+    if -1 ≤ 2real(t) ≤ 1
+        abs2(cospi(t))
     else
         zero(T)
     end
