@@ -12,6 +12,7 @@ using FFTW
     include("field_creation.jl")
     include("gaussian_pulses.jl")
     include("envelopes.jl")
+    include("carriers.jl")
     include("arithmetic.jl")
 
     @testset "Time axis" begin
