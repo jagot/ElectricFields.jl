@@ -225,7 +225,7 @@ rotation_angle(R::AbstractMatrix) = acos(clamp((tr(R) - 1)/2, -1, 1))
 # https://en.wikipedia.org/wiki/Rotation_matrix#Determining_the_axis
 function rotation_axis(R::AbstractMatrix)
     ee = eigen(R)
-    i = argmin(abs.(ee.values) .- 1)
+    i = argmin(abs.(ee.values .- 1))
     normalize(real(ee.vectors[:,i]))
 end
 
