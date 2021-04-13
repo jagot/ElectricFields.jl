@@ -24,8 +24,14 @@ import ElectricFields: oneaunit,
     @test au2si(u"bohr") == 1u"bohr"
     @test au2si_round(1, u"nm") == "52.9177 pm"
 
-    @test I2si_round(1.0) == "35.0945 PW cm⁻²"
-    @test I2si_round(Iaustrip(1e14u"W/cm^2")) == "100.0000 TW cm⁻²"
+    withenv("UNITFUL_FANCY_EXPONENTS" => true) do
+        @test I2si_round(1.0) == "35.0945 PW cm⁻²"
+        @test I2si_round(Iaustrip(1e14u"W/cm^2")) == "100.0000 TW cm⁻²"
+    end
+    withenv("UNITFUL_FANCY_EXPONENTS" => false) do
+        @test I2si_round(1.0) == "35.0945 PW cm^-2"
+        @test I2si_round(Iaustrip(1e14u"W/cm^2")) == "100.0000 TW cm^-2"
+    end
     
     @test Iaustrip(ElectricFields.Iau) ≈ 1.0 rtol=1e-14
 end
