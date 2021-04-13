@@ -261,16 +261,19 @@ This is a very simple piecewise linear function:
 ```math
 f(t)=
 \begin{cases}
-t/r_{\textrm{up}},
-& 0 \leq t < r_{\textrm{up}},\\
+r/r_{\textrm{up}},
+& 0 \leq r < r_{\textrm{up}},\\
 1,
-& r_{\textrm{up}} \leq t < r_{\textrm{up}} + r_{\textrm{flat}}, \\
-1 - \frac{t-r_{\textrm{up}}-r_{\textrm{flat}}}{r_{\textrm{down}}},
-& r_{\textrm{up}} + r_{\textrm{flat}} \leq t < r_{\textrm{up}} + r_{\textrm{flat}} + r_{\textrm{down}}, \\
+& r_{\textrm{up}} \leq r < r_{\textrm{up}} + r_{\textrm{flat}}, \\
+1 - \frac{r-r_{\textrm{up}}-r_{\textrm{flat}}}{r_{\textrm{down}}},
+& r_{\textrm{up}} + r_{\textrm{flat}} \leq r < r_{\textrm{up}} + r_{\textrm{flat}} + r_{\textrm{down}}, \\
 0,
-& \textrm{else}.
+& \textrm{else},
 \end{cases}
+\quad
+r \defd t/T,
 ```
+where ``T`` is the period time of the carrier.
 
 Required parameters:
 - `λ|T|f|ν|ω|ħω`,
@@ -287,6 +290,15 @@ struct TrapezoidalEnvelope{T} <: AbstractEnvelope
     flat::T
     ramp_down::T
     period::T
+
+    function TrapezoidalEnvelope(ramp_up::T, flat::T, ramp_down::T, period::T) where T
+        ramp_up >= 0 || error("Negative up-ramp not supported")
+        flat >= 0 || error("Negative flat region not supported")
+        ramp_down >= 0 || error("Negative down-ramp not supported")
+        ramp_up + flat + ramp_down > 0 || error("Pulse length must be non-zero")
+
+        new{T}(ramp_up, flat, ramp_down, period)
+    end
 end
 envelope_types[:trapezoidal] = TrapezoidalEnvelope
 # Common alias
@@ -299,9 +311,9 @@ function (env::TrapezoidalEnvelope{T})(t) where T
     elseif t < env.ramp_up
         t/env.ramp_up
     elseif t < env.ramp_up + env.flat
-        1
+        one(T)
     elseif t < env.ramp_up + env.flat + env.ramp_down
-        1 - (t-env.ramp_up-env.flat)/env.ramp_down
+        one(T) - (t-env.ramp_up-env.flat)/env.ramp_down
     else
         zero(T)
     end
@@ -325,12 +337,6 @@ function TrapezoidalEnvelope(field_params::Dict{Symbol,Any}, args...)
     end
 
     @unpack ramp_up, flat, ramp_down, T = field_params
-
-    ramp_up >= 0 || error("Negative up-ramp not supported")
-    flat >= 0 || error("Negative flat region not supported")
-    ramp_down >= 0 || error("Negative down-ramp not supported")
-    ramp_up + flat + ramp_down > 0 || error("Pulse length must be non-zero")
-
     TrapezoidalEnvelope(ramp_up, flat, ramp_down, austrip(T))
 end
 
@@ -360,13 +366,18 @@ Required parameters:
 """
 struct Cos²Envelope{T} <: AbstractEnvelope
     cycles::T
-    T::T
+    period::T
+
+    function Cos²Envelope(cycles::T, period::T) where T
+        cycles >= 0 || error("Negative duration not supported")
+        new{T}(cycles, period)
+    end
 end
 envelope_types[:cos²] = Cos²Envelope
 envelope_types[:cos2] = Cos²Envelope
 
 function (env::Cos²Envelope{T})(t) where T
-    t /= (env.cycles*env.T)
+    t /= (env.cycles*env.period)
     if -1 ≤ 2real(t) ≤ 1
         abs2(cospi(t))
     else
@@ -382,15 +393,12 @@ function Cos²Envelope(field_params::Dict{Symbol,Any}, args...)
     test_field_parameters(field_params, [:cycles])
 
     @unpack cycles, T = field_params
-
-    cycles >= 0 || error("Negative duration not supported")
-
     Cos²Envelope(cycles, austrip(T))
 end
 
 continuity(::Cos²Envelope) = 0
 function span(env::Cos²Envelope)
-    s = env.cycles*env.T/2
+    s = env.cycles*env.period/2
     -s..s
 end
 

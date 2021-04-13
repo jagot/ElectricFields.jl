@@ -82,11 +82,21 @@ import ElectricFields: time_integral
         env = envelope(F)
         @test string(env) == "Truncated Gaussian envelope of duration 3.0000 jiffies = 72.5665 as (intensity FWHM; turn-off from 96.7554 as to 120.9442 as)"
 
+        σ = 3.0/(2*√(2log(2)))
+        @test env.σ ≈ σ
+
         α = env.α
         for t = -3.5:0.5:3.5
             @test env(t) ≈ exp(-α*t^2) rtol=1e-12
         end
+        for t = 4.2:0.1:4.9
+            @test 0 < env(t) < exp(-α*t^2)
+        end
+
+        @test continuity(F) == Inf
 
         @test span(F) == -5..5
+
+        @test time_integral(F) ≈ σ*√(2π)
     end
 end
