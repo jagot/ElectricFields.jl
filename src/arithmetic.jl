@@ -58,11 +58,7 @@ vector_potential(f::SumField, t::Number) =
 
 polarization(f::SumField) = polarization(f.a)
 
-function span(f::SumField)
-    sa = span(f.a)
-    sb = span(f.b)
-    (min(sa[1], sb[1]), max(sa[2],sb[2]))
-end
+span(f::SumField) = span(f.a) ∪ span(f.b)
 steps(f::SumField, ndt::Int) = steps(f, ndt/min(austrip.(period.((f.a,f.b)))...))
 
 for fun in [:wavelength, :period, :frequency, :wavenumber, :fundamental, :photon_energy]
@@ -145,7 +141,10 @@ function show(io::IO, f::DelayedField)
              f.t₀, au2si_round(f.t₀, u"s"))
 end
 
-span(f::DelayedField) = span(parent(f)) .+ f.t₀
+function span(f::DelayedField)
+    s = span(parent(f))
+    (s.left+f.t₀)..(s.right+f.t₀)
+end
 
 Base.parent(f::DelayedField) = f.a
 
@@ -196,14 +195,14 @@ function show(io::IO, f::PaddedField)
 end
 
 function vector_potential(f::PaddedField, t::T) where {T<:Number}
-    a,b = span(f.field)
-    v = vector_potential(parent(f), min(max(t, a), b))
-    a ≤ t ≤ b ? v : zero(v)
+    s = span(f.field)
+    v = vector_potential(parent(f), clamp(t, endpoints(s)...))
+    t ∈ s ? v : zero(v)
 end
 
 function span(f::PaddedField)
-    a,b = span(f.field)
-    a-f.a, b+f.b
+    a,b = endpoints(span(f.field))
+    (a-f.a)..(b+f.b)
 end
 
 time_integral(f::PaddedField) =
@@ -240,10 +239,7 @@ end
 
 Base.parent(f::WindowedField) = f.field
 
-function span(f::WindowedField)
-    a,b = span(f.field)
-    max(a,f.a), min(b,f.b)
-end
+span(f::WindowedField) = span(f.field) ∩ f.a..f.b
 
 phase_shift(f::WindowedField, δϕ) =
     WindowedField(phase_shift(parent(f), δϕ), f.a, f.b)

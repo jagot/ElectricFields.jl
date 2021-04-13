@@ -125,7 +125,7 @@ function GaussianEnvelope(field_params::Dict{Symbol,Any}, carrier)
 end
 
 continuity(::GaussianEnvelope) = Inf
-span(env::GaussianEnvelope) = (-env.tmax, env.tmax)
+span(env::GaussianEnvelope) = -env.tmax..env.tmax
 
 time_integral(env::GaussianEnvelope) = env.σ*√(2π)
 
@@ -246,7 +246,7 @@ function TruncatedGaussianEnvelope(field_params::Dict{Symbol,Any}, carrier)
 end
 
 continuity(::TruncatedGaussianEnvelope) = Inf # This is not exactly true
-span(env::TruncatedGaussianEnvelope) = (-env.tmax, env.tmax)
+span(env::TruncatedGaussianEnvelope) = -env.tmax..env.tmax
 
 # TODO: Take truncation into account
 time_integral(env::TruncatedGaussianEnvelope) = env.σ*√(2π)
@@ -336,7 +336,7 @@ end
 
 continuity(::TrapezoidalEnvelope) = 0
 span(env::TrapezoidalEnvelope{T}) where T =
-    (zero(T), (env.ramp_up + env.flat + env.ramp_down)*env.period)
+    zero(T)..((env.ramp_up + env.flat + env.ramp_down)*env.period)
 
 # ** Cos²
 
@@ -391,7 +391,7 @@ end
 continuity(::Cos²Envelope) = 0
 function span(env::Cos²Envelope)
     s = env.cycles*env.T/2
-    (-s, s)
+    -s..s
 end
 
 # ** Exports

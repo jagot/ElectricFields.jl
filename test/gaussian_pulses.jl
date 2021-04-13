@@ -40,7 +40,7 @@ import ElectricFields: time_integral
         @test env3.tmax == 6.0
 
         @test continuity(F3) == Inf
-        @test span(F3) == (-6.0,6.0)
+        @test span(F3) == -6.0..6.0
         @test time_integral(F3) ≈ 3.0*√(2π)
     end
 
@@ -87,6 +87,6 @@ import ElectricFields: time_integral
             @test env(t) ≈ exp(-α*t^2) rtol=1e-12
         end
 
-        @test span(F) == (-5,5)
+        @test span(F) == -5..5
     end
 end

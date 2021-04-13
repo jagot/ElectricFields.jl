@@ -2,6 +2,7 @@ using ElectricFields
 using Test
 using Unitful
 using UnitfulAtomic
+using IntervalSets
 using FFTW
 
 @testset "ElectricFields.jl" begin

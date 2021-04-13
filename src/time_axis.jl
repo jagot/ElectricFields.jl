@@ -23,7 +23,7 @@ If `fs<:Integer`, the sampling frequency is computed as `fs/T`,
 i.e. `fs` steps per cycle.
 """
 steps(f::AbstractField, fs::Real=default_sampling_frequency(f)) =
-    ceil(Int, fs*abs(-(span(f)...)))
+    ceil(Int, fs*abs(-(endpoints(span(f))...)))
 steps(f::AbstractField, ndt::Int) = steps(f, ndt/austrip(period(f)))
 
 """
@@ -34,7 +34,7 @@ of the envelope in the number of [`steps`](@ref) given by the sample
 frequency `fs`.
 """
 function timeaxis(f::AbstractField, fs::Number=default_sampling_frequency(f))
-    a,b = span(f)
+    a,b = endpoints(span(f))
     num_steps = steps(f, fs)
     if num_steps > 1
         range(a, stop=b, length=num_steps)
@@ -53,7 +53,7 @@ Alternate interface that constructs the time axis with `N` steps
 starting from `first(span(f))`, with intervals of `dt`.
 """
 function timeaxis(f::AbstractField, (N,dt)::Tuple{<:Integer,<:Real})
-    a,b = span(f)
+    a,b = endpoints(span(f))
     t = range(a, length=N, step=dt)
     t[end] < b && @warn "$(N) steps of $(dt) jiffies does not cover the span of the field, $(b) ∉ $(t)"
     t

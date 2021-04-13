@@ -592,7 +592,7 @@ amplitude(f::ConstantField) = f.E₀
 polarization(::ConstantField) = LinearPolarization()
 
 duration(f::ConstantField) = f.tmax
-span(f::ConstantField{T}) where T = (zero(T), f.tmax)
+span(f::ConstantField{T}) where T = zero(T)..f.tmax
 
 # These methods are just for convenience (to be able to establish a
 # time base for calculations), but they are not physical as such.
