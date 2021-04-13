@@ -11,6 +11,7 @@ using FFTW
     include("rotations.jl")
     include("field_creation.jl")
     include("gaussian_pulses.jl")
+    include("arithmetic.jl")
 
     @testset "Time axis" begin
         @field(F) do

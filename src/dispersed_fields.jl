@@ -6,7 +6,7 @@
 #   implementation for evaluating a =DispersedField= at an arbitrary
 #   time point.
 
-mutable struct DispersedField <: AbstractField
+struct DispersedField <: AbstractField
     a::AbstractField
     m::Medium
     d::Unitful.Length

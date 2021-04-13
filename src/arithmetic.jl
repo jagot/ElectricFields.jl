@@ -20,7 +20,57 @@
 
 import Base: +
 
-mutable struct SumField{A,B} <: AbstractField
+"""
+    SumField(a, b)
+
+The linear combination of two fields `a` and `b`.
+
+# Example
+
+```jldoctest
+julia> @field(A) do
+           I₀ = 1.0
+           T = 2.0
+           σ = 3.0
+           Tmax = 3.0
+       end
+Linearly polarized field with
+  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm⁻² =>
+    - E₀ = 1.0000e+00 au = 514.2207 GV m⁻¹
+    - A₀ = 0.3183 au
+  – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV)
+  – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+
+julia> @field(B) do
+           I₀ = 0.5
+           T = 1.0
+           σ = 3.0
+           Tmax = 3.0
+       end
+Linearly polarized field with
+  - I₀ = 5.0000e-01 au = 1.7547226e16 W cm⁻² =>
+    - E₀ = 7.0711e-01 au = 363.6089 GV m⁻¹
+    - A₀ = 0.1125 au
+  – a Fixed carrier @ λ = 7.2516 nm (T = 24.1888 as, ω = 6.2832 Ha = 170.9742 eV)
+  – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±1.00σ)
+
+julia> A+B
+┌ Linearly polarized field with
+│   - I₀ = 1.0000e+00 au = 3.5094452e16 W cm⁻² =>
+│     - E₀ = 1.0000e+00 au = 514.2207 GV m⁻¹
+│     - A₀ = 0.3183 au
+│   – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV)
+│   – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+⊕
+│ Linearly polarized field with
+│   - I₀ = 5.0000e-01 au = 1.7547226e16 W cm⁻² =>
+│     - E₀ = 7.0711e-01 au = 363.6089 GV m⁻¹
+│     - A₀ = 0.1125 au
+│   – a Fixed carrier @ λ = 7.2516 nm (T = 24.1888 as, ω = 6.2832 Ha = 170.9742 eV)
+└   – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±1.00σ)
+```
+"""
+struct SumField{A,B} <: AbstractField
     a::A
     b::B
     function SumField(a::A, b::B) where {A<:AbstractField, B<:AbstractField}
@@ -105,30 +155,110 @@ end
 
 import Base: -
 
-mutable struct NegatedField{F<:AbstractField} <: WrappedField
+"""
+    NegatedField(a)
+
+Represents a field whose [`vector_potential`](@ref) is the negative of
+that of `a`.
+
+# Example
+
+```jldoctest
+julia> @field(A) do
+           I₀ = 1.0
+           T = 2.0
+           σ = 3.0
+           Tmax = 3.0
+       end
+Linearly polarized field with
+  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm⁻² =>
+    - E₀ = 1.0000e+00 au = 514.2207 GV m⁻¹
+    - A₀ = 0.3183 au
+  – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV)
+  – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+
+julia> B = -A
+ElectricFields.NegatedField{ElectricFields.LinearField{ElectricFields.FixedCarrier{Quantity{Float64, 𝐋, Unitful.FreeUnits{(Eₕ⁻¹, ħ, c), 𝐋, nothing}}, Quantity{Float64, 𝐓, Unitful.FreeUnits{(Eₕ⁻¹, ħ), 𝐓, nothing}}, Float64, Int64}, ElectricFields.GaussianEnvelope{Float64}, Float64}}(Linearly polarized field with
+  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm⁻² =>
+    - E₀ = 1.0000e+00 au = 514.2207 GV m⁻¹
+    - A₀ = 0.3183 au
+  – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV)
+  – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ))
+
+julia> field_amplitude(A, 0.5)
+0.008830294277641045
+
+julia> field_amplitude(B, 0.5)
+-0.008830294277641045
+
+julia> field_amplitude(A-A, 0.5)
+-0.0
+```
+"""
+struct NegatedField{F<:AbstractField} <: WrappedField
     a::F
 end
-
-(f::NegatedField)(t::Unitful.Time) = -f.a(t)
-(f::NegatedField)(fs::Unitful.Frequency=default_sampling_frequency(f)) = -f.a(fs)
 
 -(a::AbstractField,
   b::AbstractField) = a + NegatedField(b)
 -(a::AbstractField) = NegatedField(a)
 
-mutable struct NegatedCarrier <: AbstractCarrier
-    carrier::AbstractCarrier
-end
-(carrier::NegatedCarrier)(t::Unitful.Time) = -carrier.carrier(t)
-
-carrier(f::NegatedField) = NegatedCarrier(carrier(f.a), f.t₀)
-envelope(f::NegatedField) = envelope(f.a)
-
 Base.parent(f::NegatedField) = f.a
+vector_potential(f::NegatedField, t) = -vector_potential(parent(f), t)
 
 # ** Delayed fields
 
-mutable struct DelayedField{F<:AbstractField,T} <: WrappedField
+"""
+    DelayedField(a, t₀)
+
+Represents a delayed copy of `a`, that appears at time `t₀` instead of
+at `0`, i.e. `t₀>0` implies the field comes _later_.
+
+# Examples
+
+```jldoctest
+julia> @field(A) do
+           I₀ = 1.0
+           T = 2.0
+           σ = 3.0
+           Tmax = 3.0
+       end
+Linearly polarized field with
+  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm⁻² =>
+    - E₀ = 1.0000e+00 au = 514.2207 GV m⁻¹
+    - A₀ = 0.3183 au
+  – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV)
+  – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+
+julia> delay(A, 1u"fs")
+Linearly polarized field with
+  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm⁻² =>
+    - E₀ = 1.0000e+00 au = 514.2207 GV m⁻¹
+    - A₀ = 0.3183 au
+  – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV)
+  – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+  – delayed by 41.3414 jiffies = 1.0000 fs
+
+julia> delay(A, 1.0)
+Linearly polarized field with
+  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm⁻² =>
+    - E₀ = 1.0000e+00 au = 514.2207 GV m⁻¹
+    - A₀ = 0.3183 au
+  – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV)
+  – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+  – delayed by 1.0000 jiffies = 24.1888 as
+
+julia> delay(A, π*u"rad")
+Linearly polarized field with
+  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm⁻² =>
+    - E₀ = 1.0000e+00 au = 514.2207 GV m⁻¹
+    - A₀ = 0.3183 au
+  – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV)
+  – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+  – delayed by 1.0000 jiffies = 24.1888 as
+```
+"""
+struct DelayedField{F<:AbstractField,T} <: WrappedField
     a::F
     t₀::T
 end
@@ -152,9 +282,8 @@ Base.parent(f::DelayedField) = f.a
 #     Convention for delayed fields: a field delayed by a /positive/
 #     time, comes /later/, i.e. we write \(f(t-\delta t)\).
 
-delay(a::AbstractField, t₀::Unitful.Time) = DelayedField(a, austrip(t₀))
-delay(a::AbstractField, nT::Real) = delay(a, nT*period(a))
-delay(a::AbstractField, ϕ::Quantity{Float64, Unitful.Dimensions{()}}) = delay(a, ϕ/(2π*u"rad"))
+delay(a::AbstractField, t₀::Union{<:Real,<:Unitful.Time}) = DelayedField(a, austrip(t₀))
+delay(a::AbstractField, ϕ::Quantity{<:Real, NoDims}) = delay(a, (ϕ/(2π*u"rad"))*period(a))
 
 delay(a::DelayedField) = a.t₀
 delay(a::AbstractField) = 0
@@ -169,6 +298,35 @@ export delay
 Wrapper around any electric `field`, padded with `a` units of time
 before, and `b` units of time after the ordinary [`span`](@ref) of the
 field.
+
+# Example
+
+```jldoctest
+julia> @field(A) do
+           I₀ = 1.0
+           T = 2.0
+           σ = 3.0
+           Tmax = 3.0
+       end
+Linearly polarized field with
+  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm⁻² =>
+    - E₀ = 1.0000e+00 au = 514.2207 GV m⁻¹
+    - A₀ = 0.3183 au
+  – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV)
+  – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+
+julia> B = PaddedField(A, 10.0, 30.0)
+Padding before 10.0000 jiffies = 241.8884 as and after 30.0000 jiffies = 725.6653 as of
+Linearly polarized field with
+  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm⁻² =>
+    - E₀ = 1.0000e+00 au = 514.2207 GV m⁻¹
+    - A₀ = 0.3183 au
+  – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV)
+  – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+
+julia> span(A), span(B)
+(-6.0..6.0, -16.0..36.0)
+```
 """
 struct PaddedField{Field<:AbstractField,T} <: WrappedField
     field::Field
@@ -217,6 +375,41 @@ export PaddedField
 
 Wrapper around any electric `field`, windowed such that it is zero
 outside the time interval `a..b`.
+
+# Example
+
+```jldoctest
+julia> @field(A) do
+           I₀ = 1.0
+           T = 2.0
+           σ = 3.0
+           Tmax = 3.0
+       end
+Linearly polarized field with
+  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm⁻² =>
+    - E₀ = 1.0000e+00 au = 514.2207 GV m⁻¹
+    - A₀ = 0.3183 au
+  – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV)
+  – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+
+julia> B = WindowedField(A, -3, 5)
+Window from -3.0000 jiffies = -72.5665 as to 5.0000 jiffies = 120.9442 as of
+Linearly polarized field with
+  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm⁻² =>
+    - E₀ = 1.0000e+00 au = 514.2207 GV m⁻¹
+    - A₀ = 0.3183 au
+  – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV)
+  – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+
+julia> span(A), span(B)
+(-6.0..6.0, -3.0..5.0)
+
+julia> field_amplitude(A, -4)
+-0.6395632315635295
+
+julia> field_amplitude(B, -4)
+0.0
+```
 """
 struct WindowedField{Field<:AbstractField,T} <: WrappedField
     field::Field
@@ -239,7 +432,7 @@ end
 
 Base.parent(f::WindowedField) = f.field
 
-span(f::WindowedField) = span(f.field) ∩ f.a..f.b
+span(f::WindowedField) = span(parent(f)) ∩ (f.a..f.b)
 
 phase_shift(f::WindowedField, δϕ) =
     WindowedField(phase_shift(parent(f), δϕ), f.a, f.b)
