@@ -464,14 +464,6 @@ vector_potential(f::TransverseField, t::Number) = f.A₀*f.env(t)*(f.R*f.carrier
 intensity(f::TransverseField) = f.I₀
 amplitude(f::TransverseField) = f.E₀
 
-rotation_angle(R::AbstractMatrix) = acos(clamp((tr(R) - 1)/2, -1, 1))
-# https://en.wikipedia.org/wiki/Rotation_matrix#Determining_the_axis
-function rotation_axis(R::AbstractMatrix)
-    ee = eigen(R)
-    i = argmin(abs.(ee.values .- 1))
-    normalize(real(ee.vectors[:,i]))
-end
-
 rotation_matrix(f::TransverseField) = f.R
 
 function show(io::IO, f::TransverseField)

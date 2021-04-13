@@ -18,6 +18,7 @@ import Base: show
 using Formatting
 
 include("units.jl")
+include("rotations.jl")
 include("relation_dsl.jl")
 
 include("field_types.jl")
