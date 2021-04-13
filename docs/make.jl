@@ -22,14 +22,17 @@ makedocs(;
                     :mat => ["\\mathsf{#1}", 1],
                     :conj => ["#1^*", 1],
                     :im => "\\mathrm{i}",
-                    :diff => ["\\mathrm{d}#1\\,", 1]
+                    :diff => ["\\mathrm{d}#1\\,", 1],
+                    :bmat => ["\\begin{bmatrix}#1\\end{bmatrix}", 1]
                 )
             )
         ))
     ),
     pages=[
         "Home" => "index.md",
+        "Field types" => "field_types.md",
         "Envelopes" => "envelopes.md",
+        "Carriers" => "carriers.md",
         "Reference" => "reference.md",
     ],
     doctest=false

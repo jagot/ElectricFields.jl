@@ -277,6 +277,10 @@ Required parameters:
 - `ramp | (ramp_up & ramp_down)`,
 - `flat`,
 - `env=:trapezoidal | env=:tophat`.
+
+Beware that this envelope can introduce artifacts at the ends of the
+pulse, such that the electric field is non-vanishing, depending of
+e.g. the phase of the carrier.
 """
 struct TrapezoidalEnvelope{T} <: AbstractEnvelope
     ramp_up::T

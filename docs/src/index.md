@@ -26,20 +26,20 @@ At the moment, only electric fields that are the solution of the
 [Helmholtz
 equation](https://en.wikipedia.org/wiki/Helmholtz_equation),
 i.e. those that are separable in the time and space coordinates, are
-supported. Further more, the spatial dependence is neglected entirely,
-and only the temporal behaviour is modelled. This appropriate when
-studying systems which are smaller than the fundamental wavelength of
-the field, such as atoms in a laser field. It may be problematic for
-larger molecules, which can be sensitive to the spatial variation of
-the field.
+supported. Further more, the spatial dependence is neglected entirely
+(long wavelength approximation), and only the temporal behaviour is
+modelled. This appropriate when studying systems which are smaller
+than the fundamental wavelength of the field, such as atoms in a laser
+field. It may be problematic for larger molecules, which can be
+sensitive to the spatial variation of the field.
 
 The temporal structure of the field is modelled as
 ```math
-\vec{A}(t) = A_0 f(t) \Im\{\vec{\epsilon} \exp[\im(\omega t + \phi)]\},
+\vec{A}(t) = A_0 f(t) \Im\{\vec{J} \exp[\im(\omega t + \phi)]\},
 ```
 where ``A_0`` is the peak _vector potential_, ``f(t)`` is the
 _envelope_ (which does not have to be slowly varying in time, i.e. can
-be ultrashort), ``\vec{\epsilon}`` is the _polarization vector_, and
+be ultrashort), ``\vec{J}`` is the [_Jones vector_](https://en.wikipedia.org/wiki/Jones_calculus#Jones_vector), and
 ``\exp[\im(\omega t + \phi)]`` is the _carrier_. At present only
 linear polarization, or polarization transverse to the direction of
 propagation is supported, i.e. no longitudinal polarization is

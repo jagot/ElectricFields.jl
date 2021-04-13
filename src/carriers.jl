@@ -5,9 +5,16 @@ carrier_types = Dict{Symbol,Any}()
 max_frequency(carrier::AbstractCarrier) = frequency(carrier)
 
 # ** Fixed carrier
-#    The carrier is fixed in the sense that the instantaneous frequency
-#    is constant throughout the pulse.
+@doc raw"""
+    FixedCarrier <: LinearCarrier
 
+The carrier is fixed in the sense that the instantaneous frequency is
+constant throughout the pulse, i.e. no chirp/dispersion:
+
+```math
+\Im\{\exp[\im(\omega t + \phi)]\} = \sin(\omega t + \phi).
+```
+"""
 struct FixedCarrier{Λ,Tt,Ω,Φ} <: LinearCarrier
     λ::Λ
     T::Tt
@@ -50,6 +57,16 @@ end
 
 # *** Linear
 
+@doc raw"""
+    LinearTransverseCarrier
+
+The carrier is identical to [`FixedCarrier`](@ref), but explicitly in
+3d, with the polarization taken along the ``z`` axis:
+
+```math
+\vec{C}(t) = \bmat{0\\0\\\sin(\omega t + \phi)}.
+```
+"""
 struct LinearTransverseCarrier{Carrier<:LinearCarrier} <: TransverseCarrier
     carrier::Carrier
 end
@@ -75,6 +92,20 @@ phase_shift(c::LinearTransverseCarrier, δϕ) =
 
 # *** Elliptical
 
+@doc raw"""
+    EllipticalCarrier
+
+An elliptically polarized field (of which circularly and linearly
+polarized are special cases) is given in the canonical coordinate system as
+
+```math
+\vec{C}(t) = \frac{1}{\sqrt{1+\xi^2}}
+\bmat{\xi\cos\theta\\0\\\sin\theta},
+\quad
+\theta \defd \omega t + \phi,
+```
+i.e. with the principal axis of the ellipse along ``z``.
+"""
 struct EllipticalCarrier{Λ,Tt,Ω,Φ,Ξ} <: TransverseCarrier
     λ::Λ
     T::Tt

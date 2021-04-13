@@ -7,8 +7,25 @@ struct LinearPolarization <: Polarization end
 struct ArbitraryPolarization <: Polarization end
 Base.Broadcast.broadcastable(p::Polarization) = Ref(p)
 
+"""
+    AbstractCarrier
+
+Any carrier, of any dimensionality.
+"""
 abstract type AbstractCarrier end
+"""
+    LinearCarrier <: AbstractCarrier
+
+Any carrier which is one-dimensional, i.e. linearly polarized (by
+convention along ``z``).
+"""
 abstract type LinearCarrier <: AbstractCarrier end
+"""
+    TransverseCarrier <: AbstractCarrier
+
+Any carrier which is two-dimensional, i.e. polarized in the plane
+perpendicular to the direction of propagation.
+"""
 abstract type TransverseCarrier <: AbstractCarrier end
 
 abstract type AbstractEnvelope end
@@ -23,6 +40,13 @@ vector_potential(::ArbitraryPolarization, f, t::AbstractVector) =
     transpose(reduce(hcat, vector_potential.(f, t)))
 vector_potential(f::AbstractField, t::AbstractVector) =
     vector_potential(polarization(f), f, t)
+
+@doc raw"""
+    vector_potential(f, t)
+
+Compute the vector potential ``\vec{A}(t)`` of the field `f`.
+"""
+function vector_potential end
 
 field_amplitude(::LinearPolarization, f, t::AbstractVector) =
     field_amplitude.(f, t)
@@ -109,7 +133,7 @@ end
 
 Compute the intensity _envelope_ of the field `f` at time `t` by
 applying [`phase_shift`](@ref) to the [`carrier`](@ref) and looking
-for the maximum.
+for the maximal [`instantaneous_intensity`](@ref).
 """
 intensity(f::AbstractField, t::Number) = intensity(polarization(f), f, t)
 
@@ -121,18 +145,74 @@ Compute the field amplitude envelope as the square root of
 """
 field_envelope(f::AbstractField, t::Number) = √(intensity(f, t))
 
+@doc raw"""
+    wavelength(f)
+
+Return the carrier wavelength ``\lambda`` of `f`.
+"""
 wavelength(f::AbstractField) = wavelength(carrier(f))
+
+"""
+    period(f)
+
+Return the carrier period time ``T`` of `f`.
+"""
 period(f::AbstractField) = period(carrier(f))
 
+"""
+    frequency(f)
+
+Return the carrier frequency ``f`` of the field `f`.
+"""
 frequency(f::AbstractField) = frequency(carrier(f))
+
+"""
+    max_frequency(f)
+
+Return the maximum carrier frequency ``f`` in case of a composite
+field `f`.
+"""
 max_frequency(f::AbstractField) = max_frequency(carrier(f))
+
+@doc raw"""
+    wavenumber(f)
+
+Return the carrier wavenumber ``\nu`` of the field `f`.
+"""
 wavenumber(f::AbstractField) = wavenumber(carrier(f))
 fundamental(f::AbstractField) = fundamental(carrier(f))
+
+@doc raw"""
+    photon_energy(f)
+
+Return the carrier photon energy ``\hbar\omega`` of the field `f`.
+"""
 photon_energy(f::AbstractField) = photon_energy(carrier(f))
 
+@doc raw"""
+    duration(f)
+
+Return the pulse duration ``\tau`` of the field `f`.
+"""
 duration(f::AbstractField) = duration(envelope(f))
+
+@doc raw"""
+    continuity(f)
+
+Return the pulse continuity, i.e. differentiability, of the field `f`.
+"""
 continuity(f::AbstractField) = continuity(envelope(f))
 
+@doc raw"""
+    fluence(f)
+
+Compute the fluence of the field `f`, i.e.
+```math
+\frac{1}{\hbar\omega}
+\int\diff{t} I(t),
+```
+where ``I(t)`` is the [`intensity`](@ref) envelope of the pulse.
+"""
 function fluence(F::AbstractField)
     ∫t = time_integral(F)
     Iau = austrip(3.5094452e16*u"W"/(u"cm"^2))
@@ -140,11 +220,101 @@ function fluence(F::AbstractField)
     ∫t*Iau*intensity(F)/photon_energy(F)
 end
 
+"""
+    intensity(f)
+
+Return the peak intensity of the field `f`.
+"""
+function intensity end
+
+"""
+    amplitude(f)
+
+Return the peak amplitude of the field `f`.
+"""
+function amplitude end
+
+"""
+    carrier(f)
+
+Return the carrier of the field `f`.
+"""
+function carrier end
+
+"""
+    envelope(f)
+
+Return the envelope of the field `f`.
+"""
+function envelope end
+
+"""
+    phase(c)
+
+Return the phase of the carrier `c`.
+"""
+function phase end
+
+"""
+    phase_shift(f, δϕ)
+
+Return a new field whose [`carrier`](@ref) has been phase-shifted by
+`δϕ`.
+"""
+function phase_shift end
+
+"""
+    dimension(f)
+
+Return the number of dimensions of the field `f`.
+"""
+function dimensions end
+
+
+
 # * Linear field
 
+"""
+    LinearField
+
+Linearly polarized field, i.e. the field amplitude is
+scalar. Consisting of a peak vector potential, a vector envelope, and
+a carrier, which has to be a [`LinearCarrier`](@ref).
+
+# Examples
+
+```jldoctest
+julia> @field(A) do
+       I₀ = 1e14u"W/cm^2"
+       λ = 800.0u"nm"
+       τ = 6.2u"fs"
+       tmax = 20.0u"fs"
+       end
+Linearly polarized field with
+  - I₀ = 2.8495e-03 au = 1.0e14 W cm⁻² =>
+    - E₀ = 5.3380e-02 au = 27.4492 GV m⁻¹
+    - A₀ = 0.9372 au
+  – a Fixed carrier @ λ = 800.0000 nm (T = 2.6685 fs, ω = 0.0570 Ha = 1.5498 eV)
+  – and a Gaussian envelope of duration 6.2000 fs (intensity FWHM; ±8.11σ)
+
+julia> @field(B) do
+       I₀ = 0.05
+       ω = 1.0
+       ramp = 1.0
+       flat = 3.0
+       env = :trapezoidal
+       end
+Linearly polarized field with
+  - I₀ = 5.0000e-02 au = 1.7547226e15 W cm⁻² =>
+    - E₀ = 2.2361e-01 au = 114.9832 GV m⁻¹
+    - A₀ = 0.2236 au
+  – a Fixed carrier @ λ = 45.5634 nm (T = 151.9830 as, ω = 1.0000 Ha = 27.2114 eV)
+  – and a /1‾3‾1\\ cycles trapezoidal envelope
+```
+"""
 struct LinearField{Carrier<:LinearCarrier,Envelope,T} <: AbstractField
     carrier::Carrier
-    env::Envelope # Amplitude envelope
+    env::Envelope # Vector potential envelope
     I₀::T
     E₀::T
     A₀::T
@@ -200,9 +370,82 @@ rotation_matrix(f::LinearField{<:Any,<:Any,T}) where T = SMatrix{3,3,T}(I)
 
 # * Transverse field
 
+@doc raw"""
+    TransverseField
+
+Transversely polarized field, i.e the polarization vector is confined
+to the plane that is perpendicular to the direction of propagation. If
+the propagation vector is not rotated, this plane is the ``z-x``, with
+``z`` by convention being the principal polarization axis, and ``y``
+is the direction of propagation.
+
+The formal definition is
+```math
+\vec{A}(t)\defd A_0 f(t) \Im\{\vec{J}\exp[\im(\omega t + \phi)]\},
+```
+using the complex-valued [Jones vector](https://en.wikipedia.org/wiki/Jones_calculus#Jones_vector) ``\vec{J}``,
+but in practice, we use a rotation matrix ``\mat{R}`` and the [Carriers](@ref)
+give the amplitudes in the canonical, unrotated coordinate sytem:
+```math
+\vec{A}(t) = A_0 f(t) \mat{R}\vec{C}(t).
+```
+
+# Examples
+
+```jldoctest
+julia> # Circularly polarized field
+
+julia> @field(A) do
+       I₀ = 1e14u"W/cm^2"
+       λ = 800.0u"nm"
+       τ = 6.2u"fs"
+       tmax = 20.0u"fs"
+       ξ = 1.0
+       end
+Transversely polarized field with
+  - I₀ = 2.8495e-03 au = 1.0e14 W cm⁻² =>
+    - E₀ = 5.3380e-02 au = 27.4492 GV m⁻¹
+    - A₀ = 0.9372 au
+  – a Elliptical carrier with ξ = 1.00 (RCP) @ λ = 800.0000 nm (T = 2.6685 fs, ω = 0.0570 Ha = 1.5498 eV)
+  – and a Gaussian envelope of duration 6.2000 fs (intensity FWHM; ±8.11σ)
+
+julia> # Linearly polarized field, but explicitly in 3D
+
+julia> @field(B) do
+       I₀ = 1e14u"W/cm^2"
+       λ = 800.0u"nm"
+       τ = 6.2u"fs"
+       tmax = 20.0u"fs"
+       kind = :transverse
+       end
+Transversely polarized field with
+  - I₀ = 2.8495e-03 au = 1.0e14 W cm⁻² =>
+    - E₀ = 5.3380e-02 au = 27.4492 GV m⁻¹
+    - A₀ = 0.9372 au
+  – a LinearTransverseCarrier: Fixed carrier @ λ = 800.0000 nm (T = 2.6685 fs, ω = 0.0570 Ha = 1.5498 eV)
+  – and a Gaussian envelope of duration 6.2000 fs (intensity FWHM; ±8.11σ)
+
+julia> # Linearly polarized field, rotated
+
+julia> @field(C) do
+       I₀ = 1e14u"W/cm^2"
+       λ = 800.0u"nm"
+       τ = 6.2u"fs"
+       tmax = 20.0u"fs"
+       rotation = π/3, [0,0,1]
+       end
+Transversely polarized field with
+  - I₀ = 2.8495e-03 au = 1.0e14 W cm⁻² =>
+    - E₀ = 5.3380e-02 au = 27.4492 GV m⁻¹
+    - A₀ = 0.9372 au
+  – a LinearTransverseCarrier: Fixed carrier @ λ = 800.0000 nm (T = 2.6685 fs, ω = 0.0570 Ha = 1.5498 eV)
+  – a Gaussian envelope of duration 6.2000 fs (intensity FWHM; ±8.11σ)
+  – and a rotation of 0.33π about [0.000, 0.000, 1.000]
+```
+"""
 struct TransverseField{Carrier<:TransverseCarrier,Envelope,Rotation,T} <: AbstractField
     carrier::Carrier
-    env::Envelope # Amplitude envelope
+    env::Envelope # Vector potential envelope
     I₀::T
     E₀::T
     A₀::T
@@ -275,6 +518,40 @@ make_temp_field(carrier::TransverseCarrier, env, params,) =
 
 # * Constant field
 
+@doc raw"""
+    ConstantField(tmax, E₀)
+
+The field amplitude of a constant field is defined as
+```math
+F(t) = \begin{cases}
+E_0, & 0 \leq t \leq t_{\textrm{max}}, \\
+0, & \textrm{else},
+\end{cases}
+\implies
+A(t) = \begin{cases}
+-E_0t, & 0 \leq t \leq t_{\textrm{max}}, \\
+0, & \textrm{else}.
+\end{cases}
+```
+
+Since the vector potential is non-zero at the end of the pulse, this
+is a _non-propagating_ field, i.e. it does not correspond to a freely
+propagating pulse. It however corresponds to the field in an idealized
+capacitor, i.e. two plates of opposite charge.
+
+# Example
+
+```jldoctest
+julia> @field(F) do
+       I₀ = 1e13u"W/cm^2"
+       tmax = 3.0u"fs"
+       kind = :constant
+       end
+Constant field of
+  - 124.02412000600552 jiffies = 3.0000 fs duration, and
+  - E₀ = 1.6880e-02 au = 8.680210982018475e9 V m⁻¹
+```
+"""
 struct ConstantField{T} <: AbstractField
     tmax::T
     E₀::T
