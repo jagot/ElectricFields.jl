@@ -34,14 +34,14 @@ of the envelope in the number of [`steps`](@ref) given by the sample
 frequency `fs`.
 """
 function timeaxis(f::AbstractField, fs::Number=default_sampling_frequency(f))
-    a,b = endpoints(span(f))
     num_steps = steps(f, fs)
     if num_steps > 1
-        range(a, stop=b, length=num_steps)
+        range(span(f), length=num_steps)
     else
         # This hack is mainly useful for calculations where exactly
         # one time step should be taken, (b-a) becomes the step
         # length.
+        a,b = endpoints(span(f))
         a:(b-a):a
     end
 end
