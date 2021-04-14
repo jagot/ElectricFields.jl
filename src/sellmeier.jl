@@ -68,8 +68,6 @@ refractive_index(m::Medium, f::Frequency) = refractive_index(m, u"c"/f)
 
 # * Dispersion
 
-using Calculus
-
 """
     dispersion(m, d, f[, f₀=0u"Hz])
 
@@ -86,7 +84,7 @@ function dispersion(m::Medium, d::Length, f::AbstractVector{F}, f₀::Frequency 
 
     if !iszero(f₀)
         # Slope of dispersion relation at central frequency
-        ∂k∂f = (2π/u"c")*derivative(f -> real(m(f*u"Hz"))*f, f₀/u"Hz" .|> NoUnits)
+        ∂k∂f = (2π/u"c")*ForwardDiff.derivative(f -> real(m(f*u"Hz"))*f, f₀/u"Hz" .|> NoUnits)
         k -= ∂k∂f*f
     end
 

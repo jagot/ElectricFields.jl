@@ -1,32 +1,3 @@
-# * Parse assignment DSL blocks
-
-function parse_block(block, T)
-    line_no = 0
-    filename = ""
-    error_message = v -> error("$(filename):$(line_no)\n>   $(v)")
-
-    field_params = Dict{Symbol,T}()
-    param_line_nos = Dict()
-
-    for line in block.args
-        if typeof(line) == LineNumberNode
-            line_no,filename = line.line,line.file
-            continue
-        end
-        typeof(line) == Expr || error_message("Expected expression, got $(line)")
-        line.head == Symbol("=") ||
-            error_message("Expected “parameter = value expression”, got $(line)")
-        k = line.args[1]
-        k in keys(field_params) &&
-            error_message("Field parameter $(k) already specified at $(filename):$(param_line_nos[k])")
-        v = line.args[2]
-        field_params[k] = eval(v)
-        param_line_nos[k] = line_no
-    end
-
-    field_params
-end
-
 # * DSL for calculation of quantities
 
 # The somewhat complicated setup with walking the expression tree in
@@ -96,13 +67,6 @@ function walk(node::Expr, params, escape)
             target,expr = node.args
             r = get_reference(target, params)
             result = walk(expr, params, escape)
-            if typeof(target) == Symbol && target ∈ keys(base_units)
-                # Generate expression that converts to the correct
-                # base unit.
-                result = Expr(:call, :|>, result,
-                              Expr(:ref, base_units,
-                                   Expr(:quote, target)))
-            end
             Expr(node.head, r, result)
         else
             args = walk.(node.args, Ref(params), Ref(escape))

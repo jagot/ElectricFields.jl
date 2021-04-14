@@ -2,8 +2,8 @@
 #+AUTHOR: Stefanos Carlström
 #+EMAIL: stefanos.carlstrom@gmail.com
 
-[[https://jagot.github.io/ElectricFields.jl/stable][https://img.shields.io/badge/docs-stable-blue.svg]]
-[[https://jagot.github.io/ElectricFields.jl/dev][https://img.shields.io/badge/docs-dev-blue.svg]]
+[[https://www.tipota.org/ElectricFields.jl/stable][https://img.shields.io/badge/docs-stable-blue.svg]]
+[[https://www.tipota.org/ElectricFields.jl/dev][https://img.shields.io/badge/docs-dev-blue.svg]]
 [[https://github.com/jagot/ElectricFields.jl/actions][https://github.com/jagot/ElectricFields.jl/workflows/CI/badge.svg]]
 [[https://codecov.io/gh/jagot/ElectricFields.jl][https://codecov.io/gh/jagot/ElectricFields.jl/branch/master/graph/badge.svg]]
 
@@ -12,62 +12,12 @@
 A small Julian DSL for defining electrical fields, chiefly for use in
 atomic physics calculations.
 
-
-#+BEGIN_SRC julia :exports none
-  using Unitful
-  using PyPlot
-  matplotlib[:style][:use]("ggplot")
-
-  mkpath("images")
-
-  function savefig_f(filename)
-      filename = "./images/$(filename).svg"
-      savefig(filename, transparent=true)
-      filename
-  end
-#+END_SRC
-
-#+RESULTS:
-: savefig_f (generic function with 1 method)
-
-* Usage
- First we load the library and set the base units, which are used if
- unitless quantities are passed to =@field=, below. The units are
- defined in the fashion of [[https://github.com/ajkeller34/Unitful.jl][Unitful.jl]].
- #+BEGIN_SRC julia :exports code
-   using ElectricFields
-
-   # These are the default base units, so setting these is actually not
-   # necessary, if you are happy with the defaults.
-   @set_base_units() do
-       λ  = u"nm"
-       I₀ = u"W/cm^2"
-       τ  = u"fs"
-   end
- #+END_SRC
-
- #+RESULTS:
- : nothing
-
- We can now define a field, which we name =IR=, using the =@field=
- macro:
- #+BEGIN_SRC julia :exports both :results value verbatim
-   @field(IR) do
-       λ    = 800.0
-       I₀   = 1e14
-       τ    = 6.2
-       Tmax = 10
-   end
- #+END_SRC
-
- #+RESULTS:
- : Linearly polarized field with a
- :   Fixed carrier @ λ = 800.00 nm (T = 2.67 fs) and a
- :   I₀ = 1e+14 cm^-2 W Gaussian envelope of duration 6.2 fs (intensity FWHM; ±10.14σ)
-
- More usage examples are found [[file:src/ElectricFields.org][within the code]].
-
-* Ideas
-  - Harmonic fields
-  - Chirped/dispersed fields
-  - Elliptically polarized fields
+It is not intended to be used in the computations /of/, but rather
+/with/ electric fields, i.e. the electric fields are input parameters
+to (boundary terms of) a time-dependent calculation. Furthermore, the
+fields are not solutions to the full Maxwell equations, but to the
+paraxial approximation, which means that they are propagating along
+one direction and polarized in a plane transverse to the direction of
+propagation. One may however add multiple fields propagating in
+different directions forming a field vector that is not confined to a
+single plane.

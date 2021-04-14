@@ -5,17 +5,24 @@ carrier_types = Dict{Symbol,Any}()
 max_frequency(carrier::AbstractCarrier) = frequency(carrier)
 
 # ** Fixed carrier
-#    The carrier is fixed in the sense that the instantaneous frequency
-#    is constant throughout the pulse.
+@doc raw"""
+    FixedCarrier <: LinearCarrier
 
-struct FixedCarrier <: AbstractCarrier
-    λ::Unitful.Length
-    T::Unitful.Time
-    ω::Unitful.Frequency
-    ϕ::Number # Carrier–envelope phase, in radians
+The carrier is fixed in the sense that the instantaneous frequency is
+constant throughout the pulse, i.e. no chirp/dispersion:
+
+```math
+\Im\{\exp[\im(\omega t + \phi)]\} = \sin(\omega t + \phi).
+```
+"""
+struct FixedCarrier{Λ,Tt,Ω,Φ} <: LinearCarrier
+    λ::Λ
+    T::Tt
+    ω::Ω
+    ϕ::Φ # Carrier–envelope phase, in radians
 end
 
-(carrier::FixedCarrier)(t::Unitful.Time) = sin(carrier.ω*t + carrier.ϕ)
+(carrier::FixedCarrier)(t) = sin(carrier.ω*t + carrier.ϕ)
 
 carrier_types[:fixed] = FixedCarrier
 
@@ -25,96 +32,134 @@ period(carrier::FixedCarrier) = carrier.T
 frequency(carrier::FixedCarrier) = 1/carrier.T
 wavenumber(carrier::FixedCarrier) = 1/carrier.λ
 fundamental(carrier::FixedCarrier) = carrier.ω
-photon_energy(carrier::FixedCarrier) = carrier.ω * u"ħ" |> base_units[:ħω]
+photon_energy(carrier::FixedCarrier) = carrier.ω
+phase(carrier::FixedCarrier) = carrier.ϕ
+
+phase_shift(c::FixedCarrier, δϕ) =
+    FixedCarrier(c.λ, c.T, c.ω, c.ϕ+δϕ)
 
 function FixedCarrier(field_params::Dict{Symbol,Any})
     @unpack λ, T, ω = field_params
     ϕ = get(field_params, :ϕ, 0)
-    FixedCarrier(λ, T, ω, ϕ)
+    FixedCarrier(λ, T, austrip(ω), ϕ)
 end
 
 function show(io::IO, carrier::FixedCarrier)
-    write(io, @sprintf("Fixed carrier @ λ = %0.2f %s (T = %0.2f %s)",
-                       usplit(carrier.λ)..., usplit(carrier.T)...))
-    if carrier.ϕ != 0
-        write(io, @sprintf("; CEP = %0.2fπ", carrier.ϕ/π))
-    end
+    printfmt(io, "Fixed carrier @ λ = {1:s} (T = {2:s}, ω = {3:.4f} Ha = {4:s})",
+             si_round(u"m"(carrier.λ)),
+             si_round(u"s"(carrier.T)),
+             carrier.ω, au2si_round(carrier.ω, u"eV"))
+    !iszero(carrier.ϕ) &&
+        printfmt(io, "; CEP = {1:0.2f}π", carrier.ϕ/π)
 end
 
-# ** Harmonic carrier
+# ** Transverse carriers
 
-struct HarmonicCarrier <: AbstractCarrier
-    λ::Unitful.Length
-    T::Unitful.Time
-    ω::Unitful.Frequency
-    ϕ::Number # Carrier–envelope phase, in radians
-    q::AbstractVector{Int}
+# *** Linear
+
+@doc raw"""
+    LinearTransverseCarrier
+
+The carrier is identical to [`FixedCarrier`](@ref), but explicitly in
+3d, with the polarization taken along the ``z`` axis:
+
+```math
+\vec{C}(t) = \bmat{0\\0\\\sin(\omega t + \phi)}.
+```
+"""
+struct LinearTransverseCarrier{Carrier<:LinearCarrier} <: TransverseCarrier
+    carrier::Carrier
 end
 
-harmonics(carrier::HarmonicCarrier) = carrier.q
-export harmonics
+LinearTransverseCarrier(field_params::Dict{Symbol,Any}) =
+    LinearTransverseCarrier(FixedCarrier(field_params))
 
-(carrier::HarmonicCarrier)(t::Unitful.Time) = sum(sin(q*(carrier.ω*t + carrier.ϕ))
-                                                  for q ∈ harmonics(carrier))
-
-carrier_types[:harmonic] = HarmonicCarrier
-
-wavelength(carrier::HarmonicCarrier) = carrier.λ
-period(carrier::HarmonicCarrier) = carrier.T
-
-frequency(carrier::HarmonicCarrier) = 1/carrier.T
-max_frequency(carrier::HarmonicCarrier) = maximum(harmonics(carrier))*frequency(carrier)
-wavenumber(carrier::HarmonicCarrier) = 1/carrier.λ
-fundamental(carrier::HarmonicCarrier) = carrier.ω
-photon_energy(carrier::HarmonicCarrier) = carrier.ω * u"ħ" |> base_units[:ħω]
-
-function HarmonicCarrier(field_params::Dict{Symbol,Any})
-    @unpack λ, T, ω, q = field_params
-    ϕ = get(field_params, :ϕ, 0)
-    HarmonicCarrier(λ, T, ω, ϕ, q)
+function show(io::IO, carrier::LinearTransverseCarrier)
+    write(io, "LinearTransverseCarrier: ")
+    show(io, carrier.carrier)
 end
 
-function show(io::IO, carrier::HarmonicCarrier)
-    write(io, @sprintf("Harmonic carrier @ λ = %0.2f %s (T = %0.2f %s); q ∈ %s",
-                       usplit(carrier.λ)..., usplit(carrier.T)...,
-                       string(harmonics(carrier))))
-    if carrier.ϕ != 0
-        write(io, @sprintf("; CEP = %0.2fπ", carrier.ϕ/π))
-    end
+(carrier::LinearTransverseCarrier)(t) = SVector(0, 0, carrier.carrier(t))
+
+carrier_types[:linear] = LinearTransverseCarrier
+
+for fun in [:wavelength, :period, :frequency, :wavenumber, :fundamental, :photon_energy, :phase]
+    @eval $fun(carrier::LinearTransverseCarrier) = $fun(carrier.carrier)
 end
 
-# ** Dispersed carriers [0/2]
-# *** TODO Chirped carrier
-# *** TODO Sellmeier equations
-# ** Constant carrier
-#    The carrier is constant in the sense that wavelength is infinite
-#    and there is no oscillation, but the type still fulfils the carrier
-#    interface, such that it can be used to establish a time-base, etc.
+phase_shift(c::LinearTransverseCarrier, δϕ) =
+    LinearTransverseCarrier(phase_shift(c.carrier, δϕ))
 
-struct ConstantCarrier <: AbstractCarrier
-    λ::Unitful.Length
-    T::Unitful.Time
-    ω::Unitful.Frequency
+# *** Elliptical
+
+@doc raw"""
+    EllipticalCarrier
+
+An elliptically polarized field (of which circularly and linearly
+polarized are special cases) is given in the canonical coordinate system as
+
+```math
+\vec{C}(t) = \frac{1}{\sqrt{1+\xi^2}}
+\bmat{\xi\cos\theta\\0\\\sin\theta},
+\quad
+\theta \defd \omega t + \phi,
+```
+i.e. with the principal axis of the ellipse along ``z``.
+"""
+struct EllipticalCarrier{Λ,Tt,Ω,Φ,Ξ} <: TransverseCarrier
+    λ::Λ
+    T::Tt
+    ω::Ω
+    ϕ::Φ # Carrier–envelope phase, in radians
+    ξ::Ξ # Amount of ellipticity, minor/major axis ratio
 end
 
-(carrier::ConstantCarrier)(t::Unitful.Time) = 1
-
-carrier_types[:constant] = ConstantCarrier
-
-wavelength(carrier::ConstantCarrier) = carrier.λ
-period(carrier::ConstantCarrier) = carrier.T
-
-frequency(carrier::ConstantCarrier) = 1/carrier.T
-wavenumber(carrier::ConstantCarrier) = 1/carrier.λ
-fundamental(carrier::ConstantCarrier) = carrier.ω
-photon_energy(carrier::ConstantCarrier) = carrier.ω * u"ħ" |> base_units[:ħω]
-
-function ConstantCarrier(field_params::Dict{Symbol,Any})
+function EllipticalCarrier(field_params::Dict{Symbol,Any})
     @unpack λ, T, ω = field_params
-    ConstantCarrier(λ, T, ω)
+    ϕ = get(field_params, :ϕ, 0)
+    ξ = get(field_params, :ξ, 0)
+    EllipticalCarrier(λ, T, austrip(ω), ϕ, ξ)
 end
 
-function show(io::IO, carrier::ConstantCarrier)
-    write(io, @sprintf("Constant carrier @ λ = %0.2f %s (T = %0.2f %s)",
-                       usplit(carrier.λ)..., usplit(carrier.T)...))
+function show(io::IO, carrier::EllipticalCarrier)
+    ξ = carrier.ξ
+    pol = if iszero(ξ)
+        ""
+    elseif ξ == 1
+        " (RCP)"
+    elseif ξ == -1
+        " (LCP)"
+    elseif ξ > 0
+        " (right)"
+    else
+        " (left)"
+    end
+    printfmt(io, "Elliptical carrier with ξ = {1:.2f}{2:s} @ λ = {3:s} (T = {4:s}, ω = {5:.4f} Ha = {6:s})",
+             ξ, pol,
+             si_round(u"m"(carrier.λ)),
+             si_round(u"s"(carrier.T)),
+             carrier.ω, au2si_round(carrier.ω, u"eV"))
+    !iszero(carrier.ϕ) &&
+        printfmt(io, "; CEP = {1:0.2f}π", carrier.ϕ/π)
 end
+
+function (carrier::EllipticalCarrier)(t)
+    ξ = carrier.ξ
+    ϕ = carrier.ω*t + carrier.ϕ
+    s,c = sincos(ϕ)
+    SVector(ξ*c, 0, s)/√(1 + ξ^2)
+end
+
+carrier_types[:elliptical] = EllipticalCarrier
+
+wavelength(carrier::EllipticalCarrier) = carrier.λ
+period(carrier::EllipticalCarrier) = carrier.T
+
+frequency(carrier::EllipticalCarrier) = 1/carrier.T
+wavenumber(carrier::EllipticalCarrier) = 1/carrier.λ
+fundamental(carrier::EllipticalCarrier) = carrier.ω
+photon_energy(carrier::EllipticalCarrier) = carrier.ω
+phase(carrier::EllipticalCarrier) = carrier.ϕ
+
+phase_shift(c::EllipticalCarrier, δϕ) =
+    EllipticalCarrier(c.λ, c.T, c.ω, c.ϕ+δϕ, c.ξ)

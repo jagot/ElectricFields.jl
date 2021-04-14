@@ -1,12 +1,24 @@
 module ElectricFields
 
+using LinearAlgebra
+using StaticArrays
+
 using Unitful
-using FFTW
+using UnitfulAtomic
+
+# using FFTW
+using ForwardDiff
+using Optim
+
+using IntervalSets
+
 using Parameters
+
 import Base: show
-using Printf
+using Formatting
 
 include("units.jl")
+include("rotations.jl")
 include("relation_dsl.jl")
 
 include("field_types.jl")
@@ -17,7 +29,9 @@ include("arithmetic.jl")
 
 include("field_dsl.jl")
 
-include("sellmeier.jl")
-include("dispersed_fields.jl")
+# include("sellmeier.jl")
+# include("dispersed_fields.jl")
+
+include("strong_field_properties.jl")
 
 end # module

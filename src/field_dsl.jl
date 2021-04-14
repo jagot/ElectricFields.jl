@@ -6,26 +6,10 @@
 
 This function performs the calculation of different quantities from
 the information provided.
-
-The [ponderomotive
-potential](https://en.wikipedia.org/wiki/Ponderomotive_energy) ``U_p``
-is the cycle-average quiver energy of a free electron in an
-electromagnetic field. It is given by
-
-```math
-U_p =
-\frac{e^2E_0^2}{4m\omega^2}=\frac{2e^2}{c\varepsilon_0m}\times\frac{I}{4\omega^2},
-```
-
-or, in atomic units,
-
-```math
-U_p = \frac{I}{4\omega^2}.
-```
 """
 function calc_params!(field_params::Dict{Symbol,Any})
     test_field_parameters(field_params, [:λ, :T, :f, :ν, :ω, :ħω])
-    test_field_parameters(field_params, [:I₀, :E₀, :Uₚ])
+    test_field_parameters(field_params, [:I₀, :E₀, :Uₚ, :A₀])
 
     for k in keys(field_params)
         field_params[k] = get_unitful_quantity(field_params, k)
@@ -68,12 +52,22 @@ function calc_params!(field_params::Dict{Symbol,Any})
                 I₀ = Uₚ / (2*u"q"^2/(u"c"*u"ε0"*u"me")) * 4ω^2
             end
             E₀ = √(2I₀/(u"ε0"*u"c"))
-        elseif E₀
+            A₀ = E₀/ω
+        elseif E₀ || A₀
+            if E₀
+                A₀ = E₀/ω
+            else
+                E₀ = ω*A₀
+            end
             I₀ = u"ε0"*u"c"/2*E₀^2
         end
         if !Uₚ
             Uₚ = 2*u"q"^2/(u"c"*u"ε0"*u"me") * I₀/4ω^2
         end
+    end
+
+    if get(field_params, :kind, :linear) == :transverse
+        field_params[:R] = compute_rotation(get(field_params, :rotation, nothing))
     end
 
     field_params
@@ -82,32 +76,83 @@ end
 # ** Frontend macro
 
 function make_field(field_params::Dict{Symbol,Any})
-    calc_params!(field_params)
+    is_transverse = (:ξ ∈ keys(field_params) ||
+                     :rotation ∈ keys(field_params) ||
+                     get(field_params, :carrier, :fixed) ∈ [:linear, :elliptical, :circular])
+    kind = get(field_params, :kind, is_transverse ? :transverse : :linear)
 
-    # Maybe these two blocks can be implicitly deduced from the passed
-    # parameters? E.g. if a chirp parameter is given, the carrier type
-    # should autmatically be resolved as ChirpedCarrier. Similarly, if
-    # ramp and flat are given, a trapezoidal pulse is requested.
+    if kind == :linear
+        calc_params!(field_params)
 
-    carrier_sym = get(field_params, :carrier,
-                      :q ∉ keys(field_params) ? :fixed : :harmonic)
-    carrier_sym ∉ keys(carrier_types) &&
-        error("Unknown carrier type $(carrier_sym), valid choices are $(keys(carrier_types))")
-    :q ∈ keys(field_params) && carrier_sym != :harmonic &&
-        error("Invalid carrier type, $(carrier_sym), for field with harmonic components")
-    carrier = carrier_types[carrier_sym](field_params)
+        # Maybe these two blocks can be implicitly deduced from the passed
+        # parameters? E.g. if a chirp parameter is given, the carrier type
+        # should autmatically be resolved as ChirpedCarrier. Similarly, if
+        # ramp and flat are given, a trapezoidal pulse is requested.
 
-    env_sym = get(field_params, :env, :gauss)
-    env_sym ∉ keys(envelope_types) &&
-        error("Unknown envelope type $(env_sym), valid choices are $(keys(envelope_types))")
-    env = envelope_types[env_sym](field_params)
+        carrier_sym = get(field_params, :carrier,
+                          :q ∉ keys(field_params) ? :fixed : :harmonic)
+        carrier_sym ∉ keys(carrier_types) &&
+            error("Unknown carrier type $(carrier_sym), valid choices are $(keys(carrier_types))")
+        :q ∈ keys(field_params) && carrier_sym != :harmonic &&
+            error("Invalid carrier type, $(carrier_sym), for field with harmonic components")
+        carrier = carrier_types[carrier_sym](field_params)
 
-    :ξ in keys(field_params) &&
-        error("Elliptical (transverse) fields not yet supported!")
+        env_sym = get(field_params, :env, :gauss)
+        env_sym ∉ keys(envelope_types) &&
+            error("Unknown envelope type $(env_sym), valid choices are $(keys(envelope_types))")
+        env = envelope_types[env_sym](field_params, carrier)
 
-    LinearField(carrier, env, field_params)
+        :ξ in keys(field_params) || :rotation in keys(field_params) &&
+            error("Elliptical (transverse) fields are not linear!")
+
+        LinearField(carrier, env, field_params)
+    elseif kind == :transverse
+        field_params[:kind] = :transverse
+        calc_params!(field_params)
+
+        carrier_sym = get(field_params, :carrier, :ξ ∉ keys(field_params) ? :linear : :elliptical)
+        carrier_sym ∉ keys(carrier_types) &&
+            error("Unknown carrier type $(carrier_sym), valid choices are $(keys(carrier_types))")
+        :ξ ∈ keys(field_params) && carrier_sym != :elliptical &&
+            error("Invalid carrier type, $(carrier_sym), for field with elliptical polarization")
+        carrier = carrier_types[carrier_sym](field_params)
+
+        env_sym = get(field_params, :env, :gauss)
+        env_sym ∉ keys(envelope_types) &&
+            error("Unknown envelope type $(env_sym), valid choices are $(keys(envelope_types))")
+        env = envelope_types[env_sym](field_params, carrier)
+
+        TransverseField(carrier, env, field_params)
+    elseif kind == :constant
+        ConstantField(field_params)
+    else
+        throw(ArgumentError("Unknown field kind $(kind)"))
+    end
 end
 
+"""
+    @field(name) do ... end
+
+Frontend macro for creating an electric field and storing it in the
+variable `name`.
+
+# Example
+
+```julia
+julia> @field(F) do
+           I₀ = 2.0
+           T = 2.0
+           σ = 3.0
+           Tmax = 3.0
+       end
+Linearly polarized field with
+  - I₀ = 2.0000e+00 au = 7.0188904e16 W cm⁻² =>
+    - E₀ = 1.4142e+00 au = 727.2178 GV m⁻¹
+    - A₀ = 0.4502 au
+  – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV)
+  – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+```
+"""
 macro field(spec, var)
     spec.head == :-> ||
         error("Expected a block with parameters for definition of the field")
