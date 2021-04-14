@@ -46,6 +46,45 @@
 
         @test field_amplitude(-A, 0.4) == -field_amplitude(A, 0.4)
         @test field_amplitude(A-B, 0.4) == field_amplitude(A, 0.4) - field_amplitude(B, 0.4)
+
+        withenv("UNITFUL_FANCY_EXPONENTS" => true) do
+            @test string(C) == """
+                               ┌ Linearly polarized field with
+                               │   - I₀ = 1.0000e+00 au = 3.5094452e16 W cm⁻² =>
+                               │     - E₀ = 1.0000e+00 au = 514.2207 GV m⁻¹
+                               │     - A₀ = 0.3183 au
+                               │   – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV)
+                               │   – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+                               │   – Uₚ = 0.0253 Ha = 689.2724 meV => α = 0.1013 Bohr = 5.3617 pm
+                               ⊕
+                               │ Linearly polarized field with
+                               │   - I₀ = 5.0000e-01 au = 1.7547226e16 W cm⁻² =>
+                               │     - E₀ = 7.0711e-01 au = 363.6089 GV m⁻¹
+                               │     - A₀ = 0.1125 au
+                               │   – a Fixed carrier @ λ = 7.2516 nm (T = 24.1888 as, ω = 6.2832 Ha = 170.9742 eV)
+                               │   – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±1.00σ)
+                               └   – Uₚ = 0.0032 Ha = 86.1591 meV => α = 0.0179 Bohr = 947.8211 fm
+                               """
+        end
+        withenv("UNITFUL_FANCY_EXPONENTS" => false) do
+            @test string(C) == """
+                               ┌ Linearly polarized field with
+                               │   - I₀ = 1.0000e+00 au = 3.5094452e16 W cm^-2 =>
+                               │     - E₀ = 1.0000e+00 au = 514.2207 GV m^-1
+                               │     - A₀ = 0.3183 au
+                               │   – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV)
+                               │   – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+                               │   – Uₚ = 0.0253 Ha = 689.2724 meV => α = 0.1013 Bohr = 5.3617 pm
+                               ⊕
+                               │ Linearly polarized field with
+                               │   - I₀ = 5.0000e-01 au = 1.7547226e16 W cm^-2 =>
+                               │     - E₀ = 7.0711e-01 au = 363.6089 GV m^-1
+                               │     - A₀ = 0.1125 au
+                               │   – a Fixed carrier @ λ = 7.2516 nm (T = 24.1888 as, ω = 6.2832 Ha = 170.9742 eV)
+                               │   – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±1.00σ)
+                               └   – Uₚ = 0.0032 Ha = 86.1591 meV => α = 0.0179 Bohr = 947.8211 fm
+                               """
+        end
     end
 
     @testset "Delayed fields" begin
@@ -57,6 +96,29 @@
         @test iszero(delay(A))
 
         @test span(B) == -5.6..6.4
+
+        withenv("UNITFUL_FANCY_EXPONENTS" => true) do
+            @test string(B) == """
+                               Linearly polarized field with
+                                 - I₀ = 1.0000e+00 au = 3.5094452e16 W cm⁻² =>
+                                   - E₀ = 1.0000e+00 au = 514.2207 GV m⁻¹
+                                   - A₀ = 0.3183 au
+                                 – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV)
+                                 – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+                                 – Uₚ = 0.0253 Ha = 689.2724 meV => α = 0.1013 Bohr = 5.3617 pm
+                                 – delayed by 0.4000 jiffies = 9.6755 as"""
+        end
+        withenv("UNITFUL_FANCY_EXPONENTS" => false) do
+            @test string(B) == """
+                               Linearly polarized field with
+                                 - I₀ = 1.0000e+00 au = 3.5094452e16 W cm^-2 =>
+                                   - E₀ = 1.0000e+00 au = 514.2207 GV m^-1
+                                   - A₀ = 0.3183 au
+                                 – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV)
+                                 – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+                                 – Uₚ = 0.0253 Ha = 689.2724 meV => α = 0.1013 Bohr = 5.3617 pm
+                                 – delayed by 0.4000 jiffies = 9.6755 as"""
+        end
     end
 
     @testset "Padded fields" begin
@@ -77,6 +139,29 @@
         @test all(endpoints(span(B)) .≈ (-6-austrip(3.0u"fs"), 6+austrip(8.0u"fs")))
 
         @test time_integral(B) == time_integral(A)
+
+        withenv("UNITFUL_FANCY_EXPONENTS" => true) do
+            @test string(B) == """
+                               Padding before 124.0241 jiffies = 3.0000 fs and after 330.7310 jiffies = 8.0000 fs of
+                               Linearly polarized field with
+                                 - I₀ = 1.0000e+00 au = 3.5094452e16 W cm⁻² =>
+                                   - E₀ = 1.0000e+00 au = 514.2207 GV m⁻¹
+                                   - A₀ = 0.3183 au
+                                 – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV)
+                                 – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+                                 – Uₚ = 0.0253 Ha = 689.2724 meV => α = 0.1013 Bohr = 5.3617 pm"""
+        end
+        withenv("UNITFUL_FANCY_EXPONENTS" => false) do
+            @test string(B) == """
+                               Padding before 124.0241 jiffies = 3.0000 fs and after 330.7310 jiffies = 8.0000 fs of
+                               Linearly polarized field with
+                                 - I₀ = 1.0000e+00 au = 3.5094452e16 W cm^-2 =>
+                                   - E₀ = 1.0000e+00 au = 514.2207 GV m^-1
+                                   - A₀ = 0.3183 au
+                                 – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV)
+                                 – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+                                 – Uₚ = 0.0253 Ha = 689.2724 meV => α = 0.1013 Bohr = 5.3617 pm"""
+        end
     end
 
     @testset "Windowed fields" begin
@@ -98,5 +183,28 @@
 
         @test field_amplitude(phase_shift(B, 2.0), 0.4) == field_amplitude(phase_shift(A, 2.0), 0.4)
         @test field_amplitude(phase_shift(B, 2.0), 3.0) == zero(field_amplitude(phase_shift(A, 2.0), 0.4))
+
+        withenv("UNITFUL_FANCY_EXPONENTS" => true) do
+            @test string(B) == """
+                               Window from -4.1341 jiffies = -100.0000 as to 2.0671 jiffies = 50.0000 as of
+                               Linearly polarized field with
+                                 - I₀ = 1.0000e+00 au = 3.5094452e16 W cm⁻² =>
+                                   - E₀ = 1.0000e+00 au = 514.2207 GV m⁻¹
+                                   - A₀ = 0.3183 au
+                                 – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV)
+                                 – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+                                 – Uₚ = 0.0253 Ha = 689.2724 meV => α = 0.1013 Bohr = 5.3617 pm"""
+        end
+        withenv("UNITFUL_FANCY_EXPONENTS" => false) do
+            @test string(B) == """
+                               Window from -4.1341 jiffies = -100.0000 as to 2.0671 jiffies = 50.0000 as of
+                               Linearly polarized field with
+                                 - I₀ = 1.0000e+00 au = 3.5094452e16 W cm^-2 =>
+                                   - E₀ = 1.0000e+00 au = 514.2207 GV m^-1
+                                   - A₀ = 0.3183 au
+                                 – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV)
+                                 – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+                                 – Uₚ = 0.0253 Ha = 689.2724 meV => α = 0.1013 Bohr = 5.3617 pm"""
+        end
     end
 end
