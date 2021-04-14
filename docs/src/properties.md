@@ -16,6 +16,7 @@ carrier
 envelope
 phase
 dimensions
+polarization
 ```
 
 ## Strong-field properties

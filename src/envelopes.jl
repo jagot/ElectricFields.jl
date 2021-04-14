@@ -65,6 +65,19 @@ show(io::IO, env::GaussianEnvelope) =
     printfmt(io, "Gaussian envelope of duration {1:s} (intensity FWHM; ±{2:0.2f}σ)",
              au2si_round(env.τ, u"s"), env.σmax)
 
+@doc raw"""
+    gaussian_common!(field_params, carrier[; Tmax_rounder, verbosity])
+
+Compute parameters common to Gaussian envelopes,
+i.e. [`GaussianEnvelope`](@ref) and
+[`TruncatedGaussianEnvelope`](@ref); most importantly, given an
+intensity FWHM or σ, we need to figure out the coefficient ``\alpha``
+for the envelope of the vector potential ``\exp(-\alpha t^2)``, such
+that the electric field amplitude and intensity have the desired
+durations. The optional function `Tmax_rounder` determines if the
+envelop should be extended to encompass an integer amount of cycles of
+the `carrier` (default).
+"""
 function gaussian_common!(field_params, carrier;
                           Tmax_rounder = Base.Fix1(ceil, Int), verbosity=0)
     @namespace!(field_params) do
