@@ -427,6 +427,8 @@ Linearly polarized field with
     show(io, f.carrier)
     write(io, "\n  – and a ")
     show(io, f.env)
+    write(io, "\n  – ")
+    show_strong_field_properties(io, f)
 end
 
 polarization(::LinearField) = LinearPolarization()
@@ -570,6 +572,8 @@ Transversely polarized field with
         write(io, "\n  – and a ")
         show(io, f.env)
     end
+    write(io, "\n  – ")
+    show_strong_field_properties(io, f)
 end
 
 polarization(::TransverseField) = ArbitraryPolarization()

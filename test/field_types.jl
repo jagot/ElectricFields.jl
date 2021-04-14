@@ -19,7 +19,8 @@
                                    - E₀ = 1.0000e+00 au = 514.2207 GV m⁻¹
                                    - A₀ = 0.3183 au
                                  – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV)
-                                 – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)"""
+                                 – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+                                 – Uₚ = 0.0253 Ha = 689.2724 meV => α = 0.1013 Bohr = 5.3617 pm"""
         end
         withenv("UNITFUL_FANCY_EXPONENTS" => false) do
             @test string(F) == """
@@ -28,7 +29,8 @@
                                    - E₀ = 1.0000e+00 au = 514.2207 GV m^-1
                                    - A₀ = 0.3183 au
                                  – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV)
-                                 – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)"""
+                                 – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+                                 – Uₚ = 0.0253 Ha = 689.2724 meV => α = 0.1013 Bohr = 5.3617 pm"""
         end
 
         @test ElectricFields.rotation_matrix(F) == Matrix(I, 3, 3)
@@ -64,7 +66,8 @@
                                    - A₀ = 0.4502 au
                                  – a LinearTransverseCarrier: Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV)
                                  – a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
-                                 – and a rotation of 0.25π about [0.000, 0.000, 1.000]"""
+                                 – and a rotation of 0.25π about [0.000, 0.000, 1.000]
+                                 – Uₚ = 0.0507 Ha = 1.3785 eV => α = 0.1433 Bohr = 7.5826 pm"""
         end
         withenv("UNITFUL_FANCY_EXPONENTS" => false) do
             @test string(F) == """
@@ -74,7 +77,8 @@
                                    - A₀ = 0.4502 au
                                  – a LinearTransverseCarrier: Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV)
                                  – a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
-                                 – and a rotation of 0.25π about [0.000, 0.000, 1.000]"""
+                                 – and a rotation of 0.25π about [0.000, 0.000, 1.000]
+                                 – Uₚ = 0.0507 Ha = 1.3785 eV => α = 0.1433 Bohr = 7.5826 pm"""
         end
 
         @test ElectricFields.rotation_matrix(F) ≈ [1/√2 -1/√2 0
@@ -101,7 +105,8 @@
                                     - E₀ = 1.4142e+00 au = 727.2178 GV m⁻¹
                                     - A₀ = 0.4502 au
                                   – a Elliptical carrier with ξ = 1.00 (RCP) @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV)
-                                  – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)"""
+                                  – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+                                  – Uₚ = 0.0507 Ha = 1.3785 eV => α = 0.1433 Bohr = 7.5826 pm"""
         end
         withenv("UNITFUL_FANCY_EXPONENTS" => false) do
             @test string(F2) == """
@@ -110,7 +115,8 @@
                                     - E₀ = 1.4142e+00 au = 727.2178 GV m^-1
                                     - A₀ = 0.4502 au
                                   – a Elliptical carrier with ξ = 1.00 (RCP) @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV)
-                                  – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)"""
+                                  – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+                                  – Uₚ = 0.0507 Ha = 1.3785 eV => α = 0.1433 Bohr = 7.5826 pm"""
         end
     end
 

@@ -73,6 +73,16 @@ free_oscillation_amplitude(F::SumField) =
     free_oscillation_amplitude(F.a) +
     free_oscillation_amplitude(F.b)
 
+# * Print info
+
+function show_strong_field_properties(io::IO, F::Union{LinearField,TransverseField})
+    Uₚ = austrip(ponderomotive_potential(F))
+    α = austrip(free_oscillation_amplitude(F))
+    printfmt(io, "Uₚ = {1:.4f} Ha = {2:s} => α = {3:.4f} Bohr = {4:s}",
+             Uₚ, au2si_round(Uₚ, u"eV"),
+             α, au2si_round(α, u"nm"))
+end
+
 # * Exports
 
 export ponderomotive_potential, keldysh, free_oscillation_amplitude
