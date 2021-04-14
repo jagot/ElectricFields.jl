@@ -409,6 +409,7 @@ function LinearField(carrier, env, params)
 end
 
 vector_potential(f::LinearField, t::Number) = f.A₀*f.env(t)*f.carrier(t)
+vector_potential(f::LinearField) = f.A₀
 
 intensity(f::LinearField) = f.I₀
 amplitude(f::LinearField) = f.E₀
@@ -541,6 +542,7 @@ function TransverseField(carrier, env, params)
 end
 
 vector_potential(f::TransverseField, t::Number) = f.A₀*f.env(t)*(f.R*f.carrier(t))
+vector_potential(f::TransverseField) = f.A₀
 
 intensity(f::TransverseField) = f.I₀
 amplitude(f::TransverseField) = f.E₀
