@@ -121,6 +121,28 @@
         end
     end
 
+    @testset "Combined" begin
+        @field(X) do
+            I₀ = 1.0
+            ω = 1.0
+            cycles = 6.0
+            env = :cos²
+            ξ = 1.0
+        end
+
+        @field(Y) do
+            I₀ = 1.0
+            ω = 2.0
+            cycles = 6.0
+            env = :cos²
+            ξ = -1.0
+        end
+
+        Z = X + delay(Y, 3/2π)
+
+        @test field_amplitude(Z, 4.0) ≈ field_amplitude(X, 4.0) + field_amplitude(Y, 4.0 - 3/2π)
+    end
+
     @testset "Padded fields" begin
         @test_throws ArgumentError PaddedField(A, -3, 1)
         @test_throws ArgumentError PaddedField(A, 3, -1)
