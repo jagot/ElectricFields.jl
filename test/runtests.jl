@@ -13,7 +13,7 @@ using FFTW
     include("gaussian_pulses.jl")
     include("envelopes.jl")
     include("carriers.jl")
-    include("constant_fields.jl")
+    include("field_types.jl")
     include("arithmetic.jl")
 
     @testset "Time axis" begin

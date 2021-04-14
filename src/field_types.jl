@@ -341,7 +341,7 @@ Linearly polarized field with
              f.E₀, au2si_round(f.E₀, u"V/m"),
              f.A₀)
     show(io, f.carrier)
-    write(io, " \n  – and a ")
+    write(io, "\n  – and a ")
     show(io, f.env)
 end
 
@@ -477,12 +477,12 @@ Transversely polarized field with
     show(io, f.carrier)
     isrotated = f.R isa AbstractMatrix
     if isrotated
-        write(io, " \n  – a ")
+        write(io, "\n  – a ")
         show(io, f.env)
-        printfmt(io, " \n  – and a rotation of {1:.2f}π about [{2:.3f}, {3:.3f}, {4:.3f}]",
+        printfmt(io, "\n  – and a rotation of {1:.2f}π about [{2:.3f}, {3:.3f}, {4:.3f}]",
                  rotation_angle(f.R)/π, rotation_axis(f.R)...)
     else
-        write(io, " \n  – and a ")
+        write(io, "\n  – and a ")
         show(io, f.env)
     end
 end
