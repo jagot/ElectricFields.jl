@@ -1,12 +1,14 @@
 # * Envelopes
-#   The envelopes implemented below are all /amplitude/ envelopes,
-#   since that is what is being used in calculations. However, they may
-#   be specified using intensity-related quantities, e.g. Gaussian
-#   pulses are most often specified using the FWHM duration of their
-#   /intensity/ envelopes.
+#   The envelopes implemented below are all /vector potential/
+#   envelopes, since that is what is being used in
+#   calculations. However, they may be specified using
+#   intensity-related quantities, e.g. Gaussian pulses are most often
+#   specified using the FWHM duration of their /intensity/ envelopes.
 #
 
 envelope_types = Dict{Symbol,Any}()
+
+complex_squared(t) = t*t
 
 # ** Gaussian
 @doc raw"""
@@ -59,7 +61,7 @@ struct GaussianEnvelope{T} <: AbstractEnvelope
 end
 envelope_types[:gauss] = GaussianEnvelope
 
-(env::GaussianEnvelope)(t) = exp(-env.α*t^2)
+(env::GaussianEnvelope)(t) = exp(-env.α*complex_squared(t))
 
 show(io::IO, env::GaussianEnvelope) =
     printfmt(io, "Gaussian envelope of duration {1:s} (intensity FWHM; ±{2:0.2f}σ)",
@@ -230,13 +232,13 @@ end
 envelope_types[:trunc_gauss] = TruncatedGaussianEnvelope
 
 function (env::TruncatedGaussianEnvelope{T})(t) where T
-    at = abs(t)
+    at = abs(real(t))
     at > env.tmax && return zero(T)
     @unpack α, toff, tmax = env
     if at ≤ env.toff
-        exp(-α*t^2)
+        exp(-α*complex_squared(t))
     else
-        exp(-α*(toff + 2/π*(tmax-toff)*tan(π/2*(at-toff)/(tmax-toff)))^2)
+        exp(-α*complex_squared(toff + 2/π*(tmax-toff)*tan(π/2*(at-toff)/(tmax-toff))))
     end
 end
 
@@ -318,7 +320,7 @@ envelope_types[:trapezoidal] = TrapezoidalEnvelope
 envelope_types[:tophat] = TrapezoidalEnvelope
 
 function (env::TrapezoidalEnvelope{T})(t) where T
-    t /= env.period
+    t = real(t)/env.period
     if t < 0
         zero(T)
     elseif t < env.ramp_up
@@ -392,7 +394,7 @@ envelope_types[:cos2] = Cos²Envelope
 function (env::Cos²Envelope{T})(t) where T
     t /= (env.cycles*env.period)
     if -1 ≤ 2real(t) ≤ 1
-        abs2(cospi(t))
+        complex_squared(cospi(t))
     else
         zero(T)
     end

@@ -54,5 +54,7 @@ using FFTW
         @test free_oscillation_amplitude(F+F) ≈ 2/π^2 rtol=1e-7
     end
 
+    include("analytic_continuation.jl")
+
     # include("sellmeier.jl")
 end

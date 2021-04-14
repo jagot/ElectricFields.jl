@@ -60,18 +60,22 @@ intensity(f::AbstractField, t::AbstractVector) =
 
 complex_derivative(f::Function, t::Real) = ForwardDiff.derivative(f, t)
 
+# Complex derivative for an analytic function
+#   f(x + im*y) = u(x,y) + im*v(x,y)
+# is given by
+#   f′(x + im*y) = uₓ + im*vₓ = v_y - im*u_y
+assemble_derivative(::Number, J) = J[1,1] + im*J[2,1]
+assemble_derivative(::SVector{3}, J) = SVector{3}(J[1:3,1] + im*J[4:6,1])
+
 function complex_derivative(f::Function, z::Complex)
     # https://discourse.julialang.org/t/automatic-differentiation-of-complex-valued-functions/30263/3
     ff = ((x,y),) -> begin
         fz = f(complex(x,y))
-        [real(fz), imag(fz)]
+        vcat(real(fz), imag(fz))
     end
     J = ForwardDiff.jacobian(ff, [real(z), imag(z)])
-    # Complex derivative for an analytic function
-    #   f(x + im*y) = u(x,y) + im*v(x,y)
-    # is given by
-    #   f′(x + im*y) = uₓ + im*vₓ = v_y - im*u_y
-    J[1,1] + im*J[2,1]
+    assemble_derivative(f(z), J) # This amounts to an extra function
+                                 # call, but what can you do
 end
 
 @doc raw"""
