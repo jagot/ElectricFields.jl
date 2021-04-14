@@ -284,6 +284,7 @@ Linearly polarized field with
     - A₀ = 0.4502 au
   – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV)
   – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+  – Uₚ = 0.0507 Ha = 1.3785 eV => α = 0.1433 Bohr = 7.5826 pm
 
 julia> dimensions(F)
 1
@@ -301,6 +302,7 @@ Transversely polarized field with
     - A₀ = 0.4502 au
   – a Elliptical carrier with ξ = 1.00 (RCP) @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV)
   – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+  – Uₚ = 0.0507 Ha = 1.3785 eV => α = 0.1433 Bohr = 7.5826 pm
 
 julia> dimensions(F)
 3
@@ -329,6 +331,7 @@ Linearly polarized field with
     - A₀ = 0.4502 au
   – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV)
   – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+  – Uₚ = 0.0507 Ha = 1.3785 eV => α = 0.1433 Bohr = 7.5826 pm
 
 julia> polarization(F)
 LinearPolarization()
@@ -346,6 +349,7 @@ Transversely polarized field with
     - A₀ = 0.4502 au
   – a Elliptical carrier with ξ = 1.00 (RCP) @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV)
   – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+  – Uₚ = 0.0507 Ha = 1.3785 eV => α = 0.1433 Bohr = 7.5826 pm
 
 julia> polarization(F)
 ArbitraryPolarization()
@@ -377,6 +381,7 @@ Linearly polarized field with
     - A₀ = 0.9372 au
   – a Fixed carrier @ λ = 800.0000 nm (T = 2.6685 fs, ω = 0.0570 Ha = 1.5498 eV)
   – and a Gaussian envelope of duration 6.2000 fs (intensity FWHM; ±8.11σ)
+  – Uₚ = 0.2196 Ha = 5.9759 eV => α = 16.4562 Bohr = 870.8242 pm
 
 julia> @field(B) do
        I₀ = 0.05
@@ -391,6 +396,7 @@ Linearly polarized field with
     - A₀ = 0.2236 au
   – a Fixed carrier @ λ = 45.5634 nm (T = 151.9830 as, ω = 1.0000 Ha = 27.2114 eV)
   – and a /1‾3‾1\\ cycles trapezoidal envelope
+  – Uₚ = 0.0125 Ha = 340.1423 meV => α = 0.2236 Bohr = 11.8328 pm
 ```
 """
 struct LinearField{Carrier<:LinearCarrier,Envelope,T} <: AbstractField
@@ -492,6 +498,7 @@ Transversely polarized field with
     - A₀ = 0.9372 au
   – a Elliptical carrier with ξ = 1.00 (RCP) @ λ = 800.0000 nm (T = 2.6685 fs, ω = 0.0570 Ha = 1.5498 eV)
   – and a Gaussian envelope of duration 6.2000 fs (intensity FWHM; ±8.11σ)
+  – Uₚ = 0.2196 Ha = 5.9759 eV => α = 16.4562 Bohr = 870.8242 pm
 
 julia> # Linearly polarized field, but explicitly in 3D
 
@@ -508,6 +515,7 @@ Transversely polarized field with
     - A₀ = 0.9372 au
   – a LinearTransverseCarrier: Fixed carrier @ λ = 800.0000 nm (T = 2.6685 fs, ω = 0.0570 Ha = 1.5498 eV)
   – and a Gaussian envelope of duration 6.2000 fs (intensity FWHM; ±8.11σ)
+  – Uₚ = 0.2196 Ha = 5.9759 eV => α = 16.4562 Bohr = 870.8242 pm
 
 julia> # Linearly polarized field, rotated
 
@@ -525,6 +533,7 @@ Transversely polarized field with
   – a LinearTransverseCarrier: Fixed carrier @ λ = 800.0000 nm (T = 2.6685 fs, ω = 0.0570 Ha = 1.5498 eV)
   – a Gaussian envelope of duration 6.2000 fs (intensity FWHM; ±8.11σ)
   – and a rotation of 0.33π about [0.000, 0.000, 1.000]
+  – Uₚ = 0.2196 Ha = 5.9759 eV => α = 16.4562 Bohr = 870.8242 pm
 ```
 """
 struct TransverseField{Carrier<:TransverseCarrier,Envelope,Rotation,T} <: AbstractField

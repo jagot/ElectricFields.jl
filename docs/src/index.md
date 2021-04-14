@@ -1,5 +1,8 @@
 ```@meta
 CurrentModule = ElectricFields
+DocTestSetup = quote
+    using ElectricFields, Unitful, UnitfulAtomic
+end
 ```
 
 # ElectricFields.jl
@@ -52,12 +55,18 @@ The electric field amplitude is computed as
 via automatic differentiation
 ([ForwardDiff.jl](https://github.com/JuliaDiff/ForwardDiff.jl)).
 
+Presently, only the temporal picture is well supported in
+ElectricFields.jl, since the main usage (for now) is to provide input
+to time-propagation of the time-dependent Schrödinger equation. The
+equivalent spectral picture, related to the temporal one via the
+Fourier transform, will receive better support in a future release.
+
 ## Examples
 
 The simplest pulse is created thus:
 
 ```jldoctest index_examples
-using ElectricFields, Unitful
+julia> using ElectricFields, Unitful
 
 julia> @field(IR) do
        I₀ = 1e14u"W/cm^2"
@@ -71,6 +80,7 @@ Linearly polarized field with
     - A₀ = 0.9372 au
   – a Fixed carrier @ λ = 800.0000 nm (T = 2.6685 fs, ω = 0.0570 Ha = 1.5498 eV)
   – and a Gaussian envelope of duration 6.2000 fs (intensity FWHM; ±6.08σ)
+  – Uₚ = 0.2196 Ha = 5.9759 eV => α = 16.4562 Bohr = 870.8242 pm
 
 julia> vector_potential(IR, 4.0)
 0.2116055371709056
@@ -105,6 +115,7 @@ Linearly polarized field with
     - A₀ = 0.2000 au
   – a Fixed carrier @ λ = 45.5634 nm (T = 151.9830 as, ω = 1.0000 Ha = 27.2114 eV)
   – and a Gaussian envelope of duration 3.6283 fs (intensity FWHM; ±4.04σ)
+  – Uₚ = 0.0100 Ha = 272.1138 meV => α = 0.2000 Bohr = 10.5835 pm
 ```
 
 Other [Envelopes](@ref) and polarizations, as well as some simple arithmetic is possible:
@@ -122,6 +133,7 @@ Transversely polarized field with
     - A₀ = 1.0000 au
   – a Elliptical carrier with ξ = 1.00 (RCP) @ λ = 45.5634 nm (T = 151.9830 as, ω = 1.0000 Ha = 27.2114 eV)
   – and a 6.00 cycles cos² envelope
+  – Uₚ = 0.2500 Ha = 6.8028 eV => α = 1.0000 Bohr = 52.9177 pm
 
 julia> @field(B) do
            I₀ = 1.0
@@ -136,6 +148,7 @@ Transversely polarized field with
     - A₀ = 0.5000 au
   – a Elliptical carrier with ξ = -1.00 (LCP) @ λ = 22.7817 nm (T = 75.9915 as, ω = 2.0000 Ha = 54.4228 eV)
   – and a 6.00 cycles cos² envelope
+  – Uₚ = 0.0625 Ha = 1.7007 eV => α = 0.2500 Bohr = 13.2294 pm
 
 julia> F = A + delay(B, 3/2π)
 ┌ Transversely polarized field with
@@ -144,6 +157,7 @@ julia> F = A + delay(B, 3/2π)
 │     - A₀ = 1.0000 au
 │   – a Elliptical carrier with ξ = 1.00 (RCP) @ λ = 45.5634 nm (T = 151.9830 as, ω = 1.0000 Ha = 27.2114 eV)
 │   – and a 6.00 cycles cos² envelope
+│   – Uₚ = 0.2500 Ha = 6.8028 eV => α = 1.0000 Bohr = 52.9177 pm
 ⊕
 │ Transversely polarized field with
 │   - I₀ = 1.0000e+00 au = 3.5094452e16 W cm⁻² =>
@@ -151,14 +165,15 @@ julia> F = A + delay(B, 3/2π)
 │     - A₀ = 0.5000 au
 │   – a Elliptical carrier with ξ = -1.00 (LCP) @ λ = 22.7817 nm (T = 75.9915 as, ω = 2.0000 Ha = 54.4228 eV)
 │   – and a 6.00 cycles cos² envelope
-└   – delayed by 1.5000 jiffies = 36.2833 as
+│   – Uₚ = 0.0625 Ha = 1.7007 eV => α = 0.2500 Bohr = 13.2294 pm
+└   – delayed by 0.4775 jiffies = 11.5493 as
 
 
 julia> field_amplitude(F, 4.0)
 3-element StaticArrays.SVector{3, Float64} with indices SOneTo(3):
-  0.05296011027481318
+ -0.8793235934912678
  -0.0
-  0.17558903412893961
+  0.06802883592577502
 ```
 
 ![Simple polarized example](figures/index_polarized_example.svg)
@@ -166,4 +181,8 @@ julia> field_amplitude(F, 4.0)
 ## Reference
 
 ```@index
+```
+
+```@meta
+DocTestSetup = nothing
 ```
