@@ -75,8 +75,8 @@ jobs:
             Pkg.develop(PackageSpec(path=pwd()))
             Pkg.instantiate()'
       - name: Run Doctests
-        # See https://github.com/actions/toolkit/issues/399
-        continue-on-error: true
+        # # See https://github.com/actions/toolkit/issues/399
+        # continue-on-error: true
         run: |
           julia --project=docs -e '
             using Documenter: DocMeta, doctest
