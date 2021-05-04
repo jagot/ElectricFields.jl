@@ -9,7 +9,7 @@ function savedocfig(name,dir="figures")
     fig = gcf()
     filename = joinpath(@__DIR__, "src", dir, "$(name).svg")
     savefig(filename,
-            transparent=true,
+            transparent=false,
             facecolor=fig.get_facecolor())
     close(fig)
     if isfile(filename)
