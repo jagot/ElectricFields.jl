@@ -250,10 +250,15 @@ show(io::IO, env::TruncatedGaussianEnvelope) =
 function TruncatedGaussianEnvelope(field_params::Dict{Symbol,Any}, carrier)
     test_field_parameters(field_params, [:T]) # Period time required to round time window up
     test_field_parameters(field_params, [:τ, :σ])
-    test_field_parameters(field_params, [:toff])
+    test_field_parameters(field_params, [:toff, :σoff])
     test_field_parameters(field_params, [:σmax, :tmax, :Tmax])
 
     gaussian_common!(field_params, carrier, Tmax_rounder=NoUnits)
+    @namespace!(field_params) do
+        if σoff
+            toff = σ*σoff
+        end
+    end
 
     @unpack τ, σ, α, toff, tmax, Tmax = field_params
     toff < tmax || throw(ArgumentError("Hard turn-off must occur before end of pulse"))
