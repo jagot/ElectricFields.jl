@@ -99,4 +99,19 @@ import ElectricFields: time_integral
 
         @test time_integral(F) ≈ σ*√(2π)
     end
+
+    @testset "Truncated Gaussian turn-off via standard deviations" begin
+        @field(F) do
+            I₀ = 1.0
+            T = 2.0
+            τ = 3.0
+            σoff = 4.0
+            σmax = 5.0
+            env = :trunc_gauss
+        end
+
+        σ = params(F)[:σ]
+        @test params(F)[:toff] ≈ 4σ
+        @test params(F)[:tmax] ≈ 5σ
+    end
 end
