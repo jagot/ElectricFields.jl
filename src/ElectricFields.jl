@@ -11,6 +11,7 @@ using ForwardDiff
 using Optim
 
 using IntervalSets
+import IntervalSets: duration
 
 using Parameters
 

@@ -166,4 +166,83 @@
 
         @test dimensions(F) == 1
     end
+
+    @testset "Ramps" begin
+        @field(F) do
+            I₀ = 4.0
+            tmax = 4.0
+            kind = :linear_ramp
+        end
+
+        withenv("UNITFUL_FANCY_EXPONENTS" => true) do
+            @test string(F) == """
+                               Linear ramp of
+                                 - 4.0000 jiffies = 96.7554 as duration, and
+                                 - E₀ = 2.0000e+00 au = 1.0284 TV m⁻¹"""
+        end
+        withenv("UNITFUL_FANCY_EXPONENTS" => false) do
+            @test string(F) == """
+                               Linear ramp of
+                                 - 4.0000 jiffies = 96.7554 as duration, and
+                                 - E₀ = 2.0000e+00 au = 1.0284 TV m^-1"""
+        end
+
+        @test F isa ElectricFields.Ramp
+
+        @test field_amplitude(F, -1) == 0
+        @test field_amplitude(F, 2) ≈ 1 rtol=1e-7
+        @test field_amplitude(F, 4) ≈ 2 rtol=1e-7
+        @test field_amplitude(F, 5) == 0
+
+        @test intensity(F, -1) == 0
+        @test intensity(F, 2) ≈ 1 rtol=1e-7
+        @test intensity(F, 4) ≈ 4 rtol=1e-7
+        @test intensity(F, 5) == 0
+
+        @test field_amplitude(F, 0, 4.0) ≈ 4.0 rtol=1e-7
+
+        @test polarization(F) == LinearPolarization()
+
+        # @test duration(F) == 4
+        @test span(F) == 0..4
+
+        @test isone(period(F))
+        @test isone(max_frequency(F))
+        @test photon_energy(F) == 2π
+
+        @test dimensions(F) == 1
+
+        @testset "Ramp kind = $(kind)" for kind in (:linear_ramp,
+                                                    :parabolic_ramp,
+                                                    :sin²_ramp)
+            @field(R) do
+                E₀ = 1.0
+                tmax = 4.0u"fs"
+                kind = kind
+            end
+
+            @field(C) do
+                E₀ = 1.0
+                tmax = 4.0u"fs"
+                kind = :constant
+            end
+
+            F = R + delay(C, duration(R))
+
+            s = span(F)
+
+            @test iszero(field_amplitude(F, s.left-1))
+            @test iszero(field_amplitude(F, s.right+1))
+
+            @test vector_potential(F, s.right+1) ≈ vector_potential(F, s.right) rtol=1e-7
+
+            t = range(0, stop=1.1span(F).right, length=1000)
+
+            Fv = field_amplitude(F, t)
+            Av = vector_potential(F, t)
+            Fv2 = -ElectricFields.complex_derivative.(Ref(Base.Fix1(vector_potential, F)), t)
+
+            @test Fv ≈ Fv2 rtol=1e-14
+        end
+    end
 end

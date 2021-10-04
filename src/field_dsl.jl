@@ -123,8 +123,8 @@ function make_field(field_params::Dict{Symbol,Any})
         env = envelope_types[env_sym](field_params, carrier)
 
         TransverseField(carrier, env, field_params)
-    elseif kind == :constant
-        ConstantField(field_params)
+    elseif kind ∈ keys(field_types)
+        field_types[kind](field_params)
     else
         throw(ArgumentError("Unknown field kind $(kind)"))
     end
