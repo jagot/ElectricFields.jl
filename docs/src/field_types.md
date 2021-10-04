@@ -5,6 +5,7 @@
 ElectricFields.LinearField
 ElectricFields.TransverseField
 ElectricFields.ConstantField
+ElectricFields.Ramp
 ```
 
 ## Arithmetic
