@@ -681,14 +681,17 @@ Constant field of
              f.E₀, au2si_round(f.E₀, u"V/m"))
 end
 
-field_amplitude(f::ConstantField, t::Number) =
-    f.E₀*(0 ≤ t && t ≤ f.tmax)
-
 intensity(f::ConstantField, t::Number) = field_amplitude(f, t)^2
 
 function vector_potential(f::ConstantField{T}, t::Number) where T
-    t = clamp(t, zero(T), f.tmax)
-    -f.E₀*t
+    z = zero(T)
+    if t < z
+        z
+    elseif t < f.tmax
+        -f.E₀*t
+    else
+        -f.E₀*f.tmax
+    end
 end
 
 intensity(f::ConstantField) = f.E₀^2
@@ -712,18 +715,18 @@ field_types[:constant] = ConstantField
 # * Ramps
 
 @doc raw"""
-    Ramp(tmax, E₀, f, g, name)
+    Ramp(tmax, E₀, f, name)
 
 The field amplitude of a ramp is defined as
 
 ```math
 F(t) = \begin{cases}
-E_0f(\tau), & 0 \leq t_{\textrm{max}}, \\
+E_0f'(\tau), & 0 \leq t_{\textrm{max}}, \\
 0, \textrm{else},
 \end{cases}
 \implies
 A(t) = \begin{cases}
--E_0t_{\textrm{max}}g(\tau), & 0 \leq t \leq t_{\textrm{max}},\\
+-E_0t_{\textrm{max}}f(\tau), & 0 \leq t \leq t_{\textrm{max}},\\
 A(t_{\textrm{max}}), & t_{\textrm{max}} < t,\\
 0, & \textrm{else},
 \end{cases}
@@ -731,16 +734,15 @@ A(t_{\textrm{max}}), & t_{\textrm{max}} < t,\\
 \tau = \frac{t}{t_{\textrm{max}}}.
 ```
 
-To define a new ramp, one thus only needs to define a pair of
-functions on the unit interval, ``f(\tau)`` that rises from ``0`` to
-``1``, and its integral ``g(\tau)``. Similar to
-[`ConstantField`](@ref), `Ramp` is a _non-propagating_ field, but is
-realizable in e.g. a capacitor.
+To define a new ramp, one thus only needs to define one function on
+the unit interval, ``f(\tau)`` whose derivative ``f'(\tau)`` rises
+from ``0`` to ``1``. Similar to [`ConstantField`](@ref), `Ramp` is a
+_non-propagating_ field, but is realizable in e.g. a capacitor.
 
 Three kinds of ramps are predefined, `:linear_ramp`,
 `:parabolic_ramp`, `:sin²_ramp` (with the alias `:sin2_ramp`).
 
-# Example
+# Examples
 
 ```jldoctest
 julia> @field(F) do
@@ -748,21 +750,30 @@ julia> @field(F) do
            tmax = 4.0u"fs"
            kind = :sin²_ramp
        end
-sin² ramp of
+sin² up-ramp of
+  - 165.3655 jiffies = 4.0000 fs duration, and
+  - E₀ = 1.0000e+00 au = 514.2207 GV m⁻¹
+
+julia> @field(F) do
+           E₀ = 1.0
+           tmax = 4.0u"fs"
+           kind = :linear_ramp
+           ramp = :down
+       end
+Linear down-ramp of
   - 165.3655 jiffies = 4.0000 fs duration, and
   - E₀ = 1.0000e+00 au = 514.2207 GV m⁻¹
 ```
 """
-struct Ramp{T,EFunc,AFunc} <: AbstractField
+struct Ramp{T,AFunc} <: AbstractField
     tmax::T
     E₀::T
-    f::EFunc
-    g::AFunc
+    f::AFunc
     name::String
     params::Dict{Symbol, Any}
 end
 
-function Ramp(f, g, name, field_params)
+function Ramp(f, name, field_params)
     test_field_parameters(field_params, [:I₀, :E₀])
     test_field_parameters(field_params, [:tmax])
 
@@ -778,12 +789,22 @@ function Ramp(f, g, name, field_params)
 
     @unpack tmax, E₀ = field_params
 
-    Ramp(austrip(tmax), austrip(E₀), f, g, name, field_params)
+    r = get(field_params, :ramp, :up)
+    a,suffix = if r == :up
+        f, "up"
+    elseif r == :down
+        A = f(1)
+        τ -> A - f(1-τ), "down"
+    else
+        throw(ArgumentError("Unknown :ramp kind $(r)"))
+    end
+
+    Ramp(austrip(tmax), austrip(E₀), a, name*" "*suffix*"-", field_params)
 end
 
 function Base.show(io::IO, f::Ramp)
     printfmt(io, """
-$(f.name) ramp of
+$(f.name)ramp of
   - {1:.4f} jiffies = {2:s} duration, and
   - E₀ = {3:.4e} au = {4:s}""",
              f.tmax, au2si_round(f.tmax, u"s"),
@@ -791,28 +812,27 @@ $(f.name) ramp of
 end
 
 ElectricFields.field_types[:linear_ramp] =
-    p -> Ramp(identity, t -> t^2/2, "Linear", p)
+    p -> Ramp(t -> t^2/2, "Linear", p)
 
 ElectricFields.field_types[:parabolic_ramp] =
-    p -> Ramp(t -> 2t - t^2, t -> t^2 - t^3/3, "Parabolic", p)
+    p -> Ramp(t -> t^2 - t^3/3, "Parabolic", p)
 
 ElectricFields.field_types[:sin2_ramp] =
     ElectricFields.field_types[:sin²_ramp] =
-    p -> Ramp(t -> sinpi(t/2)^2, t -> t/2 - sinpi(t)/2π, "sin²", p)
-
-function field_amplitude(f::Ramp, t::Number)
-    if 0 ≤ t ≤ f.tmax
-        f.E₀*f.f(t/f.tmax)
-    else
-        zero(f.E₀)
-    end
-end
+    p -> Ramp(t -> t/2 - sinpi(t)/2π, "sin²", p)
 
 intensity(f::Ramp, t::Number) = field_amplitude(f, t)^2
 
 function vector_potential(f::Ramp{T}, t::Number) where T
-    t = clamp(t, zero(T), f.tmax)/f.tmax
-    -f.E₀*f.tmax*f.g(t)
+    z = zero(T)
+    if t < z
+        z
+    elseif t < f.tmax
+        τ = clamp(t, zero(T), f.tmax)/f.tmax
+        -f.E₀*f.tmax*f.f(τ)
+    else
+        -f.E₀*f.tmax*f.f(one(T))
+    end
 end
 
 polarization(::Ramp) = LinearPolarization()

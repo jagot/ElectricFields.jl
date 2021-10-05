@@ -174,30 +174,60 @@
             kind = :linear_ramp
         end
 
+       @field(F2) do
+            I₀ = 4.0
+            tmax = 4.0
+            kind = :linear_ramp
+            ramp = :down
+        end
+
         withenv("UNITFUL_FANCY_EXPONENTS" => true) do
             @test string(F) == """
-                               Linear ramp of
+                               Linear up-ramp of
                                  - 4.0000 jiffies = 96.7554 as duration, and
                                  - E₀ = 2.0000e+00 au = 1.0284 TV m⁻¹"""
+            @test string(F2) == """
+                                Linear down-ramp of
+                                  - 4.0000 jiffies = 96.7554 as duration, and
+                                  - E₀ = 2.0000e+00 au = 1.0284 TV m⁻¹"""
         end
         withenv("UNITFUL_FANCY_EXPONENTS" => false) do
             @test string(F) == """
-                               Linear ramp of
+                               Linear up-ramp of
                                  - 4.0000 jiffies = 96.7554 as duration, and
                                  - E₀ = 2.0000e+00 au = 1.0284 TV m^-1"""
+
+            @test string(F2) == """
+                                Linear down-ramp of
+                                  - 4.0000 jiffies = 96.7554 as duration, and
+                                  - E₀ = 2.0000e+00 au = 1.0284 TV m^-1"""
         end
 
         @test F isa ElectricFields.Ramp
 
         @test field_amplitude(F, -1) == 0
+        @test field_amplitude(F, 0) ≈ 0 rtol=1e-7
         @test field_amplitude(F, 2) ≈ 1 rtol=1e-7
-        @test field_amplitude(F, 4) ≈ 2 rtol=1e-7
+        @test field_amplitude(F, 4-2eps()) ≈ 2 rtol=1e-7
         @test field_amplitude(F, 5) == 0
 
+        @test field_amplitude(F2, -1) == 0
+        @test field_amplitude(F2, 0) ≈ 2 rtol=1e-7
+        @test field_amplitude(F2, 2) ≈ 1 rtol=1e-7
+        @test field_amplitude(F2, 4-2eps()) ≈ 0 atol=1e-10
+        @test field_amplitude(F2, 5) == 0
+
         @test intensity(F, -1) == 0
+        @test intensity(F, 0) ≈ 0 rtol=1e-7
         @test intensity(F, 2) ≈ 1 rtol=1e-7
-        @test intensity(F, 4) ≈ 4 rtol=1e-7
+        @test intensity(F, 4-2eps()) ≈ 4 rtol=1e-7
         @test intensity(F, 5) == 0
+
+        @test intensity(F2, -1) == 0
+        @test intensity(F2, 0) ≈ 4 rtol=1e-7
+        @test intensity(F2, 2) ≈ 1 rtol=1e-7
+        @test intensity(F2, 4-2eps()) ≈ 0 atol=1e-10
+        @test intensity(F2, 5) == 0
 
         @test field_amplitude(F, 0, 4.0) ≈ 4.0 rtol=1e-7
 
@@ -212,13 +242,20 @@
 
         @test dimensions(F) == 1
 
-        @testset "Ramp kind = $(kind)" for kind in (:linear_ramp,
-                                                    :parabolic_ramp,
-                                                    :sin²_ramp)
+        @testset "Ramp kind = $(kind)" for (kind,half) in ((:linear_ramp, 0.5),
+                                                           (:parabolic_ramp, 0.75),
+                                                           (:sin²_ramp, 0.5))
             @field(R) do
                 E₀ = 1.0
                 tmax = 4.0u"fs"
                 kind = kind
+            end
+
+            @field(R2) do
+                E₀ = 1.0
+                tmax = 4.0u"fs"
+                kind = kind
+                ramp = :down
             end
 
             @field(C) do
@@ -233,6 +270,9 @@
 
             @test iszero(field_amplitude(F, s.left-1))
             @test iszero(field_amplitude(F, s.right+1))
+
+            @test field_amplitude(R, austrip(2u"fs")) ≈ half
+            @test field_amplitude(R2, austrip(2u"fs")) ≈ half
 
             @test vector_potential(F, s.right+1) ≈ vector_potential(F, s.right) rtol=1e-7
 
