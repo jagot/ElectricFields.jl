@@ -35,13 +35,14 @@ frequency `fs`.
 """
 function timeaxis(f::AbstractField, fs::Number=default_sampling_frequency(f))
     num_steps = steps(f, fs)
-    if num_steps > 1
-        range(span(f), length=num_steps)
+    s = span(f)
+    if num_steps > 1 || s.left == s.right
+        range(s, length=num_steps)
     else
         # This hack is mainly useful for calculations where exactly
         # one time step should be taken, (b-a) becomes the step
         # length.
-        a,b = endpoints(span(f))
+        a,b = endpoints(s)
         a:(b-a):a
     end
 end

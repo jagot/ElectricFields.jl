@@ -112,7 +112,11 @@ vector_potential(f::SumField, t::Number) =
 
 polarization(f::SumField) = polarization(f.a)
 
-span(f::SumField) = span(f.a) ∪ span(f.b)
+function span(f::SumField)
+    sa = span(f.a)
+    sb = span(f.b)
+    min(sa.left,sb.left)..max(sa.right,sb.right)
+end
 steps(f::SumField, ndt::Int) = steps(f, ndt/min(austrip.(period.((f.a,f.b)))...))
 
 for fun in [:wavelength, :period, :frequency, :wavenumber, :fundamental, :photon_energy]

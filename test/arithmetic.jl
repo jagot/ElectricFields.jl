@@ -141,6 +141,9 @@
         Z = X + delay(Y, 3/2π)
 
         @test field_amplitude(Z, 4.0) ≈ field_amplitude(X, 4.0) + field_amplitude(Y, 4.0 - 3/2π)
+
+        W = X + delay(Y, 35.0)
+        @test span(W) == span(X).left..(span(Y).right+35.0)
     end
 
     @testset "Padded fields" begin
