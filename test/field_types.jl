@@ -165,6 +165,13 @@
         @test photon_energy(F) == 2π
 
         @test dimensions(F) == 1
+
+        @field(Fzero) do
+            I₀ = 4.0
+            tmax = 0.0
+            kind = :constant
+        end
+        @test timeaxis(Fzero) == range(0, stop=0, length=0)
     end
 
     @testset "Ramps" begin
