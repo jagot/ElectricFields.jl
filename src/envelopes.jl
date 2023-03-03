@@ -139,6 +139,7 @@ function GaussianEnvelope(field_params::Dict{Symbol,Any}, carrier)
     GaussianEnvelope(austrip(τ), austrip(σ), α, austrip(σmax), austrip(tmax))
 end
 
+duration(env::GaussianEnvelope) = env.τ
 continuity(::GaussianEnvelope) = Inf
 span(env::GaussianEnvelope) = -env.tmax..env.tmax
 
@@ -265,11 +266,14 @@ function TruncatedGaussianEnvelope(field_params::Dict{Symbol,Any}, carrier)
     TruncatedGaussianEnvelope(austrip(τ), austrip(σ), α, austrip(toff), austrip(tmax), Tmax)
 end
 
+duration(env::TruncatedGaussianEnvelope) = env.τ
 continuity(::TruncatedGaussianEnvelope) = Inf # This is not exactly true
 span(env::TruncatedGaussianEnvelope) = -env.tmax..env.tmax
 
 # TODO: Take truncation into account
 time_integral(env::TruncatedGaussianEnvelope) = env.σ*√(2π)
+
+time_bandwidth_product(::Union{GaussianEnvelope,TruncatedGaussianEnvelope}) = 2log(2)/π
 
 # ** Trapezoidal
 
@@ -364,6 +368,14 @@ continuity(::TrapezoidalEnvelope) = 0
 span(env::TrapezoidalEnvelope{T}) where T =
     zero(T)..((env.ramp_up + env.flat + env.ramp_down)*env.period)
 
+function duration(env::TrapezoidalEnvelope)
+    s = span(env)
+    s.right-s.left
+end
+
+# This is formally correct, but not very useful
+time_bandwidth_product(::TrapezoidalEnvelope) = Inf
+
 # ** Cos²
 
 @doc raw"""
@@ -416,11 +428,15 @@ function Cos²Envelope(field_params::Dict{Symbol,Any}, args...)
     Cos²Envelope(cycles, austrip(T))
 end
 
+duration(env::Cos²Envelope) = env.cycles*env.period
 continuity(::Cos²Envelope) = 0
 function span(env::Cos²Envelope)
     s = env.cycles*env.period/2
     -s..s
 end
+
+# This is formally correct, but not very useful
+time_bandwidth_product(::Cos²Envelope) = Inf
 
 # ** Exports
 
