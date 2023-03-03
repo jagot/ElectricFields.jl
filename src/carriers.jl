@@ -44,13 +44,20 @@ function FixedCarrier(field_params::Dict{Symbol,Any})
     FixedCarrier(λ, T, austrip(ω), ϕ)
 end
 
+function show_carrier_common(io::IO, carrier::AbstractCarrier)
+    ω = photon_energy(carrier)
+    ϕ = phase(carrier)
+    printfmt(io, " @ λ = {1:s} (T = {2:s}, ω = {3:.4f} Ha = {4:s}, f = {5:s})",
+             si_round(u"m"(wavelength(carrier))),
+             si_round(u"s"(period(carrier))),
+             ω, au2si_round(ω, u"eV"),
+             si_round(u"THz"(frequency(carrier))))
+    !iszero(ϕ) && printfmt(io, "; CEP = {1:0.2f}π", ϕ/π)
+end
+
 function show(io::IO, carrier::FixedCarrier)
-    printfmt(io, "Fixed carrier @ λ = {1:s} (T = {2:s}, ω = {3:.4f} Ha = {4:s})",
-             si_round(u"m"(carrier.λ)),
-             si_round(u"s"(carrier.T)),
-             carrier.ω, au2si_round(carrier.ω, u"eV"))
-    !iszero(carrier.ϕ) &&
-        printfmt(io, "; CEP = {1:0.2f}π", carrier.ϕ/π)
+    print(io, "Fixed carrier")
+    show_carrier_common(io, carrier)
 end
 
 # ** Transverse carriers
@@ -134,13 +141,9 @@ function show(io::IO, carrier::EllipticalCarrier)
     else
         " (left)"
     end
-    printfmt(io, "Elliptical carrier with ξ = {1:.2f}{2:s} @ λ = {3:s} (T = {4:s}, ω = {5:.4f} Ha = {6:s})",
-             ξ, pol,
-             si_round(u"m"(carrier.λ)),
-             si_round(u"s"(carrier.T)),
-             carrier.ω, au2si_round(carrier.ω, u"eV"))
-    !iszero(carrier.ϕ) &&
-        printfmt(io, "; CEP = {1:0.2f}π", carrier.ϕ/π)
+    printfmt(io, "Elliptical carrier with ξ = {1:.2f}{2:s}",
+             ξ, pol)
+    show_carrier_common(io, carrier)
 end
 
 function (carrier::EllipticalCarrier)(t)
