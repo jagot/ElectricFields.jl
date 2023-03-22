@@ -11,7 +11,7 @@
     @test car1 isa ElectricFields.FixedCarrier
     @test car1(0.4) ≈ sin(π*(0.4+1/4))
 
-    @test string(car1) == "Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV); CEP = 0.25π"
+    @test string(car1) == "Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV, f = 20.6707 PHz); CEP = 0.25π"
 
     @test wavelength(car1) |> u"nm" == 2*austrip(1u"c")*u"bohr" |> u"nm"
     @test austrip(period(car1)) == 2.0
@@ -33,7 +33,7 @@
     car2 = carrier(F2)
     @test car2 isa ElectricFields.LinearTransverseCarrier
 
-    @test string(car2) == "LinearTransverseCarrier: Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV); CEP = 0.25π"
+    @test string(car2) == "LinearTransverseCarrier: Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV, f = 20.6707 PHz); CEP = 0.25π"
 
     @test car2(0.4) ≈ [0,0,sin(π*(0.4+1/4))]
     @test phase_shift(car2, -π/4)(0.4) ≈ [0,0,sin(π*0.4)]
@@ -61,7 +61,7 @@
         end
         car3 = carrier(F3)
 
-        @test string(car3) == "Elliptical carrier with ξ = $(label) @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV); CEP = 0.25π"
+        @test string(car3) == "Elliptical carrier with ξ = $(label) @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV, f = 20.6707 PHz); CEP = 0.25π"
 
         @test wavelength(car3) |> u"nm" == 2*austrip(1u"c")*u"bohr" |> u"nm"
         @test austrip(period(car3)) == 2.0

@@ -18,8 +18,9 @@
                                  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm⁻² =>
                                    - E₀ = 1.0000e+00 au = 514.2207 GV m⁻¹
                                    - A₀ = 0.3183 au
-                                 – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV)
+                                 – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV, f = 20.6707 PHz)
                                  – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+                                 – and a bandwidth of 0.3925 Ha = 10.6797 eV ⟺ 2.5823 PHz ⟺ 34.2390 Bohr = 1.8119 nm
                                  – Uₚ = 0.0253 Ha = 689.2724 meV => α = 0.1013 Bohr = 5.3617 pm"""
         end
         withenv("UNITFUL_FANCY_EXPONENTS" => false) do
@@ -28,8 +29,9 @@
                                  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm^-2 =>
                                    - E₀ = 1.0000e+00 au = 514.2207 GV m^-1
                                    - A₀ = 0.3183 au
-                                 – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV)
+                                 – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV, f = 20.6707 PHz)
                                  – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+                                 – and a bandwidth of 0.3925 Ha = 10.6797 eV ⟺ 2.5823 PHz ⟺ 34.2390 Bohr = 1.8119 nm
                                  – Uₚ = 0.0253 Ha = 689.2724 meV => α = 0.1013 Bohr = 5.3617 pm"""
         end
 
@@ -38,6 +40,40 @@
         t = [0.4, 0.5]
         for fun in (vector_potential, field_amplitude, intensity)
             @test fun(F, t) == [fun(F, t[1]), fun(F, t[2])]
+        end
+
+        @testset "Trapezoidal fields" begin
+            @field(F2) do
+                I₀ = 1.0
+                T = 2.0
+                ramp_up = 1.0
+                flat = 3.0
+                ramp_down = 2.0
+                env = :trapezoidal
+            end
+
+            withenv("UNITFUL_FANCY_EXPONENTS" => true) do
+                @test string(F2) == """
+                               Linearly polarized field with
+                                 - I₀ = 1.0000e+00 au = 3.5094452e16 W cm⁻² =>
+                                   - E₀ = 1.0000e+00 au = 514.2207 GV m⁻¹
+                                   - A₀ = 0.3183 au
+                                 – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV, f = 20.6707 PHz)
+                                 – and a /1‾3‾2\\ cycles trapezoidal envelope
+                                 – and a bandwidth of Inf Ha = Inf eV ⟺ Inf Hz ⟺ Inf Bohr = Inf m
+                                 – Uₚ = 0.0253 Ha = 689.2724 meV => α = 0.1013 Bohr = 5.3617 pm"""
+            end
+            withenv("UNITFUL_FANCY_EXPONENTS" => false) do
+                @test string(F2) == """
+                               Linearly polarized field with
+                                 - I₀ = 1.0000e+00 au = 3.5094452e16 W cm^-2 =>
+                                   - E₀ = 1.0000e+00 au = 514.2207 GV m^-1
+                                   - A₀ = 0.3183 au
+                                 – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV, f = 20.6707 PHz)
+                                 – and a /1‾3‾2\\ cycles trapezoidal envelope
+                                 – and a bandwidth of Inf Ha = Inf eV ⟺ Inf Hz ⟺ Inf Bohr = Inf m
+                                 – Uₚ = 0.0253 Ha = 689.2724 meV => α = 0.1013 Bohr = 5.3617 pm"""
+            end
         end
     end
 
@@ -64,9 +100,10 @@
                                  - I₀ = 2.0000e+00 au = 7.0188904e16 W cm⁻² =>
                                    - E₀ = 1.4142e+00 au = 727.2178 GV m⁻¹
                                    - A₀ = 0.4502 au
-                                 – a LinearTransverseCarrier: Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV)
+                                 – a LinearTransverseCarrier: Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV, f = 20.6707 PHz)
                                  – a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
                                  – and a rotation of 0.25π about [0.000, 0.000, 1.000]
+                                 – and a bandwidth of 0.3925 Ha = 10.6797 eV ⟺ 2.5823 PHz ⟺ 34.2390 Bohr = 1.8119 nm
                                  – Uₚ = 0.0507 Ha = 1.3785 eV => α = 0.1433 Bohr = 7.5826 pm"""
         end
         withenv("UNITFUL_FANCY_EXPONENTS" => false) do
@@ -75,9 +112,10 @@
                                  - I₀ = 2.0000e+00 au = 7.0188904e16 W cm^-2 =>
                                    - E₀ = 1.4142e+00 au = 727.2178 GV m^-1
                                    - A₀ = 0.4502 au
-                                 – a LinearTransverseCarrier: Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV)
+                                 – a LinearTransverseCarrier: Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV, f = 20.6707 PHz)
                                  – a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
                                  – and a rotation of 0.25π about [0.000, 0.000, 1.000]
+                                 – and a bandwidth of 0.3925 Ha = 10.6797 eV ⟺ 2.5823 PHz ⟺ 34.2390 Bohr = 1.8119 nm
                                  – Uₚ = 0.0507 Ha = 1.3785 eV => α = 0.1433 Bohr = 7.5826 pm"""
         end
 
@@ -104,8 +142,9 @@
                                   - I₀ = 2.0000e+00 au = 7.0188904e16 W cm⁻² =>
                                     - E₀ = 1.4142e+00 au = 727.2178 GV m⁻¹
                                     - A₀ = 0.4502 au
-                                  – a Elliptical carrier with ξ = 1.00 (RCP) @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV)
+                                  – a Elliptical carrier with ξ = 1.00 (RCP) @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV, f = 20.6707 PHz)
                                   – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+                                  – and a bandwidth of 0.3925 Ha = 10.6797 eV ⟺ 2.5823 PHz ⟺ 34.2390 Bohr = 1.8119 nm
                                   – Uₚ = 0.0507 Ha = 1.3785 eV => α = 0.1433 Bohr = 7.5826 pm"""
         end
         withenv("UNITFUL_FANCY_EXPONENTS" => false) do
@@ -114,8 +153,9 @@
                                   - I₀ = 2.0000e+00 au = 7.0188904e16 W cm^-2 =>
                                     - E₀ = 1.4142e+00 au = 727.2178 GV m^-1
                                     - A₀ = 0.4502 au
-                                  – a Elliptical carrier with ξ = 1.00 (RCP) @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV)
+                                  – a Elliptical carrier with ξ = 1.00 (RCP) @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV, f = 20.6707 PHz)
                                   – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+                                  – and a bandwidth of 0.3925 Ha = 10.6797 eV ⟺ 2.5823 PHz ⟺ 34.2390 Bohr = 1.8119 nm
                                   – Uₚ = 0.0507 Ha = 1.3785 eV => α = 0.1433 Bohr = 7.5826 pm"""
         end
     end

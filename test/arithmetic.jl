@@ -53,16 +53,18 @@
                                │   - I₀ = 1.0000e+00 au = 3.5094452e16 W cm⁻² =>
                                │     - E₀ = 1.0000e+00 au = 514.2207 GV m⁻¹
                                │     - A₀ = 0.3183 au
-                               │   – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV)
+                               │   – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV, f = 20.6707 PHz)
                                │   – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+                               │   – and a bandwidth of 0.3925 Ha = 10.6797 eV ⟺ 2.5823 PHz ⟺ 34.2390 Bohr = 1.8119 nm
                                │   – Uₚ = 0.0253 Ha = 689.2724 meV => α = 0.1013 Bohr = 5.3617 pm
                                ⊕
                                │ Linearly polarized field with
                                │   - I₀ = 5.0000e-01 au = 1.7547226e16 W cm⁻² =>
                                │     - E₀ = 7.0711e-01 au = 363.6089 GV m⁻¹
                                │     - A₀ = 0.1125 au
-                               │   – a Fixed carrier @ λ = 7.2516 nm (T = 24.1888 as, ω = 6.2832 Ha = 170.9742 eV)
+                               │   – a Fixed carrier @ λ = 7.2516 nm (T = 24.1888 as, ω = 6.2832 Ha = 170.9742 eV, f = 41.3414 PHz)
                                │   – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±1.00σ)
+                               │   – and a bandwidth of 0.3925 Ha = 10.6797 eV ⟺ 2.5823 PHz ⟺ 8.5598 Bohr = 452.9627 pm
                                └   – Uₚ = 0.0032 Ha = 86.1591 meV => α = 0.0179 Bohr = 947.8211 fm
                                """
         end
@@ -72,16 +74,18 @@
                                │   - I₀ = 1.0000e+00 au = 3.5094452e16 W cm^-2 =>
                                │     - E₀ = 1.0000e+00 au = 514.2207 GV m^-1
                                │     - A₀ = 0.3183 au
-                               │   – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV)
+                               │   – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV, f = 20.6707 PHz)
                                │   – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+                               │   – and a bandwidth of 0.3925 Ha = 10.6797 eV ⟺ 2.5823 PHz ⟺ 34.2390 Bohr = 1.8119 nm
                                │   – Uₚ = 0.0253 Ha = 689.2724 meV => α = 0.1013 Bohr = 5.3617 pm
                                ⊕
                                │ Linearly polarized field with
                                │   - I₀ = 5.0000e-01 au = 1.7547226e16 W cm^-2 =>
                                │     - E₀ = 7.0711e-01 au = 363.6089 GV m^-1
                                │     - A₀ = 0.1125 au
-                               │   – a Fixed carrier @ λ = 7.2516 nm (T = 24.1888 as, ω = 6.2832 Ha = 170.9742 eV)
+                               │   – a Fixed carrier @ λ = 7.2516 nm (T = 24.1888 as, ω = 6.2832 Ha = 170.9742 eV, f = 41.3414 PHz)
                                │   – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±1.00σ)
+                               │   – and a bandwidth of 0.3925 Ha = 10.6797 eV ⟺ 2.5823 PHz ⟺ 8.5598 Bohr = 452.9627 pm
                                └   – Uₚ = 0.0032 Ha = 86.1591 meV => α = 0.0179 Bohr = 947.8211 fm
                                """
         end
@@ -103,8 +107,9 @@
                                  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm⁻² =>
                                    - E₀ = 1.0000e+00 au = 514.2207 GV m⁻¹
                                    - A₀ = 0.3183 au
-                                 – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV)
+                                 – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV, f = 20.6707 PHz)
                                  – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+                                 – and a bandwidth of 0.3925 Ha = 10.6797 eV ⟺ 2.5823 PHz ⟺ 34.2390 Bohr = 1.8119 nm
                                  – Uₚ = 0.0253 Ha = 689.2724 meV => α = 0.1013 Bohr = 5.3617 pm
                                  – delayed by 0.4000 jiffies = 9.6755 as"""
         end
@@ -114,8 +119,9 @@
                                  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm^-2 =>
                                    - E₀ = 1.0000e+00 au = 514.2207 GV m^-1
                                    - A₀ = 0.3183 au
-                                 – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV)
+                                 – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV, f = 20.6707 PHz)
                                  – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+                                 – and a bandwidth of 0.3925 Ha = 10.6797 eV ⟺ 2.5823 PHz ⟺ 34.2390 Bohr = 1.8119 nm
                                  – Uₚ = 0.0253 Ha = 689.2724 meV => α = 0.1013 Bohr = 5.3617 pm
                                  – delayed by 0.4000 jiffies = 9.6755 as"""
         end
@@ -172,8 +178,9 @@
                                  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm⁻² =>
                                    - E₀ = 1.0000e+00 au = 514.2207 GV m⁻¹
                                    - A₀ = 0.3183 au
-                                 – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV)
+                                 – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV, f = 20.6707 PHz)
                                  – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+                                 – and a bandwidth of 0.3925 Ha = 10.6797 eV ⟺ 2.5823 PHz ⟺ 34.2390 Bohr = 1.8119 nm
                                  – Uₚ = 0.0253 Ha = 689.2724 meV => α = 0.1013 Bohr = 5.3617 pm"""
         end
         withenv("UNITFUL_FANCY_EXPONENTS" => false) do
@@ -183,8 +190,9 @@
                                  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm^-2 =>
                                    - E₀ = 1.0000e+00 au = 514.2207 GV m^-1
                                    - A₀ = 0.3183 au
-                                 – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV)
+                                 – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV, f = 20.6707 PHz)
                                  – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+                                 – and a bandwidth of 0.3925 Ha = 10.6797 eV ⟺ 2.5823 PHz ⟺ 34.2390 Bohr = 1.8119 nm
                                  – Uₚ = 0.0253 Ha = 689.2724 meV => α = 0.1013 Bohr = 5.3617 pm"""
         end
     end
@@ -216,8 +224,9 @@
                                  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm⁻² =>
                                    - E₀ = 1.0000e+00 au = 514.2207 GV m⁻¹
                                    - A₀ = 0.3183 au
-                                 – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV)
+                                 – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV, f = 20.6707 PHz)
                                  – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+                                 – and a bandwidth of 0.3925 Ha = 10.6797 eV ⟺ 2.5823 PHz ⟺ 34.2390 Bohr = 1.8119 nm
                                  – Uₚ = 0.0253 Ha = 689.2724 meV => α = 0.1013 Bohr = 5.3617 pm"""
         end
         withenv("UNITFUL_FANCY_EXPONENTS" => false) do
@@ -227,8 +236,9 @@
                                  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm^-2 =>
                                    - E₀ = 1.0000e+00 au = 514.2207 GV m^-1
                                    - A₀ = 0.3183 au
-                                 – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV)
+                                 – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV, f = 20.6707 PHz)
                                  – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+                                 – and a bandwidth of 0.3925 Ha = 10.6797 eV ⟺ 2.5823 PHz ⟺ 34.2390 Bohr = 1.8119 nm
                                  – Uₚ = 0.0253 Ha = 689.2724 meV => α = 0.1013 Bohr = 5.3617 pm"""
         end
     end

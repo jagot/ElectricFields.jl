@@ -60,7 +60,7 @@ end
 
 function si_round(q::Quantity; fspec="{1:.4f} {2:s}")
     v,u = ustrip(q), unit(q)
-    if !iszero(v)
+    if !iszero(v) && isfinite(q)
         u,i = shift_unit(u, log10(abs(v)))
         q = u(q)
     end

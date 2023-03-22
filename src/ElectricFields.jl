@@ -9,6 +9,7 @@ using UnitfulAtomic
 # using FFTW
 using ForwardDiff
 using Optim
+using Roots
 
 using IntervalSets
 import IntervalSets: duration

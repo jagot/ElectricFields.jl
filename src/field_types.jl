@@ -202,6 +202,13 @@ Return the pulse duration ``\tau`` of the field `f`.
 """
 duration(f::AbstractField) = duration(envelope(f))
 
+"""
+    time_bandwidth_product(f)
+
+Return the time–bandwidth product of the field `f`.
+"""
+time_bandwidth_product(f::AbstractField) = time_bandwidth_product(envelope(f))
+
 @doc raw"""
     continuity(f)
 
@@ -363,6 +370,20 @@ ArbitraryPolarization()
 """
 function polarization end
 
+function show_bandwidth(io::IO, f::AbstractField)
+    τ = duration(f)
+    tbp = time_bandwidth_product(f)
+    λ = wavelength(f)
+    ω = photon_energy(f)
+    Δf = tbp/τ
+    Δω = Δf*2π
+    Δλ = (2π*austrip(1u"c")/ω^2)*Δω
+    printfmt(io, "and a bandwidth of {1:.4f} Ha = {2:s} ⟺ {3:s} ⟺ {4:.4f} Bohr = {5:s}",
+             Δω, au2si_round(Δω, u"eV"),
+             au2si_round(Δf, u"Hz"),
+             Δλ, au2si_round(Δλ, u"m"))
+end
+
 # * Linear field
 
 """
@@ -439,6 +460,8 @@ Linearly polarized field with
     show(io, f.carrier)
     write(io, "\n  – and a ")
     show(io, f.env)
+    write(io, "\n  – ")
+    show_bandwidth(io, f)
     write(io, "\n  – ")
     show_strong_field_properties(io, f)
 end
@@ -587,6 +610,8 @@ Transversely polarized field with
         write(io, "\n  – and a ")
         show(io, f.env)
     end
+    write(io, "\n  – ")
+    show_bandwidth(io, f)
     write(io, "\n  – ")
     show_strong_field_properties(io, f)
 end
@@ -856,7 +881,7 @@ export LinearPolarization, ArbitraryPolarization, polarization,
     frequency, max_frequency, wavenumber, fundamental, photon_energy,
     envelope,
     intensity, amplitude, fluence,
-    duration,
+    duration, time_bandwidth_product,
     field_amplitude, vector_potential, instantaneous_intensity,
     field_envelope,
     params, dimensions,
