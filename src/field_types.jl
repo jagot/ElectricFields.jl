@@ -378,7 +378,7 @@ function show_bandwidth(io::IO, f::AbstractField)
     Δf = tbp/τ
     Δω = Δf*2π
     Δλ = (2π*austrip(1u"c")/ω^2)*Δω
-    printfmt(io, "and a bandwidth of {1:.4f} Ha = {2:s} ⟺  {3:s} ⟺  {4:.4f} Bohr = {5:s}",
+    printfmt(io, "and a bandwidth of {1:.4f} Ha = {2:s} ⟺ {3:s} ⟺ {4:.4f} Bohr = {5:s}",
              Δω, au2si_round(Δω, u"eV"),
              au2si_round(Δf, u"Hz"),
              Δλ, au2si_round(Δλ, u"m"))
