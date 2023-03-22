@@ -41,6 +41,40 @@
         for fun in (vector_potential, field_amplitude, intensity)
             @test fun(F, t) == [fun(F, t[1]), fun(F, t[2])]
         end
+
+        @testset "Trapezoidal fields" begin
+            @field(F2) do
+                I₀ = 1.0
+                T = 2.0
+                ramp_up = 1.0
+                flat = 3.0
+                ramp_down = 2.0
+                env = :trapezoidal
+            end
+
+            withenv("UNITFUL_FANCY_EXPONENTS" => true) do
+                @test string(F2) == """
+                               Linearly polarized field with
+                                 - I₀ = 1.0000e+00 au = 3.5094452e16 W cm⁻² =>
+                                   - E₀ = 1.0000e+00 au = 514.2207 GV m⁻¹
+                                   - A₀ = 0.3183 au
+                                 – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV, f = 20.6707 PHz)
+                                 – and a /1‾3‾2\\ cycles trapezoidal envelope
+                                 – and a bandwidth of Inf Ha = Inf eV ⟺ Inf Hz ⟺ Inf Bohr = Inf m
+                                 – Uₚ = 0.0253 Ha = 689.2724 meV => α = 0.1013 Bohr = 5.3617 pm"""
+            end
+            withenv("UNITFUL_FANCY_EXPONENTS" => false) do
+                @test string(F2) == """
+                               Linearly polarized field with
+                                 - I₀ = 1.0000e+00 au = 3.5094452e16 W cm^-2 =>
+                                   - E₀ = 1.0000e+00 au = 514.2207 GV m^-1
+                                   - A₀ = 0.3183 au
+                                 – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV, f = 20.6707 PHz)
+                                 – and a /1‾3‾2\\ cycles trapezoidal envelope
+                                 – and a bandwidth of Inf Ha = Inf eV ⟺ Inf Hz ⟺ Inf Bohr = Inf m
+                                 – Uₚ = 0.0253 Ha = 689.2724 meV => α = 0.1013 Bohr = 5.3617 pm"""
+            end
+        end
     end
 
     @testset "Transverse fields" begin
