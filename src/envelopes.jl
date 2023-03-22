@@ -67,6 +67,16 @@ show(io::IO, env::GaussianEnvelope) =
     printfmt(io, "Gaussian envelope of duration {1:s} (intensity FWHM; ±{2:0.2f}σ)",
              au2si_round(env.τ, u"s"), env.σmax)
 
+function findα(τ, ω, ϵ=0.2)
+    eq(α) = 2log(2)/τ^2*(1 + 1/log(2)*log(1 + τ^2*α^2/ω^2)) - α
+
+    α₀ = 2log(2)/τ^2
+    x = τ*ω/2π
+    # This is our heuristic upper bound
+    w = 1 + ϵ + 4log(1 + 2/x)*exp(-x)
+    find_zero(eq, (α₀,w*α₀))
+end
+
 @doc raw"""
     gaussian_common!(field_params, carrier[; Tmax_rounder, verbosity])
 
@@ -103,29 +113,8 @@ function gaussian_common!(field_params, carrier;
         σmax = tmax/σ
     end
     τ = austrip(field_params[:τ])
-    σ = austrip(field_params[:σ])
-    α = 2log(2)/τ^2
-    period = austrip(field_params[:T])
     ω = austrip(field_params[:ω])
-
-    σmax = austrip(field_params[:σmax])
-    tmax = austrip(field_params[:tmax])
-
-    τ < 0.5period &&
-        @warn "Pulse durations smaller than half a period not reliably supported"
-
-    # Find the exponential coefficient for the vector potential that
-    # will give the desired FWHM for the intensity profile.
-    f = α -> begin
-        env = GaussianEnvelope(τ, σ, α[1], σmax, tmax)
-        field = make_temp_field(carrier, env, field_params)
-        abs2(intensity(field, τ/2) - ω^2/2)
-    end
-    verbosity > 0 && @info "Finding optimal vector potential coefficient"
-    res = optimize(f, [α], BFGS())
-    verbosity > 0 && display(res)
-
-    field_params[:α] = res.minimizer[1]
+    field_params[:α] = findα(τ, ω)
 end
 
 function GaussianEnvelope(field_params::Dict{Symbol,Any}, carrier)

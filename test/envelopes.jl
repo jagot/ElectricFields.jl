@@ -65,4 +65,17 @@
         @test continuity(env) == 0
         @test span(env) == -3..3
     end
+
+    @testset "Gaussian envelopes" begin
+        for τ ∈ range(0.1, stop=2.0, length=11)
+            @field(F) do
+                I₀ = 1.0
+                T = 1.0
+                τ = τ
+                σmax = 6.0
+            end
+
+            @test intensity(F, τ/2) ≈ 1/2 rtol=1e-5
+        end
+    end
 end
