@@ -23,6 +23,8 @@ include("units.jl")
 include("rotations.jl")
 include("relation_dsl.jl")
 
+include("spectra.jl")
+
 include("field_types.jl")
 include("time_axis.jl")
 include("carriers.jl")

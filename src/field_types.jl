@@ -384,6 +384,27 @@ function show_bandwidth(io::IO, f::AbstractField)
              Δλ, au2si_round(Δλ, u"m"))
 end
 
+# ** Spectra
+
+function vector_potential_spectrum end
+
+vector_potential_spectrum(::LinearPolarization, f, ω::AbstractVector) =
+    vector_potential_spectrum.(f, ω)
+vector_potential_spectrum(::ArbitraryPolarization, f, ω::AbstractVector) =
+    transpose(reduce(hcat, vector_potential_spectrum.(f, ω)))
+vector_potential_spectrum(f::AbstractField, ω::AbstractVector) =
+    vector_potential_spectrum(polarization(f), f, ω)
+
+field_amplitude_spectrum(f::AbstractField, ω::Number) =
+    im*ω*vector_potential_spectrum(f, ω)
+
+field_amplitude_spectrum(::LinearPolarization, f, ω::AbstractVector) =
+    field_amplitude_spectrum.(f, ω)
+field_amplitude_spectrum(::ArbitraryPolarization, f, ω::AbstractVector) =
+    transpose(reduce(hcat, field_amplitude_spectrum.(f, ω)))
+field_amplitude_spectrum(f::AbstractField, ω::AbstractVector) =
+    field_amplitude_spectrum(polarization(f), f, ω)
+
 # * Linear field
 
 """
@@ -443,6 +464,9 @@ end
 
 vector_potential(f::LinearField, t::Number) = f.A₀*f.env(t)*f.carrier(t)
 vector_potential(f::LinearField) = f.A₀
+
+vector_potential_spectrum(f::LinearField, ω::Number) =
+    f.A₀*convolution(spectrum(f.env), spectrum(f.carrier), ω)
 
 intensity(f::LinearField) = f.I₀
 amplitude(f::LinearField) = f.E₀
@@ -583,6 +607,9 @@ end
 
 vector_potential(f::TransverseField, t::Number) = f.A₀*f.env(t)*(f.R*f.carrier(t))
 vector_potential(f::TransverseField) = f.A₀
+
+vector_potential_spectrum(f::LinearField, ω::Number) =
+    f.A₀*convolution(spectrum(f.env), spectrum(f.carrier), ω)
 
 intensity(f::TransverseField) = f.I₀
 amplitude(f::TransverseField) = f.E₀
@@ -885,4 +912,5 @@ export LinearPolarization, ArbitraryPolarization, polarization,
     field_amplitude, vector_potential, instantaneous_intensity,
     field_envelope,
     params, dimensions,
-    phase_shift, phase
+    phase_shift, phase,
+    field_amplitude_spectrum, vector_potential_spectrum
