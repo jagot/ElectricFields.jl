@@ -1,5 +1,3 @@
-abstract type AbstractField end
-
 Base.parent(f::AbstractField) = f
 
 abstract type Polarization end

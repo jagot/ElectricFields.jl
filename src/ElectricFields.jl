@@ -6,7 +6,7 @@ using StaticArrays
 using Unitful
 using UnitfulAtomic
 
-# using FFTW
+using FFTW
 using ForwardDiff
 using Optim
 using Roots
@@ -18,6 +18,8 @@ using Parameters
 
 import Base: show
 using Formatting
+
+abstract type AbstractField end
 
 include("units.jl")
 include("rotations.jl")
