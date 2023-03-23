@@ -96,6 +96,14 @@ end
 
 (carrier::LinearTransverseCarrier)(t) = SVector(0, 0, carrier.carrier(t))
 
+function spectrum(carrier::LinearTransverseCarrier)
+    @unpack ω,ϕ = carrier.carrier
+    T = typeof(ω)
+    eiϕ = exp(im*ϕ*ω)
+    N = √(2T(π))/2im
+    DiracComb([(ω,SVector(0, 0, N*eiϕ)), (-ω,SVector(0, 0, -N*conj(eiϕ)))])
+end
+
 carrier_types[:linear] = LinearTransverseCarrier
 
 for fun in [:wavelength, :period, :frequency, :wavenumber, :fundamental, :photon_energy, :phase]

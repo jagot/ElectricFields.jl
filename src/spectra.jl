@@ -7,6 +7,14 @@ struct DiracComb{T,U}
     frequencies::Vector{Tuple{T,U}}
 end
 
+function Base.:(*)(R::RT, dc::DiracComb{T,U}) where {RT<:Union{SMatrix{3,3},UniformScaling},T,U<:SVector{3}}
+    frequencies = Vector{Tuple{T,U}}(undef, length(dc.frequencies))
+    for (i,(ω₀,c)) in enumerate(dc.frequencies)
+        frequencies[i] = (ω₀, R*c)
+    end
+    DiracComb(frequencies)
+end
+
 @doc raw"""
     convolution(f̂::Function, dc::DiracComb, ω)
 
@@ -39,11 +47,11 @@ fftω(args...) = 2π*fftfreq(args...)
 fftω(t::AbstractRange) = fftω(length(t), 1/step(t))
 
 FFTW.fft(f::AbstractField, t::AbstractRange) =
-    fft(field_amplitude(f, t))
+    fft(field_amplitude(f, t), 1)
 fft_vector_potential(f::AbstractField, t::AbstractRange) =
-    fft(vector_potential(f, t))
+    fft(vector_potential(f, t), 1)
 
-function _nfft(Y::AbstractVector, ts...)
+function _nfft(Y, ts...)
     f = one(eltype(Y))
     for t in ts
         f *= (t[end]-t[1])/(length(t)*√(2π))
@@ -59,7 +67,7 @@ Normalized FFT of `y` with respect to the axes `ts`. We use the
 symmetric normalization ``(2\pi)^{-N/2}`` where ``N`` is the number of
 dimensions.
 """
-nfft(y::AbstractVector, ts...) = _nfft(fft(y), ts...)
+nfft(y, ts...) = _nfft(fft(y, 1:length(ts)), ts...)
 
 nfft(f::AbstractField, t::AbstractRange) = _nfft(fft(f, t), t)
 

@@ -606,8 +606,8 @@ end
 vector_potential(f::TransverseField, t::Number) = f.A₀*f.env(t)*(f.R*f.carrier(t))
 vector_potential(f::TransverseField) = f.A₀
 
-vector_potential_spectrum(f::LinearField, ω::Number) =
-    f.A₀*convolution(spectrum(f.env), spectrum(f.carrier), ω)
+vector_potential_spectrum(f::TransverseField, ω::Number) =
+    f.A₀*convolution(spectrum(f.env), f.R*spectrum(f.carrier), ω)
 
 intensity(f::TransverseField) = f.I₀
 amplitude(f::TransverseField) = f.E₀
