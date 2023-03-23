@@ -762,6 +762,19 @@ dimensions(::ConstantField) = 1
 
 field_types[:constant] = ConstantField
 
+function field_amplitude_spectrum(f::ConstantField, ω::Number)
+    a = inv(f.tmax)
+    exp(-im*a*ω/2)*(1/√(2π*a^2))*sinc(ω/(2π*a))
+end
+
+function vector_potential_spectrum(f::ConstantField, ω::Number)
+    # This is not entirely correct
+    a = inv(f.tmax)
+    b = 1/(2π*a)
+    -im*exp(-im*ω/2)*(1/√(2π*a^2))*(-im*sinc(b*ω)/2 + cosc(b*ω)*b)
+    # -field_amplitude_spectrum(f,ω)/(im*ω)
+end
+
 # * Ramps
 
 @doc raw"""
