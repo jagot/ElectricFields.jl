@@ -1,7 +1,7 @@
 name = "ElectricFields"
 uuid = "2f84ce32-9bb1-11e8-0d9f-3dce90a4beca"
 authors = ["Stefanos Carlström <stefanos.carlstrom@gmail.com>"]
-version = "0.1.6"
+version = "0.2.0"
 
 [deps]
 FFTW = "7a1cc6ca-52ef-59f5-83cd-3a7055c09341"
