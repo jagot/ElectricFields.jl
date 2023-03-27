@@ -5,6 +5,26 @@ using UnitfulAtomic
 using IntervalSets
 using FFTW
 
+function test_approx_eq(a, b; on_fail::Union{Nothing,Function}=nothing, kwargs...)
+    size(a) == size(b) || throw(DimensionMismatch("Cannot compare objects of sizes $(size(a)) and $(size(b))"))
+    if !isapprox(a, b; kwargs...)
+        @error "Approximate equality failed:"
+        na = norm(a)
+        nb = norm(b)
+        Δ = norm(a-b)
+        relΔ = Δ/max(na,nb)
+        pretty_table(["|a|" na
+                      "|b|" nb
+                      "Abs. Δ" Δ
+                      "Rel. Δ" relΔ],
+                     show_header=false,
+                     alignment=[:r,:l],tf=tf_borderless)
+        isnothing(on_fail) || on_fail()
+    end
+
+    @test isapprox(a, b; kwargs...)
+end
+
 @testset "ElectricFields.jl" begin
     include("namespace_macro.jl")
     include("units.jl")
@@ -55,6 +75,8 @@ using FFTW
     end
 
     include("analytic_continuation.jl")
+
+    include("spectra.jl")
 
     # include("sellmeier.jl")
 end
