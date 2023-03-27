@@ -76,6 +76,9 @@
             end
 
             @test intensity(F, τ/2) ≈ 1/2 rtol=1e-5
+            # intensity(F, 0) is not exactly 1 due to unit conversion
+            # inaccuracy (issue #24).
+            @test intensity(F, τ/2)/intensity(F, 0) ≈ 1/2
         end
     end
 end
