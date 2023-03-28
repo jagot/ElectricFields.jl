@@ -41,4 +41,5 @@ makedocs(;
 
 deploydocs(;
     repo="github.com/jagot/ElectricFields.jl",
+    push_preview = true,
 )
