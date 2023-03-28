@@ -35,11 +35,12 @@ julia> @field(A) do
            Tmax = 3.0
        end
 Linearly polarized field with
-  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm⁻² =>
-    - E₀ = 1.0000e+00 au = 514.2207 GV m⁻¹
+  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm^-2 =>
+    - E₀ = 1.0000e+00 au = 514.2207 GV m^-1
     - A₀ = 0.3183 au
-  – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV)
+  – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV, f = 20.6707 PHz)
   – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+  – and a bandwidth of 0.3925 Ha = 10.6797 eV ⟺ 2.5823 PHz ⟺ 34.2390 Bohr = 1.8119 nm
   – Uₚ = 0.0253 Ha = 689.2724 meV => α = 0.1013 Bohr = 5.3617 pm
 
 julia> @field(B) do
@@ -49,28 +50,31 @@ julia> @field(B) do
            Tmax = 3.0
        end
 Linearly polarized field with
-  - I₀ = 5.0000e-01 au = 1.7547226e16 W cm⁻² =>
-    - E₀ = 7.0711e-01 au = 363.6089 GV m⁻¹
+  - I₀ = 5.0000e-01 au = 1.7547226e16 W cm^-2 =>
+    - E₀ = 7.0711e-01 au = 363.6089 GV m^-1
     - A₀ = 0.1125 au
-  – a Fixed carrier @ λ = 7.2516 nm (T = 24.1888 as, ω = 6.2832 Ha = 170.9742 eV)
+  – a Fixed carrier @ λ = 7.2516 nm (T = 24.1888 as, ω = 6.2832 Ha = 170.9742 eV, f = 41.3414 PHz)
   – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±1.00σ)
+  – and a bandwidth of 0.3925 Ha = 10.6797 eV ⟺ 2.5823 PHz ⟺ 8.5598 Bohr = 452.9627 pm
   – Uₚ = 0.0032 Ha = 86.1591 meV => α = 0.0179 Bohr = 947.8211 fm
 
 julia> A+B
 ┌ Linearly polarized field with
-│   - I₀ = 1.0000e+00 au = 3.5094452e16 W cm⁻² =>
-│     - E₀ = 1.0000e+00 au = 514.2207 GV m⁻¹
+│   - I₀ = 1.0000e+00 au = 3.5094452e16 W cm^-2 =>
+│     - E₀ = 1.0000e+00 au = 514.2207 GV m^-1
 │     - A₀ = 0.3183 au
-│   – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV)
+│   – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV, f = 20.6707 PHz)
 │   – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+│   – and a bandwidth of 0.3925 Ha = 10.6797 eV ⟺ 2.5823 PHz ⟺ 34.2390 Bohr = 1.8119 nm
 │   – Uₚ = 0.0253 Ha = 689.2724 meV => α = 0.1013 Bohr = 5.3617 pm
 ⊕
 │ Linearly polarized field with
-│   - I₀ = 5.0000e-01 au = 1.7547226e16 W cm⁻² =>
-│     - E₀ = 7.0711e-01 au = 363.6089 GV m⁻¹
+│   - I₀ = 5.0000e-01 au = 1.7547226e16 W cm^-2 =>
+│     - E₀ = 7.0711e-01 au = 363.6089 GV m^-1
 │     - A₀ = 0.1125 au
-│   – a Fixed carrier @ λ = 7.2516 nm (T = 24.1888 as, ω = 6.2832 Ha = 170.9742 eV)
+│   – a Fixed carrier @ λ = 7.2516 nm (T = 24.1888 as, ω = 6.2832 Ha = 170.9742 eV, f = 41.3414 PHz)
 │   – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±1.00σ)
+│   – and a bandwidth of 0.3925 Ha = 10.6797 eV ⟺ 2.5823 PHz ⟺ 8.5598 Bohr = 452.9627 pm
 └   – Uₚ = 0.0032 Ha = 86.1591 meV => α = 0.0179 Bohr = 947.8211 fm
 ```
 """
@@ -181,30 +185,32 @@ julia> @field(A) do
            Tmax = 3.0
        end
 Linearly polarized field with
-  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm⁻² =>
-    - E₀ = 1.0000e+00 au = 514.2207 GV m⁻¹
+  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm^-2 =>
+    - E₀ = 1.0000e+00 au = 514.2207 GV m^-1
     - A₀ = 0.3183 au
-  – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV)
+  – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV, f = 20.6707 PHz)
   – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+  – and a bandwidth of 0.3925 Ha = 10.6797 eV ⟺ 2.5823 PHz ⟺ 34.2390 Bohr = 1.8119 nm
   – Uₚ = 0.0253 Ha = 689.2724 meV => α = 0.1013 Bohr = 5.3617 pm
 
 julia> B = -A
-ElectricFields.NegatedField{ElectricFields.LinearField{ElectricFields.FixedCarrier{Quantity{Float64, 𝐋, Unitful.FreeUnits{(Eₕ⁻¹, ħ, c), 𝐋, nothing}}, Quantity{Float64, 𝐓, Unitful.FreeUnits{(Eₕ⁻¹, ħ), 𝐓, nothing}}, Float64, Int64}, ElectricFields.GaussianEnvelope{Float64}, Float64}}(Linearly polarized field with
-  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm⁻² =>
-    - E₀ = 1.0000e+00 au = 514.2207 GV m⁻¹
+ElectricFields.NegatedField{ElectricFields.LinearField{ElectricFields.FixedCarrier{Quantity{Float64, 𝐋, Unitful.FreeUnits{(Eₕ^-1, ħ, c), 𝐋, nothing}}, Quantity{Float64, 𝐓, Unitful.FreeUnits{(Eₕ^-1, ħ), 𝐓, nothing}}, Float64, Int64}, ElectricFields.GaussianEnvelope{Float64}, Float64}}(Linearly polarized field with
+  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm^-2 =>
+    - E₀ = 1.0000e+00 au = 514.2207 GV m^-1
     - A₀ = 0.3183 au
-  – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV)
+  – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV, f = 20.6707 PHz)
   – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+  – and a bandwidth of 0.3925 Ha = 10.6797 eV ⟺ 2.5823 PHz ⟺ 34.2390 Bohr = 1.8119 nm
   – Uₚ = 0.0253 Ha = 689.2724 meV => α = 0.1013 Bohr = 5.3617 pm)
 
 julia> field_amplitude(A, 0.5)
-0.008830294277641045
+0.008830294133325867
 
 julia> field_amplitude(B, 0.5)
--0.008830294277641045
+-0.008830294133325867
 
 julia> field_amplitude(A-A, 0.5)
--0.0
+0.0
 ```
 """
 struct NegatedField{F<:AbstractField} <: WrappedField
@@ -239,40 +245,44 @@ julia> @field(A) do
            Tmax = 3.0
        end
 Linearly polarized field with
-  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm⁻² =>
-    - E₀ = 1.0000e+00 au = 514.2207 GV m⁻¹
+  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm^-2 =>
+    - E₀ = 1.0000e+00 au = 514.2207 GV m^-1
     - A₀ = 0.3183 au
-  – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV)
+  – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV, f = 20.6707 PHz)
   – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+  – and a bandwidth of 0.3925 Ha = 10.6797 eV ⟺ 2.5823 PHz ⟺ 34.2390 Bohr = 1.8119 nm
   – Uₚ = 0.0253 Ha = 689.2724 meV => α = 0.1013 Bohr = 5.3617 pm
 
 julia> delay(A, 1u"fs")
 Linearly polarized field with
-  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm⁻² =>
-    - E₀ = 1.0000e+00 au = 514.2207 GV m⁻¹
+  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm^-2 =>
+    - E₀ = 1.0000e+00 au = 514.2207 GV m^-1
     - A₀ = 0.3183 au
-  – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV)
+  – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV, f = 20.6707 PHz)
   – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+  – and a bandwidth of 0.3925 Ha = 10.6797 eV ⟺ 2.5823 PHz ⟺ 34.2390 Bohr = 1.8119 nm
   – Uₚ = 0.0253 Ha = 689.2724 meV => α = 0.1013 Bohr = 5.3617 pm
   – delayed by 41.3414 jiffies = 1.0000 fs
 
 julia> delay(A, 1.0)
 Linearly polarized field with
-  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm⁻² =>
-    - E₀ = 1.0000e+00 au = 514.2207 GV m⁻¹
+  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm^-2 =>
+    - E₀ = 1.0000e+00 au = 514.2207 GV m^-1
     - A₀ = 0.3183 au
-  – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV)
+  – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV, f = 20.6707 PHz)
   – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+  – and a bandwidth of 0.3925 Ha = 10.6797 eV ⟺ 2.5823 PHz ⟺ 34.2390 Bohr = 1.8119 nm
   – Uₚ = 0.0253 Ha = 689.2724 meV => α = 0.1013 Bohr = 5.3617 pm
   – delayed by 1.0000 jiffies = 24.1888 as
 
 julia> delay(A, π*u"rad")
 Linearly polarized field with
-  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm⁻² =>
-    - E₀ = 1.0000e+00 au = 514.2207 GV m⁻¹
+  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm^-2 =>
+    - E₀ = 1.0000e+00 au = 514.2207 GV m^-1
     - A₀ = 0.3183 au
-  – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV)
+  – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV, f = 20.6707 PHz)
   – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+  – and a bandwidth of 0.3925 Ha = 10.6797 eV ⟺ 2.5823 PHz ⟺ 34.2390 Bohr = 1.8119 nm
   – Uₚ = 0.0253 Ha = 689.2724 meV => α = 0.1013 Bohr = 5.3617 pm
   – delayed by 1.0000 jiffies = 24.1888 as
 ```
@@ -334,21 +344,23 @@ julia> @field(A) do
            Tmax = 3.0
        end
 Linearly polarized field with
-  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm⁻² =>
-    - E₀ = 1.0000e+00 au = 514.2207 GV m⁻¹
+  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm^-2 =>
+    - E₀ = 1.0000e+00 au = 514.2207 GV m^-1
     - A₀ = 0.3183 au
-  – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV)
+  – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV, f = 20.6707 PHz)
   – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+  – and a bandwidth of 0.3925 Ha = 10.6797 eV ⟺ 2.5823 PHz ⟺ 34.2390 Bohr = 1.8119 nm
   – Uₚ = 0.0253 Ha = 689.2724 meV => α = 0.1013 Bohr = 5.3617 pm
 
 julia> B = PaddedField(A, 10.0, 30.0)
 Padding before 10.0000 jiffies = 241.8884 as and after 30.0000 jiffies = 725.6653 as of
 Linearly polarized field with
-  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm⁻² =>
-    - E₀ = 1.0000e+00 au = 514.2207 GV m⁻¹
+  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm^-2 =>
+    - E₀ = 1.0000e+00 au = 514.2207 GV m^-1
     - A₀ = 0.3183 au
-  – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV)
+  – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV, f = 20.6707 PHz)
   – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+  – and a bandwidth of 0.3925 Ha = 10.6797 eV ⟺ 2.5823 PHz ⟺ 34.2390 Bohr = 1.8119 nm
   – Uₚ = 0.0253 Ha = 689.2724 meV => α = 0.1013 Bohr = 5.3617 pm
 
 julia> span(A), span(B)
@@ -415,28 +427,30 @@ julia> @field(A) do
            Tmax = 3.0
        end
 Linearly polarized field with
-  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm⁻² =>
-    - E₀ = 1.0000e+00 au = 514.2207 GV m⁻¹
+  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm^-2 =>
+    - E₀ = 1.0000e+00 au = 514.2207 GV m^-1
     - A₀ = 0.3183 au
-  – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV)
+  – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV, f = 20.6707 PHz)
   – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+  – and a bandwidth of 0.3925 Ha = 10.6797 eV ⟺ 2.5823 PHz ⟺ 34.2390 Bohr = 1.8119 nm
   – Uₚ = 0.0253 Ha = 689.2724 meV => α = 0.1013 Bohr = 5.3617 pm
 
 julia> B = WindowedField(A, -3, 5)
 Window from -3.0000 jiffies = -72.5665 as to 5.0000 jiffies = 120.9442 as of
 Linearly polarized field with
-  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm⁻² =>
-    - E₀ = 1.0000e+00 au = 514.2207 GV m⁻¹
+  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm^-2 =>
+    - E₀ = 1.0000e+00 au = 514.2207 GV m^-1
     - A₀ = 0.3183 au
-  – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV)
+  – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV, f = 20.6707 PHz)
   – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+  – and a bandwidth of 0.3925 Ha = 10.6797 eV ⟺ 2.5823 PHz ⟺ 34.2390 Bohr = 1.8119 nm
   – Uₚ = 0.0253 Ha = 689.2724 meV => α = 0.1013 Bohr = 5.3617 pm
 
 julia> span(A), span(B)
 (-6.0..6.0, -3.0..5.0)
 
 julia> field_amplitude(A, -4)
--0.6395632315635295
+-0.6395632362683398
 
 julia> field_amplitude(B, -4)
 0.0
