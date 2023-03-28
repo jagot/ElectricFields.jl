@@ -6,22 +6,26 @@ using StaticArrays
 using Unitful
 using UnitfulAtomic
 
-# using FFTW
+using AbstractFFTs
+using FFTW
 using ForwardDiff
 using Optim
 using Roots
 
 using IntervalSets
-import IntervalSets: duration
 
 using Parameters
 
 import Base: show
 using Formatting
 
+abstract type AbstractField end
+
 include("units.jl")
 include("rotations.jl")
 include("relation_dsl.jl")
+
+include("spectra.jl")
 
 include("field_types.jl")
 include("time_axis.jl")

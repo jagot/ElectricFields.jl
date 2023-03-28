@@ -1,5 +1,3 @@
-abstract type AbstractField end
-
 Base.parent(f::AbstractField) = f
 
 abstract type Polarization end
@@ -292,11 +290,12 @@ julia> @field(F) do
            Tmax = 3.0
        end
 Linearly polarized field with
-  - I₀ = 2.0000e+00 au = 7.0188904e16 W cm⁻² =>
-    - E₀ = 1.4142e+00 au = 727.2178 GV m⁻¹
+  - I₀ = 2.0000e+00 au = 7.0188904e16 W cm^-2 =>
+    - E₀ = 1.4142e+00 au = 727.2178 GV m^-1
     - A₀ = 0.4502 au
-  – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV)
+  – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV, f = 20.6707 PHz)
   – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+  – and a bandwidth of 0.3925 Ha = 10.6797 eV ⟺ 2.5823 PHz ⟺ 34.2390 Bohr = 1.8119 nm
   – Uₚ = 0.0507 Ha = 1.3785 eV => α = 0.1433 Bohr = 7.5826 pm
 
 julia> dimensions(F)
@@ -310,11 +309,12 @@ julia> @field(F) do
            ξ = 1.0
        end
 Transversely polarized field with
-  - I₀ = 2.0000e+00 au = 7.0188904e16 W cm⁻² =>
-    - E₀ = 1.4142e+00 au = 727.2178 GV m⁻¹
+  - I₀ = 2.0000e+00 au = 7.0188904e16 W cm^-2 =>
+    - E₀ = 1.4142e+00 au = 727.2178 GV m^-1
     - A₀ = 0.4502 au
-  – a Elliptical carrier with ξ = 1.00 (RCP) @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV)
+  – a Elliptical carrier with ξ = 1.00 (RCP) @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV, f = 20.6707 PHz)
   – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+  – and a bandwidth of 0.3925 Ha = 10.6797 eV ⟺ 2.5823 PHz ⟺ 34.2390 Bohr = 1.8119 nm
   – Uₚ = 0.0507 Ha = 1.3785 eV => α = 0.1433 Bohr = 7.5826 pm
 
 julia> dimensions(F)
@@ -339,11 +339,12 @@ julia> @field(F) do
            Tmax = 3.0
        end
 Linearly polarized field with
-  - I₀ = 2.0000e+00 au = 7.0188904e16 W cm⁻² =>
-    - E₀ = 1.4142e+00 au = 727.2178 GV m⁻¹
+  - I₀ = 2.0000e+00 au = 7.0188904e16 W cm^-2 =>
+    - E₀ = 1.4142e+00 au = 727.2178 GV m^-1
     - A₀ = 0.4502 au
-  – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV)
+  – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV, f = 20.6707 PHz)
   – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+  – and a bandwidth of 0.3925 Ha = 10.6797 eV ⟺ 2.5823 PHz ⟺ 34.2390 Bohr = 1.8119 nm
   – Uₚ = 0.0507 Ha = 1.3785 eV => α = 0.1433 Bohr = 7.5826 pm
 
 julia> polarization(F)
@@ -357,11 +358,12 @@ julia> @field(F) do
            ξ = 1.0
        end
 Transversely polarized field with
-  - I₀ = 2.0000e+00 au = 7.0188904e16 W cm⁻² =>
-    - E₀ = 1.4142e+00 au = 727.2178 GV m⁻¹
+  - I₀ = 2.0000e+00 au = 7.0188904e16 W cm^-2 =>
+    - E₀ = 1.4142e+00 au = 727.2178 GV m^-1
     - A₀ = 0.4502 au
-  – a Elliptical carrier with ξ = 1.00 (RCP) @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV)
+  – a Elliptical carrier with ξ = 1.00 (RCP) @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV, f = 20.6707 PHz)
   – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+  – and a bandwidth of 0.3925 Ha = 10.6797 eV ⟺ 2.5823 PHz ⟺ 34.2390 Bohr = 1.8119 nm
   – Uₚ = 0.0507 Ha = 1.3785 eV => α = 0.1433 Bohr = 7.5826 pm
 
 julia> polarization(F)
@@ -384,6 +386,47 @@ function show_bandwidth(io::IO, f::AbstractField)
              Δλ, au2si_round(Δλ, u"m"))
 end
 
+# ** Spectra
+
+"""
+    vector_potential_spectrum(f::AbstractField, ω)
+
+Compute the analytic Fourier transform of the
+[`vector_potential`](@ref) of the field `f` at the angular frequency
+`ω`.
+"""
+function vector_potential_spectrum end
+
+vector_potential_spectrum(::LinearPolarization, f, ω::AbstractVector) =
+    vector_potential_spectrum.(f, ω)
+vector_potential_spectrum(::ArbitraryPolarization, f, ω::AbstractVector) =
+    transpose(reduce(hcat, vector_potential_spectrum.(f, ω)))
+vector_potential_spectrum(f::AbstractField, ω::AbstractVector) =
+    vector_potential_spectrum(polarization(f), f, ω)
+
+@doc raw"""
+    field_amplitude_spectrum(f::AbstractField, ω)
+
+Compute the analytic Fourier transform of the
+[`field_amplitude`](@ref) of the field `f` at the angular frequency
+`ω`, using the Fourier identity
+
+```math
+\vec{F}(t) = -\partial_t \vec{A}(t)
+\iff
+\hat{\vec{F}}(\omega) = -\im\omega \hat{\vec{A}}(\omega)
+```
+"""
+field_amplitude_spectrum(f::AbstractField, ω::Number) =
+    -im*ω*vector_potential_spectrum(f, ω)
+
+field_amplitude_spectrum(::LinearPolarization, f, ω::AbstractVector) =
+    field_amplitude_spectrum.(f, ω)
+field_amplitude_spectrum(::ArbitraryPolarization, f, ω::AbstractVector) =
+    transpose(reduce(hcat, field_amplitude_spectrum.(f, ω)))
+field_amplitude_spectrum(f::AbstractField, ω::AbstractVector) =
+    field_amplitude_spectrum(polarization(f), f, ω)
+
 # * Linear field
 
 """
@@ -403,11 +446,12 @@ julia> @field(A) do
        tmax = 20.0u"fs"
        end
 Linearly polarized field with
-  - I₀ = 2.8495e-03 au = 1.0e14 W cm⁻² =>
-    - E₀ = 5.3380e-02 au = 27.4492 GV m⁻¹
+  - I₀ = 2.8495e-03 au = 1.0e14 W cm^-2 =>
+    - E₀ = 5.3380e-02 au = 27.4492 GV m^-1
     - A₀ = 0.9372 au
-  – a Fixed carrier @ λ = 800.0000 nm (T = 2.6685 fs, ω = 0.0570 Ha = 1.5498 eV)
+  – a Fixed carrier @ λ = 800.0000 nm (T = 2.6685 fs, ω = 0.0570 Ha = 1.5498 eV, f = 374.7406 THz)
   – and a Gaussian envelope of duration 6.2000 fs (intensity FWHM; ±8.11σ)
+  – and a bandwidth of 0.0108 Ha = 294.3469 meV ⟺ 71.1728 THz ⟺ 2871.2568 Bohr = 151.9404 nm
   – Uₚ = 0.2196 Ha = 5.9759 eV => α = 16.4562 Bohr = 870.8242 pm
 
 julia> @field(B) do
@@ -418,11 +462,12 @@ julia> @field(B) do
        env = :trapezoidal
        end
 Linearly polarized field with
-  - I₀ = 5.0000e-02 au = 1.7547226e15 W cm⁻² =>
-    - E₀ = 2.2361e-01 au = 114.9832 GV m⁻¹
+  - I₀ = 5.0000e-02 au = 1.7547226e15 W cm^-2 =>
+    - E₀ = 2.2361e-01 au = 114.9832 GV m^-1
     - A₀ = 0.2236 au
-  – a Fixed carrier @ λ = 45.5634 nm (T = 151.9830 as, ω = 1.0000 Ha = 27.2114 eV)
+  – a Fixed carrier @ λ = 45.5634 nm (T = 151.9830 as, ω = 1.0000 Ha = 27.2114 eV, f = 6.5797 PHz)
   – and a /1‾3‾1\\ cycles trapezoidal envelope
+  – and a bandwidth of Inf Ha = Inf eV ⟺ Inf Hz ⟺ Inf Bohr = Inf m
   – Uₚ = 0.0125 Ha = 340.1423 meV => α = 0.2236 Bohr = 11.8328 pm
 ```
 """
@@ -443,6 +488,9 @@ end
 
 vector_potential(f::LinearField, t::Number) = f.A₀*f.env(t)*f.carrier(t)
 vector_potential(f::LinearField) = f.A₀
+
+vector_potential_spectrum(f::LinearField, ω::Number) =
+    f.A₀*convolution(spectrum(f.env), spectrum(f.carrier), ω)
 
 intensity(f::LinearField) = f.I₀
 amplitude(f::LinearField) = f.E₀
@@ -482,9 +530,6 @@ end
 
 time_integral(f::LinearField) = time_integral(envelope(f))
 
-make_temp_field(carrier::LinearCarrier, env, params) =
-    LinearField(carrier, env, 1, 1, 1, params)
-
 rotation_matrix(f::LinearField{<:Any,<:Any,T}) where T = SMatrix{3,3,T}(I)
 
 # * Transverse field
@@ -522,11 +567,12 @@ julia> @field(A) do
        ξ = 1.0
        end
 Transversely polarized field with
-  - I₀ = 2.8495e-03 au = 1.0e14 W cm⁻² =>
-    - E₀ = 5.3380e-02 au = 27.4492 GV m⁻¹
+  - I₀ = 2.8495e-03 au = 1.0e14 W cm^-2 =>
+    - E₀ = 5.3380e-02 au = 27.4492 GV m^-1
     - A₀ = 0.9372 au
-  – a Elliptical carrier with ξ = 1.00 (RCP) @ λ = 800.0000 nm (T = 2.6685 fs, ω = 0.0570 Ha = 1.5498 eV)
+  – a Elliptical carrier with ξ = 1.00 (RCP) @ λ = 800.0000 nm (T = 2.6685 fs, ω = 0.0570 Ha = 1.5498 eV, f = 374.7406 THz)
   – and a Gaussian envelope of duration 6.2000 fs (intensity FWHM; ±8.11σ)
+  – and a bandwidth of 0.0108 Ha = 294.3469 meV ⟺ 71.1728 THz ⟺ 2871.2568 Bohr = 151.9404 nm
   – Uₚ = 0.2196 Ha = 5.9759 eV => α = 16.4562 Bohr = 870.8242 pm
 
 julia> # Linearly polarized field, but explicitly in 3D
@@ -539,11 +585,12 @@ julia> @field(B) do
        kind = :transverse
        end
 Transversely polarized field with
-  - I₀ = 2.8495e-03 au = 1.0e14 W cm⁻² =>
-    - E₀ = 5.3380e-02 au = 27.4492 GV m⁻¹
+  - I₀ = 2.8495e-03 au = 1.0e14 W cm^-2 =>
+    - E₀ = 5.3380e-02 au = 27.4492 GV m^-1
     - A₀ = 0.9372 au
-  – a LinearTransverseCarrier: Fixed carrier @ λ = 800.0000 nm (T = 2.6685 fs, ω = 0.0570 Ha = 1.5498 eV)
+  – a LinearTransverseCarrier: Fixed carrier @ λ = 800.0000 nm (T = 2.6685 fs, ω = 0.0570 Ha = 1.5498 eV, f = 374.7406 THz)
   – and a Gaussian envelope of duration 6.2000 fs (intensity FWHM; ±8.11σ)
+  – and a bandwidth of 0.0108 Ha = 294.3469 meV ⟺ 71.1728 THz ⟺ 2871.2568 Bohr = 151.9404 nm
   – Uₚ = 0.2196 Ha = 5.9759 eV => α = 16.4562 Bohr = 870.8242 pm
 
 julia> # Linearly polarized field, rotated
@@ -556,12 +603,13 @@ julia> @field(C) do
        rotation = π/3, [0,0,1]
        end
 Transversely polarized field with
-  - I₀ = 2.8495e-03 au = 1.0e14 W cm⁻² =>
-    - E₀ = 5.3380e-02 au = 27.4492 GV m⁻¹
+  - I₀ = 2.8495e-03 au = 1.0e14 W cm^-2 =>
+    - E₀ = 5.3380e-02 au = 27.4492 GV m^-1
     - A₀ = 0.9372 au
-  – a LinearTransverseCarrier: Fixed carrier @ λ = 800.0000 nm (T = 2.6685 fs, ω = 0.0570 Ha = 1.5498 eV)
+  – a LinearTransverseCarrier: Fixed carrier @ λ = 800.0000 nm (T = 2.6685 fs, ω = 0.0570 Ha = 1.5498 eV, f = 374.7406 THz)
   – a Gaussian envelope of duration 6.2000 fs (intensity FWHM; ±8.11σ)
   – and a rotation of 0.33π about [0.000, 0.000, 1.000]
+  – and a bandwidth of 0.0108 Ha = 294.3469 meV ⟺ 71.1728 THz ⟺ 2871.2568 Bohr = 151.9404 nm
   – Uₚ = 0.2196 Ha = 5.9759 eV => α = 16.4562 Bohr = 870.8242 pm
 ```
 """
@@ -583,6 +631,9 @@ end
 
 vector_potential(f::TransverseField, t::Number) = f.A₀*f.env(t)*(f.R*f.carrier(t))
 vector_potential(f::TransverseField) = f.A₀
+
+vector_potential_spectrum(f::TransverseField, ω::Number) =
+    f.A₀*convolution(spectrum(f.env), f.R*spectrum(f.carrier), ω)
 
 intensity(f::TransverseField) = f.I₀
 amplitude(f::TransverseField) = f.E₀
@@ -632,9 +683,6 @@ end
 
 time_integral(f::TransverseField) = time_integral(envelope(f))
 
-make_temp_field(carrier::TransverseCarrier, env, params,) =
-    TransverseField(carrier, env, 1, 1, 1, I, params)
-
 # * Constant field
 
 @doc raw"""
@@ -669,7 +717,7 @@ julia> @field(F) do
        end
 Constant field of
   - 124.0241 jiffies = 3.0000 fs duration, and
-  - E₀ = 1.6880e-02 au = 8.6802 GV m⁻¹
+  - E₀ = 1.6880e-02 au = 8.6802 GV m^-1
 ```
 """
 struct ConstantField{T} <: AbstractField
@@ -737,6 +785,19 @@ dimensions(::ConstantField) = 1
 
 field_types[:constant] = ConstantField
 
+function field_amplitude_spectrum(f::ConstantField, ω::Number)
+    a = inv(f.tmax)
+    exp(-im*a*ω/2)*(1/√(2π*a^2))*sinc(ω/(2π*a))
+end
+
+function vector_potential_spectrum(f::ConstantField, ω::Number)
+    # # This is not entirely correct
+    # a = inv(f.tmax)
+    # b = 1/(2π*a)
+    # -im*exp(-im*ω/2)*(1/√(2π*a^2))*(-im*sinc(b*ω)/2 + cosc(b*ω)*b)
+    -field_amplitude_spectrum(f,ω)/(im*ω)
+end
+
 # * Ramps
 
 @doc raw"""
@@ -777,7 +838,7 @@ julia> @field(F) do
        end
 sin² up-ramp of
   - 165.3655 jiffies = 4.0000 fs duration, and
-  - E₀ = 1.0000e+00 au = 514.2207 GV m⁻¹
+  - E₀ = 1.0000e+00 au = 514.2207 GV m^-1
 
 julia> @field(F) do
            E₀ = 1.0
@@ -787,7 +848,7 @@ julia> @field(F) do
        end
 Linear down-ramp of
   - 165.3655 jiffies = 4.0000 fs duration, and
-  - E₀ = 1.0000e+00 au = 514.2207 GV m⁻¹
+  - E₀ = 1.0000e+00 au = 514.2207 GV m^-1
 ```
 """
 struct Ramp{T,AFunc} <: AbstractField
@@ -885,4 +946,5 @@ export LinearPolarization, ArbitraryPolarization, polarization,
     field_amplitude, vector_potential, instantaneous_intensity,
     field_envelope,
     params, dimensions,
-    phase_shift, phase
+    phase_shift, phase,
+    field_amplitude_spectrum, vector_potential_spectrum

@@ -10,7 +10,11 @@ envelope_types = Dict{Symbol,Any}()
 
 complex_squared(t) = t*t
 
-# ** Gaussian
+# ** Gaussian-like
+abstract type AbstractGaussianEnvelope{T} <: AbstractEnvelope end
+
+# *** Gaussian
+
 @doc raw"""
     GaussianEnvelope
 
@@ -52,7 +56,7 @@ Required parameters:
 - `σmax|tmax|Tmax`,
 - `env=:gauss` (optional, since [`GaussianEnvelope`](@ref) is the default envelope).
 """
-struct GaussianEnvelope{T} <: AbstractEnvelope
+struct GaussianEnvelope{T} <: AbstractGaussianEnvelope{T}
     τ::T # Intensity FWHM
     σ::T # Intensity std.dev.
     α::T # Vector potential exponential coefficient
@@ -134,42 +138,7 @@ span(env::GaussianEnvelope) = -env.tmax..env.tmax
 
 time_integral(env::GaussianEnvelope) = env.σ*√(2π)
 
-# *** Spectrum
-@doc raw"""
-    spectrum(env::GaussianEnvelope)
-
-Gaussians belong to the [Schwartz
-class](https://en.wikipedia.org/wiki/Schwartz_space), i.e. functions
-who, under Fourier transform, are mapped back to the same space. That
-is to say, the Fourier transform of a Gaussian is a Gaussian:
-
-```math
-\exp(-\alpha t^2) \leftrightarrow
-\frac{1}{\sqrt{2\alpha}}
-\exp\left(-\frac{\omega^2}{4\alpha}\right).
-```
-
-Comparing with the above, we find that the spectral standard
-deviation
-
-```math
-\Omega = \sqrt{2\alpha} = \frac{2\sqrt{\ln 2}}{\tau},
-```
-
-and the Gaussian function in the spectral domain is thus
-
-```math
-E(\omega) =
-\frac{E_0\tau}{2\sqrt{\ln 2}}
-\exp\left[-\frac{(\omega\tau)^2}{8\ln2}\right].
-```
-"""
-function spectrum(env::GaussianEnvelope)
-    N = env.E₀*env.τ/(2*√(log(2)))
-    ω -> N*exp(-(ω*env.τ)^2/8log(2))
-end
-
-# ** Truncated Gaussian
+# *** Truncated Gaussian
 
 @doc raw"""
     TruncatedGaussianEnvelope
@@ -211,7 +180,7 @@ Required parameters:
 Beyond this, everything else is the same as for
 [`GaussianEnvelope`](@ref).
 """
-struct TruncatedGaussianEnvelope{T} <: AbstractEnvelope
+struct TruncatedGaussianEnvelope{T} <: AbstractGaussianEnvelope{T}
     τ::T # Intensity FWHM
     σ::T # Intensity std.dev.
     α::T # Vector potential exponential coefficent
@@ -262,7 +231,45 @@ span(env::TruncatedGaussianEnvelope) = -env.tmax..env.tmax
 # TODO: Take truncation into account
 time_integral(env::TruncatedGaussianEnvelope) = env.σ*√(2π)
 
-time_bandwidth_product(::Union{GaussianEnvelope,TruncatedGaussianEnvelope}) = 2log(2)/π
+# *** Spectrum
+
+time_bandwidth_product(::AbstractGaussianEnvelope) = 2log(2)/π
+
+@doc raw"""
+    spectrum(env::AbstractGaussianEnvelope)
+
+Gaussians belong to the [Schwartz
+class](https://en.wikipedia.org/wiki/Schwartz_space), i.e. functions
+who, under Fourier transform, are mapped back to the same space. That
+is to say, the Fourier transform of a Gaussian is a Gaussian:
+
+```math
+\exp(-\alpha t^2) \leftrightarrow
+\frac{1}{\sqrt{2\alpha}}
+\exp\left(-\frac{\omega^2}{4\alpha}\right).
+```
+
+Comparing with the above, we find that the spectral standard
+deviation
+
+```math
+\Omega = \sqrt{2\alpha} = \frac{2\sqrt{\ln 2}}{\tau},
+```
+
+and the Gaussian function in the spectral domain is thus
+
+```math
+E(\omega) =
+\frac{E_0\tau}{2\sqrt{\ln 2}}
+\exp\left[-\frac{(\omega\tau)^2}{8\ln2}\right].
+```
+"""
+function spectrum(env::AbstractGaussianEnvelope)
+    α = env.α
+    N = 1/√(2α)
+    β = 1/(4α)
+    ω -> N*exp(-β*ω^2)
+end
 
 # ** Trapezoidal
 
@@ -429,4 +436,4 @@ time_bandwidth_product(::Cos²Envelope) = Inf
 
 # ** Exports
 
-export continuity
+export duration, continuity

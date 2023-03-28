@@ -24,6 +24,14 @@ end
 
 (carrier::FixedCarrier)(t) = sin(carrier.ω*t + carrier.ϕ)
 
+function spectrum(carrier::FixedCarrier)
+    @unpack ω,ϕ = carrier
+    T = typeof(ω)
+    eiϕ = exp(im*ϕ*ω)
+    N = √(2T(π))/2im
+    DiracComb([(ω,N*eiϕ), (-ω,-N*conj(eiϕ))])
+end
+
 carrier_types[:fixed] = FixedCarrier
 
 wavelength(carrier::FixedCarrier) = carrier.λ
@@ -88,6 +96,14 @@ end
 
 (carrier::LinearTransverseCarrier)(t) = SVector(0, 0, carrier.carrier(t))
 
+function spectrum(carrier::LinearTransverseCarrier)
+    @unpack ω,ϕ = carrier.carrier
+    T = typeof(ω)
+    eiϕ = exp(im*ϕ*ω)
+    N = √(2T(π))/2im
+    DiracComb([(ω,SVector(0, 0, N*eiϕ)), (-ω,SVector(0, 0, -N*conj(eiϕ)))])
+end
+
 carrier_types[:linear] = LinearTransverseCarrier
 
 for fun in [:wavelength, :period, :frequency, :wavenumber, :fundamental, :photon_energy, :phase]
@@ -151,6 +167,16 @@ function (carrier::EllipticalCarrier)(t)
     ϕ = carrier.ω*t + carrier.ϕ
     s,c = sincos(ϕ)
     SVector(ξ*c, 0, s)/√(1 + ξ^2)
+end
+
+function spectrum(carrier::EllipticalCarrier)
+    @unpack ω,ϕ,ξ = carrier
+    T = typeof(ω)
+    eiϕ = exp(im*ϕ*ω)
+    N = √(2T(π))/2
+    m = 1/√(1 + T(ξ)^2)
+    DiracComb([(ω, m*SVector(ξ*N*eiϕ, 0, -im*N*eiϕ)),
+               (-ω, m*SVector(ξ*N*conj(eiϕ), 0, im*N*conj(eiϕ)))])
 end
 
 carrier_types[:elliptical] = EllipticalCarrier
