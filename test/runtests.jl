@@ -4,8 +4,9 @@ using Unitful
 using UnitfulAtomic
 using IntervalSets
 using FFTW
+using PrettyTables
 
-function test_approx_eq(a, b; on_fail::Union{Nothing,Function}=nothing, kwargs...)
+function test_approx_eq(a, b; on_fail::Union{Nothing,Function}=nothing, isbroken=false, kwargs...)
     size(a) == size(b) || throw(DimensionMismatch("Cannot compare objects of sizes $(size(a)) and $(size(b))"))
     if !isapprox(a, b; kwargs...)
         @error "Approximate equality failed:"
@@ -22,7 +23,11 @@ function test_approx_eq(a, b; on_fail::Union{Nothing,Function}=nothing, kwargs..
         isnothing(on_fail) || on_fail()
     end
 
-    @test isapprox(a, b; kwargs...)
+    if !isbroken
+        @test isapprox(a, b; kwargs...)
+    else
+        @test_broken isapprox(a, b; kwargs...)
+    end
 end
 
 @testset "ElectricFields.jl" begin

@@ -197,7 +197,7 @@
 
         @test polarization(F) == LinearPolarization()
 
-        # @test duration(F) == 4
+        @test duration(F) == 4
         @test span(F) == 0..4
 
         @test isone(period(F))
