@@ -12,7 +12,6 @@ using Optim
 using Roots
 
 using IntervalSets
-import IntervalSets: duration
 
 using Parameters
 

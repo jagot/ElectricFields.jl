@@ -436,4 +436,4 @@ time_bandwidth_product(::Cos²Envelope) = Inf
 
 # ** Exports
 
-export continuity
+export duration, continuity

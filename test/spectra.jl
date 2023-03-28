@@ -18,5 +18,7 @@
 
         test_approx_eq(F̂v, F̂v_exact, rtol=0.2)
         test_approx_eq(abs2.(F̂v), abs2.(F̂v_exact), rtol=1e-2)
+
+        test_approx_eq(field_amplitude_spectrum(delay(F, 6.0), ω), exp.(-im*6ω) .* F̂v_exact)
     end
 end

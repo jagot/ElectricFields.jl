@@ -62,6 +62,7 @@
 
         @test string(env) == "3.00 cycles cos² envelope"
 
+        @test duration(env) == 6.0
         @test continuity(env) == 0
         @test span(env) == -3..3
     end
@@ -75,6 +76,7 @@
                 σmax = 6.0
             end
 
+            @test duration(F) == τ
             @test intensity(F, τ/2) ≈ 1/2 rtol=1e-5
             # intensity(F, 0) is not exactly 1 due to unit conversion
             # inaccuracy (issue #24).
