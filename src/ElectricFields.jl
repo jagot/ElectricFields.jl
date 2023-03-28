@@ -6,6 +6,7 @@ using StaticArrays
 using Unitful
 using UnitfulAtomic
 
+using AbstractFFTs
 using FFTW
 using ForwardDiff
 using Optim

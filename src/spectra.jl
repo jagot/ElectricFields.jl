@@ -110,6 +110,6 @@ nfft_vector_potential(f::AbstractField, t::AbstractRange) =
 # * Exports
 
 export spectrum,
-    fftω,
+    fftω, fftshift,
     fft, fft_vector_potential,
     nfft, nfft_vector_potential

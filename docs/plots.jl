@@ -1,5 +1,6 @@
 using ElectricFields
 using Unitful
+using FFTW
 
 using PyPlot
 using Jagot.plotting
@@ -171,3 +172,4 @@ end
 mkpath("docs/src/figures")
 @echo index_example()
 @echo index_polarized_example()
+@echo index_spectrum_example()
