@@ -76,11 +76,27 @@
                 σmax = 6.0
             end
 
-            @test duration(F) == τ
-            @test intensity(F, τ/2) ≈ 1/2 rtol=1e-5
-            # intensity(F, 0) is not exactly 1 due to unit conversion
-            # inaccuracy (issue #24).
-            @test intensity(F, τ/2)/intensity(F, 0) ≈ 1/2
+            @field(Ft) do
+                I₀ = 1.0
+                T = 1.0
+                τ = τ
+                σoff = 4.0
+                σmax = 6.0
+                env = :trunc_gauss
+            end
+
+            for A = (F,Ft)
+                @test duration(A) == τ
+                @test intensity(A, τ/2) ≈ 1/2 rtol=1e-5
+                # intensity(A, 0) is not exactly 1 due to unit conversion
+                # inaccuracy (issue #24).
+                @test intensity(A, τ/2)/intensity(A, 0) ≈ 1/2
+            end
+
+            toff = austrip(Ft.params[:toff])
+            tmax = austrip(Ft.params[:tmax])
+            t = (toff+tmax)/2
+            @test intensity(Ft, t) < intensity(F, t)
         end
     end
 end
