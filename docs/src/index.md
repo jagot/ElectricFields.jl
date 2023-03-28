@@ -63,6 +63,8 @@ Fourier transform, will receive better support in a future release.
 
 ## Examples
 
+### Linear polarization
+
 The simplest pulse is created thus:
 
 ```jldoctest index_examples
@@ -119,6 +121,8 @@ Linearly polarized field with
   – and a bandwidth of 0.0185 Ha = 502.9732 meV ⟺ 121.6184 THz ⟺ 15.9151 Bohr = 842.1896 pm
   – Uₚ = 0.0100 Ha = 272.1138 meV => α = 0.2000 Bohr = 10.5835 pm
 ```
+
+### Arbitrary polarization, composite fields
 
 Other [Envelopes](@ref) and polarizations, as well as some simple arithmetic is possible:
 ```jldoctest index_examples
@@ -183,6 +187,50 @@ julia> field_amplitude(F, 4.0)
 ```
 
 ![Simple polarized example](figures/index_polarized_example.svg)
+
+### Spectra
+
+We can compute the spectrum of a field using either the Fast Fourier
+Transform [`fft`](@ref), [`nfft`](@ref), or for some fields
+analytically [`field_amplitude_spectrum`](@ref):
+
+```jldoctest
+julia> @field(F) do
+           I₀ = 1.0
+           T = 1.0
+           τ = 2.0
+           σmax = 6.0
+       end
+Linearly polarized field with
+  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm^-2 =>
+    - E₀ = 1.0000e+00 au = 514.2207 GV m^-1
+    - A₀ = 0.1592 au
+  – a Fixed carrier @ λ = 7.2516 nm (T = 24.1888 as, ω = 6.2832 Ha = 170.9742 eV, f = 41.3414 PHz)
+  – and a Gaussian envelope of duration 48.3777 as (intensity FWHM; ±7.06σ)
+  – and a bandwidth of 1.3863 Ha = 37.7230 eV ⟺ 9.1214 PHz ⟺ 30.2350 Bohr = 1.6000 nm
+  – Uₚ = 0.0063 Ha = 172.3181 meV => α = 0.0253 Bohr = 1.3404 pm
+
+julia> t = timeaxis(F)
+-6.0:0.010008340283569641:6.0
+
+julia> Fv = field_amplitude(F, t);
+
+julia> Av = vector_potential(F, t);
+
+julia> ω = fftshift(fftω(t));
+
+julia> # We need to undo the phase, since the FFT does not care that
+       # pulse is centred around zero.
+       F̂v = exp.(im*ω*t[1]) .* fftshift(nfft(F, t), 1);
+
+julia> Âv = exp.(im*ω*t[1]) .* fftshift(nfft_vector_potential(F, t), 1);
+
+julia> F̂v_exact = field_amplitude_spectrum(F, ω);
+
+julia> Âv_exact = vector_potential_spectrum(F, ω);
+```
+
+![Simple spectrum example](figures/index_spectrum_example.svg)
 
 ## Reference
 
