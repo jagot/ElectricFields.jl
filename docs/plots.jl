@@ -153,6 +153,7 @@ function index_spectrum_example()
             plot(ω[sel], (angle.(Âv_exact[sel,:])), "--", label=L"$\arg\{A(\omega)\}$, exact")
             axes_labels_opposite(:y)
             legend(loc=3)
+            π_labels(:y)
         end
         csubplot(326) do
             semilogy(ω[sel], abs2.(F̂v[sel,:] - F̂v_exact[sel,:]), label=L"|\hat{F}_{\mathrm{FFT}}-\hat{F}_{\mathrm{exact}}|")
