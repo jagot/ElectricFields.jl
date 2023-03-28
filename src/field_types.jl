@@ -388,6 +388,13 @@ end
 
 # ** Spectra
 
+"""
+    vector_potential_spectrum(f::AbstractField, ω)
+
+Compute the analytic Fourier transform of the
+[`vector_potential`](@ref) of the field `f` at the angular frequency
+`ω`.
+"""
 function vector_potential_spectrum end
 
 vector_potential_spectrum(::LinearPolarization, f, ω::AbstractVector) =
@@ -397,6 +404,19 @@ vector_potential_spectrum(::ArbitraryPolarization, f, ω::AbstractVector) =
 vector_potential_spectrum(f::AbstractField, ω::AbstractVector) =
     vector_potential_spectrum(polarization(f), f, ω)
 
+@doc raw"""
+    field_amplitude_spectrum(f::AbstractField, ω)
+
+Compute the analytic Fourier transform of the
+[`field_amplitude`](@ref) of the field `f` at the angular frequency
+`ω`, using the Fourier identity
+
+```math
+\vec{F}(t) = -\partial_t \vec{A}(t)
+\iff
+\hat{\vec{F}}(\omega) = -\im\omega \hat{\vec{A}}(\omega)
+```
+"""
 field_amplitude_spectrum(f::AbstractField, ω::Number) =
     -im*ω*vector_potential_spectrum(f, ω)
 

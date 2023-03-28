@@ -44,10 +44,29 @@ end
 # * FFT
 
 fftω(args...) = 2π*fftfreq(args...)
+"""
+    fftω(t::AbstractRange)
+
+Return the angular frequency grid corresponding to uniform sampling in
+time with the tempolar grid `t`.
+"""
 fftω(t::AbstractRange) = fftω(length(t), 1/step(t))
 
+"""
+    fft(f::AbstractField, t::AbstractRange)
+
+Compute the FFT of the [`field_amplitude`](@ref) of the field `f`
+sampled on the uniform temporal grid `t`.
+"""
 FFTW.fft(f::AbstractField, t::AbstractRange) =
     fft(field_amplitude(f, t), 1)
+
+"""
+    fft_vector_potential(f::AbstractField, t::AbstractRange)
+
+Compute the FFT of the [`vector_potential`](@ref) of the field `f`
+sampled on the uniform temporal grid `t`.
+"""
 fft_vector_potential(f::AbstractField, t::AbstractRange) =
     fft(vector_potential(f, t), 1)
 
@@ -69,8 +88,22 @@ dimensions.
 """
 nfft(y, ts...) = _nfft(fft(y, 1:length(ts)), ts...)
 
+"""
+    nfft(f::AbstractField, t::AbstractRange)
+
+Compute the symmetrically normalized FFT of the
+[`field_amplitude`](@ref) of the field `f` sampled on the uniform
+temporal grid `t`.
+"""
 nfft(f::AbstractField, t::AbstractRange) = _nfft(fft(f, t), t)
 
+"""
+    nfft_vector_potential(f::AbstractField, t::AbstractRange)
+
+Compute the symmetrically normalized FFT of the
+[`vector_potential`](@ref) of the field `f` sampled on the uniform
+temporal grid `t`.
+"""
 nfft_vector_potential(f::AbstractField, t::AbstractRange) =
     _nfft(fft_vector_potential(f, t), t)
 
