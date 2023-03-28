@@ -504,9 +504,6 @@ end
 
 time_integral(f::LinearField) = time_integral(envelope(f))
 
-make_temp_field(carrier::LinearCarrier, env, params) =
-    LinearField(carrier, env, 1, 1, 1, params)
-
 rotation_matrix(f::LinearField{<:Any,<:Any,T}) where T = SMatrix{3,3,T}(I)
 
 # * Transverse field
@@ -656,9 +653,6 @@ function phase_shift(f::TransverseField, δϕ)
 end
 
 time_integral(f::TransverseField) = time_integral(envelope(f))
-
-make_temp_field(carrier::TransverseCarrier, env, params,) =
-    TransverseField(carrier, env, 1, 1, 1, I, params)
 
 # * Constant field
 
