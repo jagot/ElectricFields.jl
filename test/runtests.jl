@@ -18,8 +18,9 @@ function test_approx_eq(a, b; on_fail::Union{Nothing,Function}=nothing, isbroken
                       "|b|" nb
                       "Abs. Δ" Δ
                       "Rel. Δ" relΔ],
-                     show_header=false,
-                     alignment=[:r,:l],tf=tf_borderless)
+                     header=["Quantity", "Value"],
+                     hlines=[1], vlines=[],
+                     alignment=[:r,:l])
         isnothing(on_fail) || on_fail()
     end
 
