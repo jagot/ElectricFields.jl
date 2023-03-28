@@ -123,7 +123,7 @@ function index_spectrum_example()
 
     sel = ind(ω, -20):ind(ω, 20)
 
-    savedfigure("field", figsize=(8,10)) do
+    savedfigure("index_spectrum_example", figsize=(8,10)) do
         csubplot(311) do
             plot(t, Fv, label=L"F(t)")
             plot(t, Av, label=L"A(t)")
