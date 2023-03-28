@@ -3,6 +3,7 @@ using Unitful
 using FFTW
 
 using PyPlot
+using Jagot
 using Jagot.plotting
 plot_style("ggplot")
 
