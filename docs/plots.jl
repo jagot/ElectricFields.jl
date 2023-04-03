@@ -171,7 +171,8 @@ macro echo(expr)
 end
 
 @info "Documentation plots"
-mkpath("docs/src/figures")
+fig_dir = joinpath(@__DIR__, "src", "figures")
+mkpath(fig_dir)
 @echo index_example()
 @echo index_polarized_example()
 @echo index_spectrum_example()
