@@ -2,7 +2,7 @@ using ElectricFields
 using Unitful
 using FFTW
 
-using PyPlot
+using PythonPlot
 using Jagot
 using Jagot.plotting
 plot_style("ggplot")
@@ -13,7 +13,7 @@ function savedocfig(name,dir="figures")
     savefig(filename,
             transparent=false,
             facecolor=fig.get_facecolor())
-    close(fig)
+    PythonPlot.close("all")
     if isfile(filename)
         println("Saved $(name) to $(filename)")
     else
@@ -171,7 +171,8 @@ macro echo(expr)
 end
 
 @info "Documentation plots"
-mkpath("docs/src/figures")
+fig_dir = joinpath(@__DIR__, "src", "figures")
+mkpath(fig_dir)
 @echo index_example()
 @echo index_polarized_example()
 @echo index_spectrum_example()
