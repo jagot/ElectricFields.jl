@@ -2,7 +2,7 @@ using ElectricFields
 using Unitful
 using FFTW
 
-using PyPlot
+using PythonPlot
 using Jagot
 using Jagot.plotting
 plot_style("ggplot")
@@ -13,7 +13,7 @@ function savedocfig(name,dir="figures")
     savefig(filename,
             transparent=false,
             facecolor=fig.get_facecolor())
-    close(fig)
+    PythonPlot.close("all")
     if isfile(filename)
         println("Saved $(name) to $(filename)")
     else
