@@ -200,8 +200,8 @@
         @test duration(F) == 4
         @test span(F) == 0..4
 
-        @test isone(period(F))
-        @test isone(max_frequency(F))
+        @test isone(austrip(period(F)))
+        @test isone(austrip(max_frequency(F)))
         @test photon_energy(F) == 2π
 
         @test dimensions(F) == 1
@@ -283,8 +283,8 @@
         # @test duration(F) == 4
         @test span(F) == 0..4
 
-        @test isone(period(F))
-        @test isone(max_frequency(F))
+        @test isone(austrip(period(F)))
+        @test isone(austrip(max_frequency(F)))
         @test photon_energy(F) == 2π
 
         @test dimensions(F) == 1

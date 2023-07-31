@@ -842,8 +842,8 @@ span(f::ConstantField{T}) where T = zero(T)..f.tmax
 
 # These methods are just for convenience (to be able to establish a
 # time base for calculations), but they are not physical as such.
-period(f::ConstantField{T}) where T = one(T)
-max_frequency(f::ConstantField{T}) where T = one(T)
+period(f::ConstantField{T}) where T = one(T)*aunit(u"s")
+max_frequency(f::ConstantField{T}) where T = one(T)/aunit(u"s")
 photon_energy(f::ConstantField{T}) where T = 2T(π)
 
 dimensions(::ConstantField) = 1
@@ -993,8 +993,8 @@ span(f::Ramp{T}) where T = zero(T)..f.tmax
 
 # These methods are just for convenience (to be able to establish a
 # time base for calculations), but they are not physical as such.
-period(f::Ramp{T}) where T = one(T)
-max_frequency(f::Ramp{T}) where T = one(T)
+period(f::Ramp{T}) where T = one(T)*aunit(u"s")
+max_frequency(f::Ramp{T}) where T = one(T)/aunit(u"s")
 photon_energy(f::Ramp{T}) where T = 2T(π)
 
 dimensions(::Ramp) = 1

@@ -136,7 +136,7 @@ for fun in [:wavelength, :period, :frequency, :wavenumber, :fundamental, :photon
 end
 
 max_frequency(f::SumField) =
-    max(austrip(max_frequency(f.a)), austrip(max_frequency(f.b)))
+    max(max_frequency(f.a), max_frequency(f.b))
 
 continuity(f::SumField) =
     min(continuity(f.a), continuity(f.b))
