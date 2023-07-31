@@ -98,10 +98,10 @@ function show(io::IO, f::SumField)
         write(io, "$s $l\n")
     end
 
-    write(io, "⊕\n")
+    write(io, "⊕")
 
     for (s,l) in zip(repeat("│", length(b_str)-1) * "└", b_str)
-        write(io, "$s $l\n")
+        write(io, "\n$s $l")
     end
 end
 
