@@ -1,3 +1,49 @@
+function test_addition(::LinearPolarization, A, B)
+    F = A + B
+    F2 = B + A
+    t = timeaxis(F)
+
+    tplot = 24.2e-3t
+
+    Fv = field_amplitude(F, t)
+    Fv2 = field_amplitude(F2, t)
+    FvA = field_amplitude(A, t)
+    FvB = field_amplitude(B, t)
+
+    @test Fv  ≈ FvA + FvB
+    @test Fv2 ≈ FvA + FvB
+end
+
+function test_addition(::ArbitraryPolarization, A, B)
+    F = A + B
+    F2 = B + A
+    t = timeaxis(F)
+
+    tplot = 24.2e-3t
+
+    function get_me_three_dimensions(V)
+        if ndims(V) == 1
+            m = length(V)
+            hcat(zeros(m, 2), V)
+        elseif ndims(V) == 2
+            @assert size(V,2) == 3
+            V
+        else
+            error("This does not work")
+        end
+    end
+
+    Fv = get_me_three_dimensions(field_amplitude(F, t))
+    Fv2 = get_me_three_dimensions(field_amplitude(F2, t))
+    FvA = get_me_three_dimensions(field_amplitude(A, t))
+    FvB = get_me_three_dimensions(field_amplitude(B, t))
+
+    @test Fv  ≈ FvA + FvB
+    @test Fv2 ≈ FvA + FvB
+end
+
+test_addition(A, B) = test_addition(polarization(A+B), A, B)
+
 @testset "Field arithmetic" begin
     @field(A) do
         I₀ = 1.0
@@ -243,7 +289,7 @@
         end
     end
 
-    @testset "Add fields of different polarization" begin
+    @testset "Add various kinds of fields" begin
         @field(A) do
             λ = 800u"nm"
             I₀ = 1e13u"W/cm^2"
@@ -263,24 +309,32 @@
             ξ = 1.0
         end
 
+        @field(C) do
+            tmax = 3.0u"fs"
+            E₀ = 0.1
+            kind = :constant
+        end
+        C = delay(C, -3.0u"fs")
+
+        @field(D) do
+            tmax = 3.0u"fs"
+            E₀ = 0.1
+            kind = :sin²_ramp
+            ramp = :down
+        end
+
+        ApB = A+B
+        CpD = C+D
+
         F = A + B
         F2 = B + A
 
         @test polarization(F) == ArbitraryPolarization()
         @test polarization(F2) == ArbitraryPolarization()
 
-        t = timeaxis(F)
-
-        Fv = field_amplitude(F, t)
-        Fv2 = field_amplitude(F2, t)
-        FvA = field_amplitude(A, t)
-        FvB = field_amplitude(B, t)
-
-        @test Fv[:,1]  ≈ FvB[:,1]
-        @test Fv2[:,1] ≈ FvB[:,1]
-        @test Fv[:,2]  ≈ FvB[:,2]
-        @test Fv2[:,2] ≈ FvB[:,2]
-        @test Fv[:,3]  ≈ FvA + FvB[:,3]
-        @test Fv2[:,3] ≈ FvA + FvB[:,3]
+        test_addition(A, B)
+        test_addition(C, D)
+        test_addition(A, CpD)
+        test_addition(ApB, CpD)
     end
 end

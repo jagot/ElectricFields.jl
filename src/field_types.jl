@@ -688,6 +688,66 @@ Base.convert(::Type{<:TransverseField}, f::LinearField) =
                     envelope(f), f.I₀, f.E₀, f.A₀,
                     I, f.params)
 
+# * Linearly polarized transverse field
+
+@doc raw"""
+LinearTransverseField
+
+Linearly polarized field, but explicitly in 3d, i.e the polarization
+vector is confined to a line in the plane that is perpendicular to the
+direction of propagation. If the propagation vector is not rotated,
+this plane is the ``z-x``, with ``z`` by convention being the
+principal polarization axis, and ``y`` is the direction of
+propagation.
+
+This is mostly used as a proxy, if one wants to calculate using a
+manifestly linearly polarized field in 3d. See also
+[`LinearTransverseCarrier`](@ref).
+"""
+struct LinearTransverseField{LinearField<:AbstractField,Rotation} <: AbstractField
+    linear_field::LinearField
+    R::Rotation
+end
+
+LinearTransverseField(::LinearPolarization, f::AbstractField, R=I) =
+    LinearTransverseField(f, compute_rotation(R))
+
+LinearTransverseField(f::AbstractField, args...) =
+    LinearTransverseField(polarization(f), f, args...)
+
+vector_potential(f::LinearTransverseField, t::Number) =
+    f.R*SVector(0, 0, vector_potential(f.linear_field, t))
+
+vector_potential_spectrum(f::LinearTransverseField, ω::Number) =
+    f.R*SVector(0, 0, vector_potential_spectrum(f.linear_field, ω))
+
+for fun in (:vector_potential, :intensity, :amplitude, :carrier, :envelope, :params, :max_frequency, :span)
+    @eval $fun(f::LinearTransverseField) = $fun(f.linear_field)
+end
+
+rotation_matrix(f::LinearTransverseField) = f.R
+
+function show(io::IO, f::LinearTransverseField)
+    print(io, """
+Linearly polarized field in transverse plane constructed from
+""")
+    show(io, f.linear_field)
+    isrotated = f.R isa AbstractMatrix
+    if isrotated
+        printfmt(io, "\n  – and a rotation of {1:.2f}π about [{2:.3f}, {3:.3f}, {4:.3f}]",
+                 rotation_angle(f.R)/π, rotation_axis(f.R)...)
+    end
+end
+
+polarization(::LinearTransverseField) = ArbitraryPolarization()
+
+dimensions(::LinearTransverseField) = 3
+
+phase_shift(f::LinearTransverseField, δϕ) =
+    LinearTransverseField(phase_shift(f.linear_field, δϕ), f.R)
+
+time_integral(f::LinearTransverseField) = time_integral(envelope(f))
+
 # * Constant field
 
 @doc raw"""
@@ -939,6 +999,13 @@ photon_energy(f::Ramp{T}) where T = 2T(π)
 
 dimensions(::Ramp) = 1
 
+# * Conversion to transverse field
+
+transverse_field(::LinearPolarization, f::LinearField) = convert(TransverseField, f)
+transverse_field(::LinearPolarization, f) = LinearTransverseField(f)
+transverse_field(::ArbitraryPolarization, f) = f
+transverse_field(f) = transverse_field(polarization(f), f)
+
 # * Exports
 
 export LinearPolarization, ArbitraryPolarization, polarization,
@@ -952,4 +1019,5 @@ export LinearPolarization, ArbitraryPolarization, polarization,
     field_envelope,
     params, dimensions,
     phase_shift, phase,
-    field_amplitude_spectrum, vector_potential_spectrum
+    field_amplitude_spectrum, vector_potential_spectrum,
+    transverse_field

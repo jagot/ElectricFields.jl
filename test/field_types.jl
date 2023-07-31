@@ -332,4 +332,50 @@
             @test Fv ≈ Fv2 rtol=1e-14
         end
     end
+
+    @testset "Conversion to transverse fields" begin
+        @field(A) do
+            λ = 800u"nm"
+            I₀ = 1e13u"W/cm^2"
+            τ = 1.45u"fs"
+            σoff = 4.0
+            σmax = 6.0
+            env = :trunc_gauss
+        end
+
+        @field(B) do
+            λ = 100u"nm"
+            I₀ = 1e12u"W/cm^2"
+            τ = 1.45u"fs"
+            σoff = 4.0
+            σmax = 6.0
+            env = :trunc_gauss
+            ξ = 1.0
+        end
+
+        @field(C) do
+            tmax = 3.0u"fs"
+            E₀ = 0.1
+            kind = :constant
+        end
+        C = delay(C, -3.0u"fs")
+
+        @field(D) do
+            tmax = 3.0u"fs"
+            E₀ = 0.1
+            kind = :sin²_ramp
+            ramp = :down
+        end
+
+        ApB = A+B
+        CpD = C+D
+
+        tA = transverse_field(A)
+        @test tA isa ElectricFields.TransverseField
+        @test transverse_field(B) === B
+        @test transverse_field(ApB) === ApB
+
+        tCpD = transverse_field(CpD)
+        @test tCpD isa ElectricFields.LinearTransverseField
+    end
 end

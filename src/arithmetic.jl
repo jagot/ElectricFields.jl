@@ -106,10 +106,8 @@ function show(io::IO, f::SumField)
 end
 
 +(::Pol, a::AbstractField, ::Pol, b::AbstractField) where {Pol<:Polarization} = SumField(a, b)
-+(::LinearPolarization, a::AbstractField, ::ArbitraryPolarization, b::AbstractField) =
-    SumField(convert(TransverseField, a), b)
-+(::ArbitraryPolarization, a::AbstractField, ::LinearPolarization, b::AbstractField) =
-    SumField(a, convert(TransverseField, b))
++(::LinearPolarization, a::AbstractField, ::ArbitraryPolarization, b::AbstractField) = SumField(transverse_field(a), b)
++(::ArbitraryPolarization, a::AbstractField, ::LinearPolarization, b::AbstractField) = SumField(a, transverse_field(b))
 +(a::AbstractField, b::AbstractField) = +(polarization(a), a, polarization(b), b)
 
 for fun in [:vector_potential, :field_amplitude, :vector_potential_spectrum]
@@ -138,7 +136,7 @@ for fun in [:wavelength, :period, :frequency, :wavenumber, :fundamental, :photon
 end
 
 max_frequency(f::SumField) =
-    max(max_frequency(f.a), max_frequency(f.b))
+    max(austrip(max_frequency(f.a)), austrip(max_frequency(f.b)))
 
 continuity(f::SumField) =
     min(continuity(f.a), continuity(f.b))
