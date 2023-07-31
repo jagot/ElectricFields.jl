@@ -683,6 +683,11 @@ end
 
 time_integral(f::TransverseField) = time_integral(envelope(f))
 
+Base.convert(::Type{<:TransverseField}, f::LinearField) =
+    TransverseField(LinearTransverseCarrier(carrier(f)),
+                    envelope(f), f.I₀, f.E₀, f.A₀,
+                    I, f.params)
+
 # * Constant field
 
 @doc raw"""

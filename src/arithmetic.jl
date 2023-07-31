@@ -105,11 +105,12 @@ function show(io::IO, f::SumField)
     end
 end
 
-function +(a::AbstractField, b::AbstractField)
-    polarization(a) == polarization(b) ||
-        throw(ArgumentError("Cannot add fields of different polarization"))
-    SumField(a, b)
-end
++(::Pol, a::AbstractField, ::Pol, b::AbstractField) where {Pol<:Polarization} = SumField(a, b)
++(::LinearPolarization, a::AbstractField, ::ArbitraryPolarization, b::AbstractField) =
+    SumField(convert(TransverseField, a), b)
++(::ArbitraryPolarization, a::AbstractField, ::LinearPolarization, b::AbstractField) =
+    SumField(a, convert(TransverseField, b))
++(a::AbstractField, b::AbstractField) = +(polarization(a), a, polarization(b), b)
 
 for fun in [:vector_potential, :field_amplitude, :vector_potential_spectrum]
     @eval $fun(f::SumField, t::Number) =

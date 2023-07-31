@@ -242,4 +242,45 @@
                                  – Uₚ = 0.0253 Ha = 689.2724 meV => α = 0.1013 Bohr = 5.3617 pm"""
         end
     end
+
+    @testset "Add fields of different polarization" begin
+        @field(A) do
+            λ = 800u"nm"
+            I₀ = 1e13u"W/cm^2"
+            τ = 1.45u"fs"
+            σoff = 4.0
+            σmax = 6.0
+            env = :trunc_gauss
+        end
+
+        @field(B) do
+            λ = 100u"nm"
+            I₀ = 1e12u"W/cm^2"
+            τ = 1.45u"fs"
+            σoff = 4.0
+            σmax = 6.0
+            env = :trunc_gauss
+            ξ = 1.0
+        end
+
+        F = A + B
+        F2 = B + A
+
+        @test polarization(F) == ArbitraryPolarization()
+        @test polarization(F2) == ArbitraryPolarization()
+
+        t = timeaxis(F)
+
+        Fv = field_amplitude(F, t)
+        Fv2 = field_amplitude(F2, t)
+        FvA = field_amplitude(A, t)
+        FvB = field_amplitude(B, t)
+
+        @test Fv[:,1]  ≈ FvB[:,1]
+        @test Fv2[:,1] ≈ FvB[:,1]
+        @test Fv[:,2]  ≈ FvB[:,2]
+        @test Fv2[:,2] ≈ FvB[:,2]
+        @test Fv[:,3]  ≈ FvA + FvB[:,3]
+        @test Fv2[:,3] ≈ FvA + FvB[:,3]
+    end
 end
