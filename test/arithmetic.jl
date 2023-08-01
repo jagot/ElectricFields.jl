@@ -334,6 +334,7 @@ test_addition(A, B) = test_addition(polarization(A+B), A, B)
         test_addition(C, D)
         test_addition(A, CpD)
         test_addition(ApB, CpD)
+        test_addition(ApB, rotate(CpD, [1 0 0; 0 1 1; 0 -1 1]))
 
         ApBpCpD = ApB + CpD
 

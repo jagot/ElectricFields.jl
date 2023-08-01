@@ -36,3 +36,5 @@ function rotation_axis(R::AbstractMatrix)
     i = argmin(abs.(ee.values .- 1))
     normalize(real(ee.vectors[:,i]))
 end
+
+export rotation_angle, rotation_axis, rotation_matrix

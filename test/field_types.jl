@@ -35,7 +35,7 @@
                                  – Uₚ = 0.0253 Ha = 689.2724 meV => α = 0.1013 Bohr = 5.3617 pm"""
         end
 
-        @test ElectricFields.rotation_matrix(F) == Matrix(I, 3, 3)
+        @test rotation_matrix(F) == Matrix(I, 3, 3)
 
         t = [0.4, 0.5]
         for fun in (vector_potential, field_amplitude, intensity)
@@ -119,9 +119,9 @@
                                  – Uₚ = 0.0507 Ha = 1.3785 eV => α = 0.1433 Bohr = 7.5826 pm"""
         end
 
-        @test ElectricFields.rotation_matrix(F) ≈ [1/√2 -1/√2 0
-                                                   1/√2 1/√2  0
-                                                   0    0     1]
+        @test rotation_matrix(F) ≈ [1/√2 -1/√2 0
+                                    1/√2 1/√2  0
+                                    0    0     1]
 
         t = [0.4, 0.5]
         for fun in (vector_potential, field_amplitude, intensity)
@@ -333,7 +333,7 @@
         end
     end
 
-    @testset "Conversion to transverse fields" begin
+    @testset "Various transverse fields" begin
         @field(A) do
             λ = 800u"nm"
             I₀ = 1e13u"W/cm^2"
@@ -370,12 +370,46 @@
         ApB = A+B
         CpD = C+D
 
-        tA = transverse_field(A)
-        @test tA isa ElectricFields.TransverseField
-        @test transverse_field(B) === B
-        @test transverse_field(ApB) === ApB
+        @testset "Conversion to transverse fields" begin
+            tA = transverse_field(A)
+            @test tA isa ElectricFields.TransverseField
+            @test transverse_field(B) === B
+            @test transverse_field(ApB) === ApB
 
-        tCpD = transverse_field(CpD)
-        @test tCpD isa ElectricFields.LinearTransverseField
+            tCpD = transverse_field(CpD)
+            @test tCpD isa ElectricFields.LinearTransverseField
+        end
+
+        @testset "Rotation of fields" begin
+            R = [1 0 0; 0 0 1; 0 1 0]
+
+            rA = rotate(A, R)
+            @test rA isa ElectricFields.TransverseField
+            @test rotation_matrix(rA) ≈ R
+            tA = timeaxis(A)
+            FA = field_amplitude(A, tA)
+            FrA = field_amplitude(rA, tA)
+            @test FrA[:,2] ≈ FA
+            @test FrA[:,3] ≈ zeros(length(tA)) atol=1e-14
+
+            rB = rotate(B, R)
+            @test rB isa ElectricFields.TransverseField
+            @test rotation_matrix(rB) ≈ R
+            tB = timeaxis(B)
+            FB = field_amplitude(B, tB)
+            FrB = field_amplitude(rB, tB)
+            @test FrB[:,1] ≈ FB[:,1]
+            @test FrB[:,2] ≈ FB[:,3]
+            @test FrB[:,3] ≈ zeros(length(tB)) atol=1e-14
+
+            rCpD = rotate(CpD, R)
+            @test rCpD isa ElectricFields.LinearTransverseField
+            @test rotation_matrix(rCpD) ≈ R
+            tCpD = timeaxis(CpD)
+            FCpD = field_amplitude(CpD, tCpD)
+            FrCpD = field_amplitude(rCpD, tCpD)
+            @test FrCpD[:,2] ≈ FCpD
+            @test FrCpD[:,3] ≈ zeros(length(tCpD)) atol=1e-14
+        end
     end
 end

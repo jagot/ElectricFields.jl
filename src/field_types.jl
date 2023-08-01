@@ -688,6 +688,11 @@ Base.convert(::Type{<:TransverseField}, f::LinearField) =
                     envelope(f), f.I₀, f.E₀, f.A₀,
                     I, f.params)
 
+rotate(f::TransverseField, R) =
+    TransverseField(f.carrier, f.env,
+                    f.I₀, f.E₀, f.A₀,
+                    compute_rotation(R*f.R), f.params)
+
 # * Linearly polarized transverse field
 
 @doc raw"""
@@ -747,6 +752,9 @@ phase_shift(f::LinearTransverseField, δϕ) =
     LinearTransverseField(phase_shift(f.linear_field, δϕ), f.R)
 
 time_integral(f::LinearTransverseField) = time_integral(envelope(f))
+
+rotate(f::LinearTransverseField, R) =
+    LinearTransverseField(f.linear_field, compute_rotation(R*f.R))
 
 # * Constant field
 
@@ -1006,6 +1014,8 @@ transverse_field(::LinearPolarization, f) = LinearTransverseField(f)
 transverse_field(::ArbitraryPolarization, f) = f
 transverse_field(f) = transverse_field(polarization(f), f)
 
+rotate(f, R) = rotate(transverse_field(f), R)
+
 # * Exports
 
 export LinearPolarization, ArbitraryPolarization, polarization,
@@ -1020,4 +1030,5 @@ export LinearPolarization, ArbitraryPolarization, polarization,
     params, dimensions,
     phase_shift, phase,
     field_amplitude_spectrum, vector_potential_spectrum,
-    transverse_field
+    transverse_field,
+    rotate, rotation_matrix
