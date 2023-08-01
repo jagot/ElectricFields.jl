@@ -146,6 +146,8 @@ dimensions(f::SumField) = dimensions(f.a)
 phase_shift(f::SumField, ϕ) =
     SumField(phase_shift(f.a, ϕ), phase_shift(f.b, ϕ))
 
+rotate(f::SumField, R) = SumField(rotate(f.a, R), rotate(f.b, R))
+
 # ** Wrapped fields
 
 """
@@ -159,7 +161,7 @@ for fun in [:params, :carrier, :envelope, :polarization,
             :wavelength, :period, :frequency, :max_frequency,
             :wavenumber, :fundamental, :photon_energy,
             :intensity, :amplitude, :duration, :continuity,
-            :span, :dimensions]
+            :span, :dimensions, :rotation_matrix]
     @eval $fun(f::WrappedField, args...) = $fun(parent(f), args...)
 end
 # [:vector_potential, :field_amplitude], should these be explicitly forwarded?
@@ -225,6 +227,8 @@ Base.parent(f::NegatedField) = f.a
 for fun in [:vector_potential, :vector_potential_spectrum]
     @eval $fun(f::NegatedField, t::Number) = -$fun(parent(f), t)
 end
+
+rotate(f::NegatedField, R) = NegatedField(rotate(f.a, R))
 
 # ** Delayed fields
 
@@ -311,6 +315,8 @@ function span(f::DelayedField)
 end
 
 Base.parent(f::DelayedField) = f.a
+
+rotate(f::DelayedField, R) = DelayedField(rotate(f.a, R), f.t₀)
 
 # *** DONE Delay operators
 #     Convention for delayed fields: a field delayed by a /positive/
@@ -405,6 +411,8 @@ end
 
 time_integral(f::PaddedField) =
     time_integral(parent(f))
+
+rotate(f::PaddedField, R) = PaddedField(rotate(f.field, R), f.a, f.b)
 
 export PaddedField
 
@@ -501,5 +509,7 @@ function timeaxis(f::WindowedField, fs)
     t = timeaxis(f.field, fs)
     t[findall(in(f.a..f.b), t)]
 end
+
+rotate(f::WindowedField, R) = WindowedField(rotate(f.field, R), f.a, f.b)
 
 export WindowedField

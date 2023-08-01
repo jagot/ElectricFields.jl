@@ -1,9 +1,19 @@
+function get_me_three_dimensions(V)
+    if ndims(V) == 1
+        m = length(V)
+        hcat(zeros(m, 2), V)
+    elseif ndims(V) == 2
+        @assert size(V,2) == 3
+        V
+    else
+        error("This does not work")
+    end
+end
+
 function test_addition(::LinearPolarization, A, B)
     F = A + B
     F2 = B + A
     t = timeaxis(F)
-
-    tplot = 24.2e-3t
 
     Fv = field_amplitude(F, t)
     Fv2 = field_amplitude(F2, t)
@@ -19,20 +29,6 @@ function test_addition(::ArbitraryPolarization, A, B)
     F2 = B + A
     t = timeaxis(F)
 
-    tplot = 24.2e-3t
-
-    function get_me_three_dimensions(V)
-        if ndims(V) == 1
-            m = length(V)
-            hcat(zeros(m, 2), V)
-        elseif ndims(V) == 2
-            @assert size(V,2) == 3
-            V
-        else
-            error("This does not work")
-        end
-    end
-
     Fv = get_me_three_dimensions(field_amplitude(F, t))
     Fv2 = get_me_three_dimensions(field_amplitude(F2, t))
     FvA = get_me_three_dimensions(field_amplitude(A, t))
@@ -43,6 +39,15 @@ function test_addition(::ArbitraryPolarization, A, B)
 end
 
 test_addition(A, B) = test_addition(polarization(A+B), A, B)
+
+function test_rotated_field(f, R)
+    R = ElectricFields.compute_rotation(R)
+    rf = rotate(f, R)
+    t = timeaxis(rf)
+    @test t ≈ timeaxis(f)
+    @test field_amplitude(rf, t) ≈ transpose(R*transpose(get_me_three_dimensions(field_amplitude(f, t))))
+    rf
+end
 
 @testset "Field arithmetic" begin
     @field(A) do
@@ -133,6 +138,40 @@ test_addition(A, B) = test_addition(polarization(A+B), A, B)
                                │   – and a bandwidth of 0.3925 Ha = 10.6797 eV ⟺ 2.5823 PHz ⟺ 8.5598 Bohr = 452.9627 pm
                                └   – Uₚ = 0.0032 Ha = 86.1591 meV => α = 0.0179 Bohr = 947.8211 fm"""
         end
+
+        @testset "Rotations" begin
+            rC = test_rotated_field(C, [1 0 0; 0 1 1; 0 -1 1])
+            @test rC isa ElectricFields.SumField
+        end
+    end
+
+    @testset "Negated fields" begin
+        nA = -A
+        @test nA isa ElectricFields.NegatedField
+        @test parent(nA) === A
+        t = timeaxis(nA)
+        @test t ≈ timeaxis(A)
+        @test field_amplitude(nA, t) ≈ -field_amplitude(A, t)
+
+        @field(B) do
+            I₀ = 0.5
+            T = 1.0
+            σ = 3.0
+            Tmax = 3.0
+        end
+
+        C = A - B
+        @test C.b isa ElectricFields.NegatedField
+        t = timeaxis(C)
+        @test field_amplitude(C, t) ≈ field_amplitude(A, t) - field_amplitude(B, t)
+
+        R = [1 0 0; 0 1 1; 0 -1 1]
+        rnA = test_rotated_field(nA, R)
+        @test rnA isa ElectricFields.NegatedField
+        @test rotation_matrix(rnA) ≈ ElectricFields.compute_rotation(R)
+        rC = test_rotated_field(C, R)
+        @test rC isa ElectricFields.SumField
+        @test rC.b isa ElectricFields.NegatedField
     end
 
     @testset "Delayed fields" begin
@@ -144,6 +183,11 @@ test_addition(A, B) = test_addition(polarization(A+B), A, B)
         @test iszero(delay(A))
 
         @test span(B) == -5.6..6.4
+
+        R = [1 0 0; 0 1 1; 0 -1 1]
+        rB = test_rotated_field(B, R)
+        @test rB isa ElectricFields.DelayedField
+        @test rotation_matrix(rB) ≈ ElectricFields.compute_rotation(R)
 
         withenv("UNITFUL_FANCY_EXPONENTS" => true) do
             @test string(B) == """
@@ -215,6 +259,11 @@ test_addition(A, B) = test_addition(polarization(A+B), A, B)
 
         @test time_integral(B) == time_integral(A)
 
+        R = [1 0 0; 0 1 1; 0 -1 1]
+        rB = test_rotated_field(B, R)
+        @test rB isa ElectricFields.PaddedField
+        @test rotation_matrix(rB) ≈ ElectricFields.compute_rotation(R)
+
         withenv("UNITFUL_FANCY_EXPONENTS" => true) do
             @test string(B) == """
                                Padding before 124.0241 jiffies = 3.0000 fs and after 330.7310 jiffies = 8.0000 fs of
@@ -260,6 +309,11 @@ test_addition(A, B) = test_addition(polarization(A+B), A, B)
 
         @test field_amplitude(phase_shift(B, 2.0), 0.4) == field_amplitude(phase_shift(A, 2.0), 0.4)
         @test field_amplitude(phase_shift(B, 2.0), 3.0) == zero(field_amplitude(phase_shift(A, 2.0), 0.4))
+
+        R = [1 0 0; 0 1 1; 0 -1 1]
+        rB = test_rotated_field(B, R)
+        @test rB isa ElectricFields.WindowedField
+        @test rotation_matrix(rB) ≈ ElectricFields.compute_rotation(R)
 
         withenv("UNITFUL_FANCY_EXPONENTS" => true) do
             @test string(B) == """

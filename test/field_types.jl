@@ -403,8 +403,9 @@
             @test FrB[:,3] ≈ zeros(length(tB)) atol=1e-14
 
             rCpD = rotate(CpD, R)
-            @test rCpD isa ElectricFields.LinearTransverseField
-            @test rotation_matrix(rCpD) ≈ R
+            @test rCpD isa ElectricFields.SumField
+            @test rotation_matrix(rCpD.a) ≈ R
+            @test rotation_matrix(rCpD.b) ≈ R
             tCpD = timeaxis(CpD)
             FCpD = field_amplitude(CpD, tCpD)
             FrCpD = field_amplitude(rCpD, tCpD)
