@@ -30,6 +30,9 @@ import ElectricFields: compute_rotation, rotation_angle, rotation_axis
                                 0.0 1.0 1.0
                                 0.0 0.0 1.0]) ≈ I rtol=1e-14
 
+        R = compute_rotation([1 0 0; 0 1 1; 0 -1 1])
+        @test compute_rotation(R) ≈ R rtol=1e-14
+
         @test_throws DimensionMismatch compute_rotation([1.0 0.0
                                                          0.0 1.0])
 
