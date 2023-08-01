@@ -363,7 +363,7 @@ Linearly polarized field with
   – Uₚ = 0.0253 Ha = 689.2724 meV => α = 0.1013 Bohr = 5.3617 pm
 
 julia> span(A), span(B)
-(-6.0..6.0, -16.0..36.0)
+(-6.0 .. 6.0, -16.0 .. 36.0)
 ```
 """
 struct PaddedField{Field<:AbstractField,T} <: WrappedField
@@ -446,7 +446,7 @@ Linearly polarized field with
   – Uₚ = 0.0253 Ha = 689.2724 meV => α = 0.1013 Bohr = 5.3617 pm
 
 julia> span(A), span(B)
-(-6.0..6.0, -3.0..5.0)
+(-6.0 .. 6.0, -3.0 .. 5.0)
 
 julia> field_amplitude(A, -4)
 -0.6395632362683398
