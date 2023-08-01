@@ -19,7 +19,7 @@ function compute_rotation(R::AbstractMatrix{T}) where {T<:Real}
         throw(DimensionMismatch("Rotation matrix must have dimensions 3×3"))
     rank(R) < 3 &&
         throw(ArgumentError("Rotation matrix singular"))
-    R = copy(R)
+    R = Matrix{T}(R)
     for i = 2:3
         for j = 1:i-1
             R[:,i] -= dot(R[:,j],R[:,i])*R[:,j]
