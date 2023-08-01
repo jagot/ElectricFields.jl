@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Field types · ElectricFields.jl</title><script data-outdated-warner src="../assets/warner.js"></script><link rel="canonical" href="https://www.tipota.org/ElectricFields.jl/field_types/"/><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.045/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.24/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../">ElectricFields.jl</a></span></div><form class="docs-search" action="../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li class="is-active"><a class="tocitem" href>Field types</a><ul class="internal"><li><a class="tocitem" href="#Basic-field-types"><span>Basic field types</span></a></li><li><a class="tocitem" href="#Arithmetic"><span>Arithmetic</span></a></li></ul></li><li><a class="tocitem" href="../envelopes/">Envelopes</a></li><li><a class="tocitem" href="../carriers/">Carriers</a></li><li><a class="tocitem" href="../properties/">Field properties</a></li><li><a class="tocitem" href="../reference/">Reference</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Field types</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Field types</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/jagot/ElectricFields.jl/blob/master/docs/src/field_types.md#L" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="Field-types"><a class="docs-heading-anchor" href="#Field-types">Field types</a><a id="Field-types-1"></a><a class="docs-heading-anchor-permalink" href="#Field-types" title="Permalink"></a></h1><h2 id="Basic-field-types"><a class="docs-heading-anchor" href="#Basic-field-types">Basic field types</a><a id="Basic-field-types-1"></a><a class="docs-heading-anchor-permalink" href="#Basic-field-types" title="Permalink"></a></h2><article class="docstring"><header><a class="docstring-binding" id="ElectricFields.LinearField" href="#ElectricFields.LinearField"><code>ElectricFields.LinearField</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia hljs">LinearField</code></pre><p>Linearly polarized field, i.e. the field amplitude is scalar. Consisting of a peak vector potential, a vector envelope, and a carrier, which has to be a <a href="../carriers/#ElectricFields.LinearCarrier"><code>LinearCarrier</code></a>.</p><p><strong>Examples</strong></p><pre><code class="language-julia-repl hljs">julia&gt; @field(A) do
+       I₀ = 1e14u&quot;W/cm^2&quot;
+       λ = 800.0u&quot;nm&quot;
+       τ = 6.2u&quot;fs&quot;
+       tmax = 20.0u&quot;fs&quot;
+       end
+Linearly polarized field with
+  - I₀ = 2.8495e-03 au = 1.0e14 W cm^-2 =&gt;
+    - E₀ = 5.3380e-02 au = 27.4492 GV m^-1
+    - A₀ = 0.9372 au
+  – a Fixed carrier @ λ = 800.0000 nm (T = 2.6685 fs, ω = 0.0570 Ha = 1.5498 eV, f = 374.7406 THz)
+  – and a Gaussian envelope of duration 6.2000 fs (intensity FWHM; ±8.11σ)
+  – and a bandwidth of 0.0108 Ha = 294.3469 meV ⟺ 71.1728 THz ⟺ 2871.2568 Bohr = 151.9404 nm
+  – Uₚ = 0.2196 Ha = 5.9759 eV =&gt; α = 16.4562 Bohr = 870.8242 pm
+
+julia&gt; @field(B) do
+       I₀ = 0.05
+       ω = 1.0
+       ramp = 1.0
+       flat = 3.0
+       env = :trapezoidal
+       end
+Linearly polarized field with
+  - I₀ = 5.0000e-02 au = 1.7547226e15 W cm^-2 =&gt;
+    - E₀ = 2.2361e-01 au = 114.9832 GV m^-1
+    - A₀ = 0.2236 au
+  – a Fixed carrier @ λ = 45.5634 nm (T = 151.9830 as, ω = 1.0000 Ha = 27.2114 eV, f = 6.5797 PHz)
+  – and a /1‾3‾1\ cycles trapezoidal envelope
+  – and a bandwidth of Inf Ha = Inf eV ⟺ Inf Hz ⟺ Inf Bohr = Inf m
+  – Uₚ = 0.0125 Ha = 340.1423 meV =&gt; α = 0.2236 Bohr = 11.8328 pm</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/jagot/ElectricFields.jl/blob/b59227928a50c2f8e0b2e782e0ff8b422aa7e37a/src/field_types.jl#LL432-L473">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="ElectricFields.TransverseField" href="#ElectricFields.TransverseField"><code>ElectricFields.TransverseField</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia hljs">TransverseField</code></pre><p>Transversely polarized field, i.e the polarization vector is confined to the plane that is perpendicular to the direction of propagation. If the propagation vector is not rotated, this plane is the <span>$z-x$</span>, with <span>$z$</span> by convention being the principal polarization axis, and <span>$y$</span> is the direction of propagation.</p><p>The formal definition is</p><p class="math-container">\[\vec{A}(t)\defd A_0 f(t) \Im\{\vec{J}\exp[\im(\omega t + \phi)]\},\]</p><p>using the complex-valued <a href="https://en.wikipedia.org/wiki/Jones_calculus#Jones_vector">Jones vector</a> <span>$\vec{J}$</span>, but in practice, we use a rotation matrix <span>$\mat{R}$</span> and the <a href="../carriers/#Carriers">Carriers</a> give the amplitudes in the canonical, unrotated coordinate sytem:</p><p class="math-container">\[\vec{A}(t) = A_0 f(t) \mat{R}\vec{C}(t).\]</p><p><strong>Examples</strong></p><pre><code class="language-julia-repl hljs">julia&gt; # Circularly polarized field
+
+julia&gt; @field(A) do
+       I₀ = 1e14u&quot;W/cm^2&quot;
+       λ = 800.0u&quot;nm&quot;
+       τ = 6.2u&quot;fs&quot;
+       tmax = 20.0u&quot;fs&quot;
+       ξ = 1.0
+       end
+Transversely polarized field with
+  - I₀ = 2.8495e-03 au = 1.0e14 W cm^-2 =&gt;
+    - E₀ = 5.3380e-02 au = 27.4492 GV m^-1
+    - A₀ = 0.9372 au
+  – a Elliptical carrier with ξ = 1.00 (RCP) @ λ = 800.0000 nm (T = 2.6685 fs, ω = 0.0570 Ha = 1.5498 eV, f = 374.7406 THz)
+  – and a Gaussian envelope of duration 6.2000 fs (intensity FWHM; ±8.11σ)
+  – and a bandwidth of 0.0108 Ha = 294.3469 meV ⟺ 71.1728 THz ⟺ 2871.2568 Bohr = 151.9404 nm
+  – Uₚ = 0.2196 Ha = 5.9759 eV =&gt; α = 16.4562 Bohr = 870.8242 pm
+
+julia&gt; # Linearly polarized field, but explicitly in 3D
+
+julia&gt; @field(B) do
+       I₀ = 1e14u&quot;W/cm^2&quot;
+       λ = 800.0u&quot;nm&quot;
+       τ = 6.2u&quot;fs&quot;
+       tmax = 20.0u&quot;fs&quot;
+       kind = :transverse
+       end
+Transversely polarized field with
+  - I₀ = 2.8495e-03 au = 1.0e14 W cm^-2 =&gt;
+    - E₀ = 5.3380e-02 au = 27.4492 GV m^-1
+    - A₀ = 0.9372 au
+  – a LinearTransverseCarrier: Fixed carrier @ λ = 800.0000 nm (T = 2.6685 fs, ω = 0.0570 Ha = 1.5498 eV, f = 374.7406 THz)
+  – and a Gaussian envelope of duration 6.2000 fs (intensity FWHM; ±8.11σ)
+  – and a bandwidth of 0.0108 Ha = 294.3469 meV ⟺ 71.1728 THz ⟺ 2871.2568 Bohr = 151.9404 nm
+  – Uₚ = 0.2196 Ha = 5.9759 eV =&gt; α = 16.4562 Bohr = 870.8242 pm
+
+julia&gt; # Linearly polarized field, rotated
+
+julia&gt; @field(C) do
+       I₀ = 1e14u&quot;W/cm^2&quot;
+       λ = 800.0u&quot;nm&quot;
+       τ = 6.2u&quot;fs&quot;
+       tmax = 20.0u&quot;fs&quot;
+       rotation = π/3, [0,0,1]
+       end
+Transversely polarized field with
+  - I₀ = 2.8495e-03 au = 1.0e14 W cm^-2 =&gt;
+    - E₀ = 5.3380e-02 au = 27.4492 GV m^-1
+    - A₀ = 0.9372 au
+  – a LinearTransverseCarrier: Fixed carrier @ λ = 800.0000 nm (T = 2.6685 fs, ω = 0.0570 Ha = 1.5498 eV, f = 374.7406 THz)
+  – a Gaussian envelope of duration 6.2000 fs (intensity FWHM; ±8.11σ)
+  – and a rotation of 0.33π about [0.000, 0.000, 1.000]
+  – and a bandwidth of 0.0108 Ha = 294.3469 meV ⟺ 71.1728 THz ⟺ 2871.2568 Bohr = 151.9404 nm
+  – Uₚ = 0.2196 Ha = 5.9759 eV =&gt; α = 16.4562 Bohr = 870.8242 pm</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/jagot/ElectricFields.jl/blob/b59227928a50c2f8e0b2e782e0ff8b422aa7e37a/src/field_types.jl#LL537-L615">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="ElectricFields.ConstantField" href="#ElectricFields.ConstantField"><code>ElectricFields.ConstantField</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia hljs">ConstantField(tmax, E₀)</code></pre><p>The field amplitude of a constant field is defined as</p><p class="math-container">\[F(t) = \begin{cases}
+E_0, &amp; 0 \leq t \leq t_{\textrm{max}}, \\
+0, &amp; \textrm{else},
+\end{cases}
+\implies
+A(t) = \begin{cases}
+-E_0t, &amp; 0 \leq t \leq t_{\textrm{max}}, \\
+A(t_{\textrm{max}}), &amp; t_{\textrm{max}} &lt; t, \\
+0, &amp; \textrm{else}.
+\end{cases}\]</p><p>Since the vector potential is non-zero at the end of the pulse, this is a <em>non-propagating</em> field, i.e. it does not correspond to a freely propagating pulse. It however corresponds to the field in an idealized capacitor, i.e. two plates of opposite charge.</p><p><strong>Example</strong></p><pre><code class="language-julia-repl hljs">julia&gt; @field(F) do
+       I₀ = 1e13u&quot;W/cm^2&quot;
+       tmax = 3.0u&quot;fs&quot;
+       kind = :constant
+       end
+Constant field of
+  - 124.0241 jiffies = 3.0000 fs duration, and
+  - E₀ = 1.6880e-02 au = 8.6802 GV m^-1</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/jagot/ElectricFields.jl/blob/b59227928a50c2f8e0b2e782e0ff8b422aa7e37a/src/field_types.jl#LL761-L795">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="ElectricFields.Ramp" href="#ElectricFields.Ramp"><code>ElectricFields.Ramp</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia hljs">Ramp(tmax, E₀, f, name)</code></pre><p>The field amplitude of a ramp is defined as</p><p class="math-container">\[F(t) = \begin{cases}
+E_0f&#39;(\tau), &amp; 0 \leq t_{\textrm{max}}, \\
+0, \textrm{else},
+\end{cases}
+\implies
+A(t) = \begin{cases}
+-E_0t_{\textrm{max}}f(\tau), &amp; 0 \leq t \leq t_{\textrm{max}},\\
+A(t_{\textrm{max}}), &amp; t_{\textrm{max}} &lt; t,\\
+0, &amp; \textrm{else},
+\end{cases}
+\quad
+\tau = \frac{t}{t_{\textrm{max}}}.\]</p><p>To define a new ramp, one thus only needs to define one function on the unit interval, <span>$f(\tau)$</span> whose derivative <span>$f&#39;(\tau)$</span> rises from <span>$0$</span> to <span>$1$</span>. Similar to <a href="#ElectricFields.ConstantField"><code>ConstantField</code></a>, <code>Ramp</code> is a <em>non-propagating</em> field, but is realizable in e.g. a capacitor.</p><p>Three kinds of ramps are predefined, <code>:linear_ramp</code>, <code>:parabolic_ramp</code>, <code>:sin²_ramp</code> (with the alias <code>:sin2_ramp</code>).</p><p><strong>Examples</strong></p><pre><code class="language-julia-repl hljs">julia&gt; @field(F) do
+           E₀ = 1.0
+           tmax = 4.0u&quot;fs&quot;
+           kind = :sin²_ramp
+       end
+sin² up-ramp of
+  - 165.3655 jiffies = 4.0000 fs duration, and
+  - E₀ = 1.0000e+00 au = 514.2207 GV m^-1
+
+julia&gt; @field(F) do
+           E₀ = 1.0
+           tmax = 4.0u&quot;fs&quot;
+           kind = :linear_ramp
+           ramp = :down
+       end
+Linear down-ramp of
+  - 165.3655 jiffies = 4.0000 fs duration, and
+  - E₀ = 1.0000e+00 au = 514.2207 GV m^-1</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/jagot/ElectricFields.jl/blob/b59227928a50c2f8e0b2e782e0ff8b422aa7e37a/src/field_types.jl#LL876-L926">source</a></section></article><h2 id="Arithmetic"><a class="docs-heading-anchor" href="#Arithmetic">Arithmetic</a><a id="Arithmetic-1"></a><a class="docs-heading-anchor-permalink" href="#Arithmetic" title="Permalink"></a></h2><article class="docstring"><header><a class="docstring-binding" id="ElectricFields.SumField" href="#ElectricFields.SumField"><code>ElectricFields.SumField</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia hljs">SumField(a, b)</code></pre><p>The linear combination of two fields <code>a</code> and <code>b</code>.</p><p><strong>Example</strong></p><pre><code class="language-julia-repl hljs">julia&gt; @field(A) do
+           I₀ = 1.0
+           T = 2.0
+           σ = 3.0
+           Tmax = 3.0
+       end
+Linearly polarized field with
+  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm^-2 =&gt;
+    - E₀ = 1.0000e+00 au = 514.2207 GV m^-1
+    - A₀ = 0.3183 au
+  – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV, f = 20.6707 PHz)
+  – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+  – and a bandwidth of 0.3925 Ha = 10.6797 eV ⟺ 2.5823 PHz ⟺ 34.2390 Bohr = 1.8119 nm
+  – Uₚ = 0.0253 Ha = 689.2724 meV =&gt; α = 0.1013 Bohr = 5.3617 pm
+
+julia&gt; @field(B) do
+           I₀ = 0.5
+           T = 1.0
+           σ = 3.0
+           Tmax = 3.0
+       end
+Linearly polarized field with
+  - I₀ = 5.0000e-01 au = 1.7547226e16 W cm^-2 =&gt;
+    - E₀ = 7.0711e-01 au = 363.6089 GV m^-1
+    - A₀ = 0.1125 au
+  – a Fixed carrier @ λ = 7.2516 nm (T = 24.1888 as, ω = 6.2832 Ha = 170.9742 eV, f = 41.3414 PHz)
+  – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±1.00σ)
+  – and a bandwidth of 0.3925 Ha = 10.6797 eV ⟺ 2.5823 PHz ⟺ 8.5598 Bohr = 452.9627 pm
+  – Uₚ = 0.0032 Ha = 86.1591 meV =&gt; α = 0.0179 Bohr = 947.8211 fm
+
+julia&gt; A+B
+┌ Linearly polarized field with
+│   - I₀ = 1.0000e+00 au = 3.5094452e16 W cm^-2 =&gt;
+│     - E₀ = 1.0000e+00 au = 514.2207 GV m^-1
+│     - A₀ = 0.3183 au
+│   – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV, f = 20.6707 PHz)
+│   – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+│   – and a bandwidth of 0.3925 Ha = 10.6797 eV ⟺ 2.5823 PHz ⟺ 34.2390 Bohr = 1.8119 nm
+│   – Uₚ = 0.0253 Ha = 689.2724 meV =&gt; α = 0.1013 Bohr = 5.3617 pm
+⊕
+│ Linearly polarized field with
+│   - I₀ = 5.0000e-01 au = 1.7547226e16 W cm^-2 =&gt;
+│     - E₀ = 7.0711e-01 au = 363.6089 GV m^-1
+│     - A₀ = 0.1125 au
+│   – a Fixed carrier @ λ = 7.2516 nm (T = 24.1888 as, ω = 6.2832 Ha = 170.9742 eV, f = 41.3414 PHz)
+│   – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±1.00σ)
+│   – and a bandwidth of 0.3925 Ha = 10.6797 eV ⟺ 2.5823 PHz ⟺ 8.5598 Bohr = 452.9627 pm
+└   – Uₚ = 0.0032 Ha = 86.1591 meV =&gt; α = 0.0179 Bohr = 947.8211 fm</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/jagot/ElectricFields.jl/blob/b59227928a50c2f8e0b2e782e0ff8b422aa7e37a/src/arithmetic.jl#LL23-L80">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="ElectricFields.WrappedField" href="#ElectricFields.WrappedField"><code>ElectricFields.WrappedField</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia hljs">WrappedField</code></pre><p>Wrapper around any electric <code>field</code></p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/jagot/ElectricFields.jl/blob/b59227928a50c2f8e0b2e782e0ff8b422aa7e37a/src/arithmetic.jl#LL151-L155">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="ElectricFields.NegatedField" href="#ElectricFields.NegatedField"><code>ElectricFields.NegatedField</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia hljs">NegatedField(a)</code></pre><p>Represents a field whose <a href="../reference/#ElectricFields.vector_potential"><code>vector_potential</code></a> is the negative of that of <code>a</code>.</p><p><strong>Example</strong></p><pre><code class="language-julia-repl hljs">julia&gt; @field(A) do
+           I₀ = 1.0
+           T = 2.0
+           σ = 3.0
+           Tmax = 3.0
+       end
+Linearly polarized field with
+  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm^-2 =&gt;
+    - E₀ = 1.0000e+00 au = 514.2207 GV m^-1
+    - A₀ = 0.3183 au
+  – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV, f = 20.6707 PHz)
+  – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+  – and a bandwidth of 0.3925 Ha = 10.6797 eV ⟺ 2.5823 PHz ⟺ 34.2390 Bohr = 1.8119 nm
+  – Uₚ = 0.0253 Ha = 689.2724 meV =&gt; α = 0.1013 Bohr = 5.3617 pm
+
+julia&gt; B = -A
+ElectricFields.NegatedField{ElectricFields.LinearField{ElectricFields.FixedCarrier{Quantity{Float64, 𝐋, Unitful.FreeUnits{(Eₕ^-1, ħ, c), 𝐋, nothing}}, Quantity{Float64, 𝐓, Unitful.FreeUnits{(Eₕ^-1, ħ), 𝐓, nothing}}, Float64, Int64}, ElectricFields.GaussianEnvelope{Float64}, Float64}}(Linearly polarized field with
+  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm^-2 =&gt;
+    - E₀ = 1.0000e+00 au = 514.2207 GV m^-1
+    - A₀ = 0.3183 au
+  – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV, f = 20.6707 PHz)
+  – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+  – and a bandwidth of 0.3925 Ha = 10.6797 eV ⟺ 2.5823 PHz ⟺ 34.2390 Bohr = 1.8119 nm
+  – Uₚ = 0.0253 Ha = 689.2724 meV =&gt; α = 0.1013 Bohr = 5.3617 pm)
+
+julia&gt; field_amplitude(A, 0.5)
+0.008830294133325867
+
+julia&gt; field_amplitude(B, 0.5)
+-0.008830294133325867
+
+julia&gt; field_amplitude(A-A, 0.5)
+0.0</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/jagot/ElectricFields.jl/blob/b59227928a50c2f8e0b2e782e0ff8b422aa7e37a/src/arithmetic.jl#LL171-L214">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="ElectricFields.DelayedField" href="#ElectricFields.DelayedField"><code>ElectricFields.DelayedField</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia hljs">DelayedField(a, t₀)</code></pre><p>Represents a delayed copy of <code>a</code>, that appears at time <code>t₀</code> instead of at <code>0</code>, i.e. <code>t₀&gt;0</code> implies the field comes <em>later</em>.</p><p><strong>Examples</strong></p><pre><code class="language-julia-repl hljs">julia&gt; @field(A) do
+           I₀ = 1.0
+           T = 2.0
+           σ = 3.0
+           Tmax = 3.0
+       end
+Linearly polarized field with
+  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm^-2 =&gt;
+    - E₀ = 1.0000e+00 au = 514.2207 GV m^-1
+    - A₀ = 0.3183 au
+  – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV, f = 20.6707 PHz)
+  – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+  – and a bandwidth of 0.3925 Ha = 10.6797 eV ⟺ 2.5823 PHz ⟺ 34.2390 Bohr = 1.8119 nm
+  – Uₚ = 0.0253 Ha = 689.2724 meV =&gt; α = 0.1013 Bohr = 5.3617 pm
+
+julia&gt; delay(A, 1u&quot;fs&quot;)
+Linearly polarized field with
+  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm^-2 =&gt;
+    - E₀ = 1.0000e+00 au = 514.2207 GV m^-1
+    - A₀ = 0.3183 au
+  – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV, f = 20.6707 PHz)
+  – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+  – and a bandwidth of 0.3925 Ha = 10.6797 eV ⟺ 2.5823 PHz ⟺ 34.2390 Bohr = 1.8119 nm
+  – Uₚ = 0.0253 Ha = 689.2724 meV =&gt; α = 0.1013 Bohr = 5.3617 pm
+  – delayed by 41.3414 jiffies = 1.0000 fs
+
+julia&gt; delay(A, 1.0)
+Linearly polarized field with
+  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm^-2 =&gt;
+    - E₀ = 1.0000e+00 au = 514.2207 GV m^-1
+    - A₀ = 0.3183 au
+  – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV, f = 20.6707 PHz)
+  – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+  – and a bandwidth of 0.3925 Ha = 10.6797 eV ⟺ 2.5823 PHz ⟺ 34.2390 Bohr = 1.8119 nm
+  – Uₚ = 0.0253 Ha = 689.2724 meV =&gt; α = 0.1013 Bohr = 5.3617 pm
+  – delayed by 1.0000 jiffies = 24.1888 as
+
+julia&gt; delay(A, π*u&quot;rad&quot;)
+Linearly polarized field with
+  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm^-2 =&gt;
+    - E₀ = 1.0000e+00 au = 514.2207 GV m^-1
+    - A₀ = 0.3183 au
+  – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV, f = 20.6707 PHz)
+  – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+  – and a bandwidth of 0.3925 Ha = 10.6797 eV ⟺ 2.5823 PHz ⟺ 34.2390 Bohr = 1.8119 nm
+  – Uₚ = 0.0253 Ha = 689.2724 meV =&gt; α = 0.1013 Bohr = 5.3617 pm
+  – delayed by 1.0000 jiffies = 24.1888 as</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/jagot/ElectricFields.jl/blob/b59227928a50c2f8e0b2e782e0ff8b422aa7e37a/src/arithmetic.jl#LL231-L288">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="ElectricFields.PaddedField" href="#ElectricFields.PaddedField"><code>ElectricFields.PaddedField</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia hljs">  PaddedField(field, a, b)</code></pre><p>Wrapper around any electric <code>field</code>, padded with <code>a</code> units of time before, and <code>b</code> units of time after the ordinary <a href="../reference/#ElectricFields.span-Tuple{ElectricFields.AbstractField}"><code>span</code></a> of the field.</p><p><strong>Example</strong></p><pre><code class="language-julia-repl hljs">julia&gt; @field(A) do
+           I₀ = 1.0
+           T = 2.0
+           σ = 3.0
+           Tmax = 3.0
+       end
+Linearly polarized field with
+  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm^-2 =&gt;
+    - E₀ = 1.0000e+00 au = 514.2207 GV m^-1
+    - A₀ = 0.3183 au
+  – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV, f = 20.6707 PHz)
+  – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+  – and a bandwidth of 0.3925 Ha = 10.6797 eV ⟺ 2.5823 PHz ⟺ 34.2390 Bohr = 1.8119 nm
+  – Uₚ = 0.0253 Ha = 689.2724 meV =&gt; α = 0.1013 Bohr = 5.3617 pm
+
+julia&gt; B = PaddedField(A, 10.0, 30.0)
+Padding before 10.0000 jiffies = 241.8884 as and after 30.0000 jiffies = 725.6653 as of
+Linearly polarized field with
+  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm^-2 =&gt;
+    - E₀ = 1.0000e+00 au = 514.2207 GV m^-1
+    - A₀ = 0.3183 au
+  – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV, f = 20.6707 PHz)
+  – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+  – and a bandwidth of 0.3925 Ha = 10.6797 eV ⟺ 2.5823 PHz ⟺ 34.2390 Bohr = 1.8119 nm
+  – Uₚ = 0.0253 Ha = 689.2724 meV =&gt; α = 0.1013 Bohr = 5.3617 pm
+
+julia&gt; span(A), span(B)
+(-6.0..6.0, -16.0..36.0)</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/jagot/ElectricFields.jl/blob/b59227928a50c2f8e0b2e782e0ff8b422aa7e37a/src/arithmetic.jl#LL329-L368">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="ElectricFields.WindowedField" href="#ElectricFields.WindowedField"><code>ElectricFields.WindowedField</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia hljs">WindowedField(field, a, b)</code></pre><p>Wrapper around any electric <code>field</code>, windowed such that it is zero outside the time interval <code>a..b</code>.</p><p><strong>Example</strong></p><pre><code class="language-julia-repl hljs">julia&gt; @field(A) do
+           I₀ = 1.0
+           T = 2.0
+           σ = 3.0
+           Tmax = 3.0
+       end
+Linearly polarized field with
+  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm^-2 =&gt;
+    - E₀ = 1.0000e+00 au = 514.2207 GV m^-1
+    - A₀ = 0.3183 au
+  – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV, f = 20.6707 PHz)
+  – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+  – and a bandwidth of 0.3925 Ha = 10.6797 eV ⟺ 2.5823 PHz ⟺ 34.2390 Bohr = 1.8119 nm
+  – Uₚ = 0.0253 Ha = 689.2724 meV =&gt; α = 0.1013 Bohr = 5.3617 pm
+
+julia&gt; B = WindowedField(A, -3, 5)
+Window from -3.0000 jiffies = -72.5665 as to 5.0000 jiffies = 120.9442 as of
+Linearly polarized field with
+  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm^-2 =&gt;
+    - E₀ = 1.0000e+00 au = 514.2207 GV m^-1
+    - A₀ = 0.3183 au
+  – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV, f = 20.6707 PHz)
+  – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+  – and a bandwidth of 0.3925 Ha = 10.6797 eV ⟺ 2.5823 PHz ⟺ 34.2390 Bohr = 1.8119 nm
+  – Uₚ = 0.0253 Ha = 689.2724 meV =&gt; α = 0.1013 Bohr = 5.3617 pm
+
+julia&gt; span(A), span(B)
+(-6.0..6.0, -3.0..5.0)
+
+julia&gt; field_amplitude(A, -4)
+-0.6395632362683398
+
+julia&gt; field_amplitude(B, -4)
+0.0</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/jagot/ElectricFields.jl/blob/b59227928a50c2f8e0b2e782e0ff8b422aa7e37a/src/arithmetic.jl#LL413-L457">source</a></section></article></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« Home</a><a class="docs-footer-nextpage" href="../envelopes/">Envelopes »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.25 on <span class="colophon-date" title="Tuesday 1 August 2023 06:34">Tuesday 1 August 2023</span>. Using Julia version 1.9.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
