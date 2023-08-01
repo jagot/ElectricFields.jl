@@ -1,3 +1,49 @@
+function test_addition(::LinearPolarization, A, B)
+    F = A + B
+    F2 = B + A
+    t = timeaxis(F)
+
+    tplot = 24.2e-3t
+
+    Fv = field_amplitude(F, t)
+    Fv2 = field_amplitude(F2, t)
+    FvA = field_amplitude(A, t)
+    FvB = field_amplitude(B, t)
+
+    @test Fv  ≈ FvA + FvB
+    @test Fv2 ≈ FvA + FvB
+end
+
+function test_addition(::ArbitraryPolarization, A, B)
+    F = A + B
+    F2 = B + A
+    t = timeaxis(F)
+
+    tplot = 24.2e-3t
+
+    function get_me_three_dimensions(V)
+        if ndims(V) == 1
+            m = length(V)
+            hcat(zeros(m, 2), V)
+        elseif ndims(V) == 2
+            @assert size(V,2) == 3
+            V
+        else
+            error("This does not work")
+        end
+    end
+
+    Fv = get_me_three_dimensions(field_amplitude(F, t))
+    Fv2 = get_me_three_dimensions(field_amplitude(F2, t))
+    FvA = get_me_three_dimensions(field_amplitude(A, t))
+    FvB = get_me_three_dimensions(field_amplitude(B, t))
+
+    @test Fv  ≈ FvA + FvB
+    @test Fv2 ≈ FvA + FvB
+end
+
+test_addition(A, B) = test_addition(polarization(A+B), A, B)
+
 @testset "Field arithmetic" begin
     @field(A) do
         I₀ = 1.0
@@ -65,8 +111,7 @@
                                │   – a Fixed carrier @ λ = 7.2516 nm (T = 24.1888 as, ω = 6.2832 Ha = 170.9742 eV, f = 41.3414 PHz)
                                │   – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±1.00σ)
                                │   – and a bandwidth of 0.3925 Ha = 10.6797 eV ⟺ 2.5823 PHz ⟺ 8.5598 Bohr = 452.9627 pm
-                               └   – Uₚ = 0.0032 Ha = 86.1591 meV => α = 0.0179 Bohr = 947.8211 fm
-                               """
+                               └   – Uₚ = 0.0032 Ha = 86.1591 meV => α = 0.0179 Bohr = 947.8211 fm"""
         end
         withenv("UNITFUL_FANCY_EXPONENTS" => false) do
             @test string(C) == """
@@ -86,8 +131,7 @@
                                │   – a Fixed carrier @ λ = 7.2516 nm (T = 24.1888 as, ω = 6.2832 Ha = 170.9742 eV, f = 41.3414 PHz)
                                │   – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±1.00σ)
                                │   – and a bandwidth of 0.3925 Ha = 10.6797 eV ⟺ 2.5823 PHz ⟺ 8.5598 Bohr = 452.9627 pm
-                               └   – Uₚ = 0.0032 Ha = 86.1591 meV => α = 0.0179 Bohr = 947.8211 fm
-                               """
+                               └   – Uₚ = 0.0032 Ha = 86.1591 meV => α = 0.0179 Bohr = 947.8211 fm"""
         end
     end
 
@@ -240,6 +284,119 @@
                                  – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
                                  – and a bandwidth of 0.3925 Ha = 10.6797 eV ⟺ 2.5823 PHz ⟺ 34.2390 Bohr = 1.8119 nm
                                  – Uₚ = 0.0253 Ha = 689.2724 meV => α = 0.1013 Bohr = 5.3617 pm"""
+        end
+    end
+
+    @testset "Add various kinds of fields" begin
+        @field(A) do
+            λ = 800u"nm"
+            I₀ = 1e13u"W/cm^2"
+            τ = 1.45u"fs"
+            σoff = 4.0
+            σmax = 6.0
+            env = :trunc_gauss
+        end
+
+        @field(B) do
+            λ = 100u"nm"
+            I₀ = 1e12u"W/cm^2"
+            τ = 1.45u"fs"
+            σoff = 4.0
+            σmax = 6.0
+            env = :trunc_gauss
+            ξ = 1.0
+        end
+
+        @field(C) do
+            tmax = 3.0u"fs"
+            E₀ = 0.1
+            kind = :constant
+        end
+        C = delay(C, -3.0u"fs")
+
+        @field(D) do
+            tmax = 3.0u"fs"
+            E₀ = 0.1
+            kind = :sin²_ramp
+            ramp = :down
+        end
+
+        ApB = A+B
+        CpD = C+D
+
+        F = A + B
+        F2 = B + A
+
+        @test polarization(F) == ArbitraryPolarization()
+        @test polarization(F2) == ArbitraryPolarization()
+
+        test_addition(A, B)
+        test_addition(C, D)
+        test_addition(A, CpD)
+        test_addition(ApB, CpD)
+        test_addition(ApB, rotate(CpD, [1 0 0; 0 1 1; 0 -1 1]))
+
+        ApBpCpD = ApB + CpD
+
+        withenv("UNITFUL_FANCY_EXPONENTS" => true) do
+            @test string(ApBpCpD) == """
+                  ┌ ┌ Transversely polarized field with
+                  │ │   - I₀ = 2.8495e-04 au = 1.0e13 W cm⁻² =>
+                  │ │     - E₀ = 1.6880e-02 au = 8.6802 GV m⁻¹
+                  │ │     - A₀ = 0.2964 au
+                  │ │   – a LinearTransverseCarrier: Fixed carrier @ λ = 800.0000 nm (T = 2.6685 fs, ω = 0.0570 Ha = 1.5498 eV, f = 374.7406 THz)
+                  │ │   – and a Truncated Gaussian envelope of duration 59.9450 jiffies = 1.4500 fs (intensity FWHM; turn-off from 2.4630 fs to 3.6945 fs)
+                  │ │   – and a bandwidth of 0.0463 Ha = 1.2586 eV ⟺ 304.3250 THz ⟺ 12277.0979 Bohr = 649.6760 nm
+                  │ │   – Uₚ = 0.0220 Ha = 597.5865 meV => α = 5.2039 Bohr = 275.3788 pm
+                  │ ⊕
+                  │ │ Transversely polarized field with
+                  │ │   - I₀ = 2.8495e-05 au = 1.0e12 W cm⁻² =>
+                  │ │     - E₀ = 5.3380e-03 au = 2.7449 GV m⁻¹
+                  │ │     - A₀ = 0.0117 au
+                  │ │   – a Elliptical carrier with ξ = 1.00 (RCP) @ λ = 100.0000 nm (T = 333.5641 as, ω = 0.4556 Ha = 12.3984 eV, f = 2.9979 PHz)
+                  │ │   – and a Truncated Gaussian envelope of duration 59.9450 jiffies = 1.4500 fs (intensity FWHM; turn-off from 2.4630 fs to 3.6945 fs)
+                  │ │   – and a bandwidth of 0.0463 Ha = 1.2586 eV ⟺ 304.3250 THz ⟺ 191.8297 Bohr = 10.1512 nm
+                  │ └   – Uₚ = 0.0000 Ha = 933.7290 μeV => α = 0.0257 Bohr = 1.3607 pm
+                  ⊕
+                  │ Linearly polarized field in transverse plane constructed from
+                  │ ┌ Constant field of
+                  │ │   - 124.0241 jiffies = 3.0000 fs duration, and
+                  │ │   - E₀ = 1.0000e-01 au = 51.4221 GV m⁻¹
+                  │ │   – delayed by -124.0241 jiffies = -3.0000 fs
+                  │ ⊕
+                  │ │ sin² down-ramp of
+                  │ │   - 124.0241 jiffies = 3.0000 fs duration, and
+                  └ └   - E₀ = 1.0000e-01 au = 51.4221 GV m⁻¹"""
+        end
+        withenv("UNITFUL_FANCY_EXPONENTS" => false) do
+            @test string(ApBpCpD) == """
+                  ┌ ┌ Transversely polarized field with
+                  │ │   - I₀ = 2.8495e-04 au = 1.0e13 W cm^-2 =>
+                  │ │     - E₀ = 1.6880e-02 au = 8.6802 GV m^-1
+                  │ │     - A₀ = 0.2964 au
+                  │ │   – a LinearTransverseCarrier: Fixed carrier @ λ = 800.0000 nm (T = 2.6685 fs, ω = 0.0570 Ha = 1.5498 eV, f = 374.7406 THz)
+                  │ │   – and a Truncated Gaussian envelope of duration 59.9450 jiffies = 1.4500 fs (intensity FWHM; turn-off from 2.4630 fs to 3.6945 fs)
+                  │ │   – and a bandwidth of 0.0463 Ha = 1.2586 eV ⟺ 304.3250 THz ⟺ 12277.0979 Bohr = 649.6760 nm
+                  │ │   – Uₚ = 0.0220 Ha = 597.5865 meV => α = 5.2039 Bohr = 275.3788 pm
+                  │ ⊕
+                  │ │ Transversely polarized field with
+                  │ │   - I₀ = 2.8495e-05 au = 1.0e12 W cm^-2 =>
+                  │ │     - E₀ = 5.3380e-03 au = 2.7449 GV m^-1
+                  │ │     - A₀ = 0.0117 au
+                  │ │   – a Elliptical carrier with ξ = 1.00 (RCP) @ λ = 100.0000 nm (T = 333.5641 as, ω = 0.4556 Ha = 12.3984 eV, f = 2.9979 PHz)
+                  │ │   – and a Truncated Gaussian envelope of duration 59.9450 jiffies = 1.4500 fs (intensity FWHM; turn-off from 2.4630 fs to 3.6945 fs)
+                  │ │   – and a bandwidth of 0.0463 Ha = 1.2586 eV ⟺ 304.3250 THz ⟺ 191.8297 Bohr = 10.1512 nm
+                  │ └   – Uₚ = 0.0000 Ha = 933.7290 μeV => α = 0.0257 Bohr = 1.3607 pm
+                  ⊕
+                  │ Linearly polarized field in transverse plane constructed from
+                  │ ┌ Constant field of
+                  │ │   - 124.0241 jiffies = 3.0000 fs duration, and
+                  │ │   - E₀ = 1.0000e-01 au = 51.4221 GV m^-1
+                  │ │   – delayed by -124.0241 jiffies = -3.0000 fs
+                  │ ⊕
+                  │ │ sin² down-ramp of
+                  │ │   - 124.0241 jiffies = 3.0000 fs duration, and
+                  └ └   - E₀ = 1.0000e-01 au = 51.4221 GV m^-1"""
         end
     end
 end

@@ -98,18 +98,17 @@ function show(io::IO, f::SumField)
         write(io, "$s $l\n")
     end
 
-    write(io, "⊕\n")
+    write(io, "⊕")
 
     for (s,l) in zip(repeat("│", length(b_str)-1) * "└", b_str)
-        write(io, "$s $l\n")
+        write(io, "\n$s $l")
     end
 end
 
-function +(a::AbstractField, b::AbstractField)
-    polarization(a) == polarization(b) ||
-        throw(ArgumentError("Cannot add fields of different polarization"))
-    SumField(a, b)
-end
++(::Pol, a::AbstractField, ::Pol, b::AbstractField) where {Pol<:Polarization} = SumField(a, b)
++(::LinearPolarization, a::AbstractField, ::ArbitraryPolarization, b::AbstractField) = SumField(transverse_field(a), b)
++(::ArbitraryPolarization, a::AbstractField, ::LinearPolarization, b::AbstractField) = SumField(a, transverse_field(b))
++(a::AbstractField, b::AbstractField) = +(polarization(a), a, polarization(b), b)
 
 for fun in [:vector_potential, :field_amplitude, :vector_potential_spectrum]
     @eval $fun(f::SumField, t::Number) =
@@ -364,7 +363,7 @@ Linearly polarized field with
   – Uₚ = 0.0253 Ha = 689.2724 meV => α = 0.1013 Bohr = 5.3617 pm
 
 julia> span(A), span(B)
-(-6.0..6.0, -16.0..36.0)
+(-6.0 .. 6.0, -16.0 .. 36.0)
 ```
 """
 struct PaddedField{Field<:AbstractField,T} <: WrappedField
@@ -447,7 +446,7 @@ Linearly polarized field with
   – Uₚ = 0.0253 Ha = 689.2724 meV => α = 0.1013 Bohr = 5.3617 pm
 
 julia> span(A), span(B)
-(-6.0..6.0, -3.0..5.0)
+(-6.0 .. 6.0, -3.0 .. 5.0)
 
 julia> field_amplitude(A, -4)
 -0.6395632362683398
