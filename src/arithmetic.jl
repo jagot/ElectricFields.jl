@@ -490,7 +490,7 @@ phase_shift(f::WindowedField, δϕ) =
     WindowedField(phase_shift(parent(f), δϕ), f.a, f.b)
 
 for fun in [:vector_potential, :field_amplitude, :intensity]
-    @eval function $fun(f::WindowedField{T}, t) where T
+    @eval function $fun(f::WindowedField{T}, t::Number) where T
         v = $fun(parent(f), t)
         t < f.a || t > f.b ? zero(v) : v
     end
@@ -505,7 +505,7 @@ function field_amplitude(f::WindowedField, a, b)
     end
 end
 
-function timeaxis(f::WindowedField, fs)
+function timeaxis(f::WindowedField, fs::Number)
     t = timeaxis(f.field, fs)
     t[findall(in(f.a..f.b), t)]
 end
