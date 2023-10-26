@@ -372,7 +372,7 @@ ArbitraryPolarization()
 """
 function polarization end
 
-function show_bandwidth(io::IO, f::AbstractField)
+function bandwidths(f::AbstractField)
     τ = duration(f)
     tbp = time_bandwidth_product(f)
     λ = wavelength(f)
@@ -380,6 +380,14 @@ function show_bandwidth(io::IO, f::AbstractField)
     Δf = tbp/τ
     Δω = Δf*2π
     Δλ = (2π*austrip(1u"c")/ω^2)*Δω
+    (Δω=Δω, Δf=Δf, Δλ=Δλ)
+end
+
+bandwidth(f::AbstractField) = bandwidths(f).Δω
+
+function show_bandwidth(io::IO, f::AbstractField)
+    Δω, Δf, Δλ = bandwidths(f)
+
     printfmt(io, "and a bandwidth of {1:.4f} Ha = {2:s} ⟺ {3:s} ⟺ {4:.4f} Bohr = {5:s}",
              Δω, au2si_round(Δω, u"eV"),
              au2si_round(Δf, u"Hz"),
@@ -1024,7 +1032,7 @@ export LinearPolarization, ArbitraryPolarization, polarization,
     frequency, max_frequency, wavenumber, fundamental, photon_energy,
     envelope,
     intensity, amplitude, fluence,
-    duration, time_bandwidth_product,
+    duration, time_bandwidth_product, bandwidths, bandwidth,
     field_amplitude, vector_potential, instantaneous_intensity,
     field_envelope,
     params, dimensions,
