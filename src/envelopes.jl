@@ -52,7 +52,7 @@ cycles of the fundamental.
 
 Required parameters:
 - `λ|T|f|ν|ω|ħω`,
-- `τ|σ`,
+- `τ|σ|α`,
 - `σmax|tmax|Tmax`,
 - `env=:gauss` (optional, since [`GaussianEnvelope`](@ref) is the default envelope).
 """
@@ -81,6 +81,16 @@ function findα(τ, ω, ϵ=0.2)
     find_zero(eq, (α₀,w*α₀))
 end
 
+function findτ(α, ω)
+    eq(τ) = 2log(2)/τ^2*(1 + 1/log(2)*log(1 + τ^2*α^2/ω^2)) - α
+
+    τ₀ = √(2log(2)/α)
+    x = α/ω^2
+    # This is our heuristic upper bound
+    w̃ = 1 + 85sqrt(log(1 + √x))/100 * (2 - exp(-x))
+    find_zero(eq, (τ₀,w̃*τ₀))
+end
+
 @doc raw"""
     gaussian_common!(field_params, carrier[; Tmax_rounder, verbosity])
 
@@ -96,10 +106,18 @@ the `carrier` (default).
 """
 function gaussian_common!(field_params, carrier;
                           Tmax_rounder = Base.Fix1(ceil, Int), verbosity=0)
+    field_params[:T] = austrip(field_params[:T])
+    field_params[:ω] = austrip(field_params[:ω])
     @namespace!(field_params) do
+        if α
+            τ = findτ(α, ω)
+        end
+
         if τ
+            τ = austrip(τ)
             σ = τ/(2*√(2log(2)))
         else
+            σ = austrip(σ)
             τ = 2*√(2log(2))*σ
         end
 
@@ -108,8 +126,10 @@ function gaussian_common!(field_params, carrier;
             tmax = Tmax*T
         else
             if tmax
+                tmax = austrip(tmax)
                 Tmax = Tmax_rounder(tmax/T)
             elseif Tmax
+                Tmax = austrip(Tmax)
                 tmax = Tmax*T
             end
             tmax = Tmax*T
@@ -117,13 +137,14 @@ function gaussian_common!(field_params, carrier;
         σmax = tmax/σ
     end
     τ = austrip(field_params[:τ])
-    ω = austrip(field_params[:ω])
-    field_params[:α] = findα(τ, ω)
+    if :α ∉ keys(field_params)
+        field_params[:α] = findα(τ, ω)
+    end
 end
 
 function GaussianEnvelope(field_params::Dict{Symbol,Any}, carrier)
     test_field_parameters(field_params, [:T]) # Period time required to round time window up
-    test_field_parameters(field_params, [:τ, :σ])
+    test_field_parameters(field_params, [:τ, :σ, :α])
     test_field_parameters(field_params, [:σmax, :tmax, :Tmax])
 
     gaussian_common!(field_params, carrier)
@@ -172,7 +193,7 @@ This is Eq. (72) of
 
 Required parameters:
 - `λ|T|f|ν|ω|ħω`,
-- `τ|σ`,
+- `τ|σ|α`,
 - `toff`,
 - `σmax|tmax|Tmax`,
 `env=:trunc_gauss`.
@@ -208,20 +229,23 @@ show(io::IO, env::TruncatedGaussianEnvelope) =
 
 function TruncatedGaussianEnvelope(field_params::Dict{Symbol,Any}, carrier)
     test_field_parameters(field_params, [:T]) # Period time required to round time window up
-    test_field_parameters(field_params, [:τ, :σ])
+    test_field_parameters(field_params, [:τ, :σ, :α])
     test_field_parameters(field_params, [:toff, :σoff])
     test_field_parameters(field_params, [:σmax, :tmax, :Tmax])
 
     gaussian_common!(field_params, carrier, Tmax_rounder=NoUnits)
     @namespace!(field_params) do
         if σoff
+            σoff = austrip(σoff)
             toff = σ*σoff
+        else
+            toff = austrip(toff)
         end
     end
 
     @unpack τ, σ, α, toff, tmax, Tmax = field_params
     toff < tmax || throw(ArgumentError("Hard turn-off must occur before end of pulse"))
-    TruncatedGaussianEnvelope(austrip(τ), austrip(σ), α, austrip(toff), austrip(tmax), Tmax)
+    TruncatedGaussianEnvelope(austrip(τ), austrip(σ), α, toff, tmax, Tmax)
 end
 
 duration(env::TruncatedGaussianEnvelope) = env.τ
