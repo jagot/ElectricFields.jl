@@ -11,6 +11,7 @@ using FFTW
 using ForwardDiff
 using Optim
 using Roots
+using SpecialFunctions
 
 using IntervalSets
 

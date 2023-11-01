@@ -513,3 +513,166 @@ end
 rotate(f::WindowedField, R) = WindowedField(rotate(f.field, R), f.a, f.b)
 
 export WindowedField
+
+# ** Apodized field
+
+# *** Windows
+
+abstract type AbstractWindow end
+
+Base.Broadcast.broadcastable(x::AbstractWindow) = Ref(x)
+
+# Map [a,b] onto [-1/2,1/2]
+winx(a, b, t) = t/(b-a)
+windx(a, b, _) = inv(b-a)
+
+window_value(w::AbstractWindow, a, b, t) = window_value(w, winx(a, b, t))
+window_derivative(w::AbstractWindow, a, b, t) = windx(a, b, t)*window_derivative(w, winx(a, b, t))
+
+# **** Rect
+struct Rect <: AbstractWindow end
+
+Base.show(io::IO, ::Rect) = write(io, "Rectangular")
+
+window_value(::Rect, x) = abs(2x) > 1 ? zero(x) : one(x)
+
+# We completely disregard the jumps at x = ±1/2.
+window_derivative(::Rect, x) = zero(x)
+
+# **** Cosine-sum windows
+
+function cosine_sum_window(name, a, pretty_name)
+    z = :(zero(x))
+    na = length(a)
+    fex = if na == 0
+        z
+    elseif na == 1
+        eval(first(a))
+    else
+        fex = :(+($(eval(first(a)))))
+        for i = 2:na
+            push!(fex.args, :($(eval(a[i]))*cospi($(2*(i-1))*x)))
+        end
+        fex
+    end
+
+    dex = if na < 2
+        z
+    elseif na == 2
+        :($(-eval(a[2])*2*π)*sinpi(2*x))
+    else
+        dex = :(+())
+        for i = 2:na
+            push!(dex.args, :($(-eval(a[i])*2*(i-1)π)*sinpi($(2*(i-1))*x)))
+        end
+        dex
+    end
+
+    quote
+        struct $(name) <: AbstractWindow end
+
+        Base.show(io::IO, ::$(name)) = write(io, $(pretty_name))
+
+        function window_value(::$(name), x)
+            abs(2x) > 1 && return zero(x)
+            $(fex)
+        end
+
+        function window_derivative(::$(name), x)
+            abs(2x) > 1 && return zero(x)
+            $(dex)
+        end
+    end
+end
+
+macro cosine_sum_window(name, a, pretty_name)
+    (a.head == :tuple || a.head == :vect) ||
+        throw(ArgumentError("a must be a compile-time constant vector/tuple of constants"))
+    esc(cosine_sum_window(name, a.args, pretty_name))
+end
+
+@cosine_sum_window Hann (0.5, 0.5) "Hann"
+@cosine_sum_window Hamming (25/46, 21/46) "Hamming"
+@cosine_sum_window Blackman (0.42, 0.5, 0.08) "Blackman"
+@cosine_sum_window BlackmanExact (7938/18608, 9240/18608, 1430/18608) "Blackman exact"
+@cosine_sum_window Nuttall (0.355768, 0.487396, 0.144232, 0.012604) "Nuttall"
+@cosine_sum_window BlackmanNuttall (0.3635819, 0.4891775, 0.1365995, 0.0106411) "Blackman–Nuttall"
+@cosine_sum_window BlackmanHarris (0.35875, 0.48829, 0.14128, 0.01168) "Blackman–Harris"
+
+# **** Kaiser
+
+struct Kaiser{T} <: AbstractWindow
+    α::T
+end
+
+Base.show(io::IO, w::Kaiser) = write(io, "Kaiser(α = $(w.α))")
+
+function window_value(w::Kaiser, x)
+    abs(2x) > 1 && return zero(x)
+    a = π*w.α
+    f = √(1 - (2x)^2)
+    pf = inv(besseli(0,a))
+    pf*besseli(0, a*f)
+end
+
+function window_derivative(w::Kaiser, x)
+    abs(2x) > 1 && return zero(x)
+    a = π*w.α
+    f = √(1 - (2x)^2)
+    pf = 2a*x/(besseli(0,a)*f)
+    -pf*besseli(1, a*f)
+end
+
+# *** Implementation
+
+struct ApodizedField{Field<:AbstractField,T,Window<:AbstractWindow} <: WrappedField
+    field::Field
+    a::T
+    b::T
+    window::Window
+
+    ApodizedField(field::Field, a::T, b::T, window=BlackmanHarris()) where {Field,T<:Real} =
+        new{Field,T,typeof(window)}(field, a, b, window)
+
+    ApodizedField(field, a::Unitful.Time, b::Unitful.Time, args...) =
+        ApodizedField(field, austrip(a), austrip(b), args...)
+end
+
+function show(io::IO, f::ApodizedField)
+    printfmtln(io, "{1:s} window from {2:.4f} jiffies = {3:s} to {4:.4f} jiffies = {5:s} of",
+               f.window,
+               f.a, au2si_round(f.a, u"s"),
+               f.b, au2si_round(f.b, u"s"))
+    show(io, f.field)
+end
+
+Base.parent(f::ApodizedField) = f.field
+
+span(f::ApodizedField) = span(parent(f)) ∩ (f.a..f.b)
+
+phase_shift(f::ApodizedField, δϕ) =
+    ApodizedField(phase_shift(parent(f), δϕ), f.a, f.b, f.window)
+
+function vector_potential(f::ApodizedField{T}, t::Number) where T
+    v = vector_potential(parent(f), t)
+    (t < f.a || t > f.b) && return zero(v)
+
+    v*window_value(f.window, f.a, f.b, t)
+end
+
+function field_amplitude(f::ApodizedField{T}, t::Number) where T
+    E = field_amplitude(parent(f), t)
+    (t < f.a || t > f.b) && return zero(E)
+    A = vector_potential(parent(f), t)
+
+    E*window_value(f.window, f.a, f.b, t) - A*window_derivative(f.window, f.a, f.b, t)
+end
+
+function timeaxis(f::ApodizedField, fs::Number)
+    t = timeaxis(f.field, fs)
+    t[findall(in(f.a..f.b), t)]
+end
+
+rotate(f::ApodizedField, R) = ApodizedField(rotate(f.field, R), f.a, f.b, f.window)
+
+export ApodizedField
