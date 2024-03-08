@@ -18,7 +18,7 @@ using IntervalSets
 using Parameters
 
 import Base: show
-using Formatting
+using Format
 
 abstract type AbstractField end
 
