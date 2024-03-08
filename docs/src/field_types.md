@@ -4,6 +4,7 @@
 ```@docs
 ElectricFields.LinearField
 ElectricFields.TransverseField
+ElectricFields.LinearTransverseField
 ElectricFields.ConstantField
 ElectricFields.Ramp
 ```
@@ -16,4 +17,5 @@ ElectricFields.NegatedField
 ElectricFields.DelayedField
 ElectricFields.PaddedField
 ElectricFields.WindowedField
+ElectricFields.phase_shift
 ```

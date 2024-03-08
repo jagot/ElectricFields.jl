@@ -117,6 +117,13 @@ I_i(t) = \abs{F(t)}^2 = \abs{-\partial_t A(t)}^2.
 """
 instantaneous_intensity(f::AbstractField, t::Number) = norm(field_amplitude(f, t))^2
 
+"""
+    intensity(f, t)
+
+Compute the time-dependent intensity of the field `f` by
+phase-shifting the carrier continuously until the maximum
+[`instantaneous_intensity`](@ref) is achieved.
+"""
 function intensity(::LinearPolarization, f, t::Number; kwargs...)
     fun = ϕ -> -instantaneous_intensity(phase_shift(f, ϕ), t)
     res = optimize(fun, 0.0, 2π; kwargs...)
@@ -145,7 +152,7 @@ intensity(f::AbstractField, t::Number) = intensity(polarization(f), f, t)
     field_envelope(f, t)
 
 Compute the field amplitude envelope as the square root of
-[`field_envelope`](@ref).
+[`intensity`](@ref).
 """
 field_envelope(f::AbstractField, t::Number) = √(intensity(f, t))
 

@@ -3,6 +3,19 @@
 function spectrum end
 function convolution end
 
+@doc raw"""
+    DiracComb(frequencies)
+
+Represents a Dirac frequency comb, where `frequencies` is a vector of
+`Tuple`s: `(ωᵢ,cᵢ)`, representing a frequency and an amplitude:
+
+```math
+\mathrm{DC}(\omega) =
+\sum_i
+c_i
+\delta(\omega-\omega_i).
+```
+"""
 struct DiracComb{T,U}
     frequencies::Vector{Tuple{T,U}}
 end
