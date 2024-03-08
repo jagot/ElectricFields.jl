@@ -107,7 +107,7 @@ the `carrier` (default).
 function gaussian_common!(field_params, carrier;
                           Tmax_rounder = Base.Fix1(ceil, Int), verbosity=0)
     field_params[:T] = austrip(field_params[:T])
-    field_params[:ω] = austrip(field_params[:ω])
+    ω = field_params[:ω] = austrip(field_params[:ω])
     @namespace!(field_params) do
         if α
             τ = findτ(α, ω)
