@@ -162,7 +162,7 @@ for fun in [:params, :carrier, :envelope, :polarization,
             :wavenumber, :fundamental, :photon_energy,
             :intensity, :amplitude, :duration, :continuity,
             :span, :dimensions, :rotation_matrix]
-    @eval $fun(f::WrappedField, args...) = $fun(parent(f), args...)
+    @eval $fun(f::WrappedField) = $fun(parent(f))
 end
 # [:vector_potential, :field_amplitude], should these be explicitly forwarded?
 
