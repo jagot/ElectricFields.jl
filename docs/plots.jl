@@ -165,6 +165,78 @@ function index_spectrum_example()
     end
 end
 
+function apodized_field()
+    @field(F) do
+        ω = 1.0
+        I₀ = 1.0
+        ramp = 0.0
+        flat = 3.0
+        env = :tophat
+    end
+
+    t = timeaxis(F)
+    tplot = 24.2e-3t
+
+    tmin = 1.0
+    tmax = 14.0
+
+    Fw = ApodizedField(F, tmin, tmax, ElectricFields.Kaiser(3))
+
+    Fv = field_amplitude(F, t)
+    Av = vector_potential(F, t)
+
+    Fwv = field_amplitude(Fw, t)
+    Awv = vector_potential(Fw, t)
+
+    w = ElectricFields.window_value.(Fw.window, 1.0, 14.0, t)
+
+   savedfigure("apodized_field", figsize=(7,8)) do
+        csubplot(211, nox=true) do
+            plot(tplot, Fv)
+            plot(tplot, Fwv)
+            ylabel(L"F(t)")
+        end
+        csubplot(212) do
+            plot(tplot, Av, label="Original field")
+            plot(tplot, Awv, label="Windowed field")
+            plot(tplot, w, "--", label="Window")
+            legend(loc=1)
+            xlabel(L"$t$ [fs]")
+            ylabel(L"A(t)")
+        end
+    end
+end
+
+function apodizing_windows()
+    x = range(-0.55, stop=0.55, length=1001)
+
+    savedfigure("windows", figsize=(7,8)) do
+        ws = (ElectricFields.Hann(), ElectricFields.Hamming(),
+              ElectricFields.Blackman(),
+              ElectricFields.BlackmanExact(),
+              ElectricFields.Nuttall(),
+              ElectricFields.BlackmanNuttall(),
+              ElectricFields.BlackmanHarris(),
+              ElectricFields.Kaiser(3), ElectricFields.Kaiser(2),
+              ElectricFields.Rect())
+
+        csubplot(211, nox=true) do
+            for w in ws
+                plot(x, ElectricFields.window_value.(w, x), label=string(w))
+            end
+            ylabel(L"w(x)")
+        end
+        csubplot(212) do
+            for w in ws
+                plot(x, ElectricFields.window_derivative.(w, x), label=string(w))
+            end
+            legend(loc=1, ncol=2)
+            xlabel(L"$t$ [fs]")
+            ylabel(L"w'(x)")
+        end
+    end
+end
+
 macro echo(expr)
     println(expr)
     :(@time $expr)
@@ -176,3 +248,5 @@ mkpath(fig_dir)
 @echo index_example()
 @echo index_polarized_example()
 @echo index_spectrum_example()
+@echo apodized_field()
+@echo apodizing_windows()

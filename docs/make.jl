@@ -30,6 +30,7 @@ makedocs(;
     ),
     pages=[
         "Home" => "index.md",
+        "Interface" => "interface.md",
         "Field types" => "field_types.md",
         "Envelopes" => "envelopes.md",
         "Carriers" => "carriers.md",

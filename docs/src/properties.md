@@ -8,6 +8,7 @@ max_frequency
 wavenumber
 photon_energy
 duration
+time_bandwidth_product
 continuity
 fluence
 intensity

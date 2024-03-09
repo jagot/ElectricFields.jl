@@ -453,4 +453,6 @@ end
                   └ └   - E₀ = 1.0000e-01 au = 51.4221 GV m^-1"""
         end
     end
+
+    include("apodized_fields.jl")
 end

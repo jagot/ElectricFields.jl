@@ -85,6 +85,15 @@
                 env = :trunc_gauss
             end
 
+            @field(Ftα) do
+                I₀ = 1.0
+                T = 1.0
+                α = Ft.env.α
+                σoff = 4.0
+                σmax = 6.0
+                env = :trunc_gauss
+            end
+
             for A = (F,Ft)
                 @test duration(A) == τ
                 @test intensity(A, τ/2) ≈ 1/2 rtol=1e-5
@@ -97,6 +106,8 @@
             tmax = austrip(Ft.params[:tmax])
             t = (toff+tmax)/2
             @test intensity(Ft, t) < intensity(F, t)
+
+            @test duration(Ftα) ≈ duration(Ft)
         end
     end
 end

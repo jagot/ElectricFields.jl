@@ -117,6 +117,13 @@ I_i(t) = \abs{F(t)}^2 = \abs{-\partial_t A(t)}^2.
 """
 instantaneous_intensity(f::AbstractField, t::Number) = norm(field_amplitude(f, t))^2
 
+"""
+    intensity(f, t)
+
+Compute the time-dependent intensity of the field `f` by
+phase-shifting the carrier continuously until the maximum
+[`instantaneous_intensity`](@ref) is achieved.
+"""
 function intensity(::LinearPolarization, f, t::Number; kwargs...)
     fun = ϕ -> -instantaneous_intensity(phase_shift(f, ϕ), t)
     res = optimize(fun, 0.0, 2π; kwargs...)
@@ -145,7 +152,7 @@ intensity(f::AbstractField, t::Number) = intensity(polarization(f), f, t)
     field_envelope(f, t)
 
 Compute the field amplitude envelope as the square root of
-[`field_envelope`](@ref).
+[`intensity`](@ref).
 """
 field_envelope(f::AbstractField, t::Number) = √(intensity(f, t))
 
@@ -372,7 +379,7 @@ ArbitraryPolarization()
 """
 function polarization end
 
-function show_bandwidth(io::IO, f::AbstractField)
+function spectral_bandwidths(f::AbstractField)
     τ = duration(f)
     tbp = time_bandwidth_product(f)
     λ = wavelength(f)
@@ -380,6 +387,14 @@ function show_bandwidth(io::IO, f::AbstractField)
     Δf = tbp/τ
     Δω = Δf*2π
     Δλ = (2π*austrip(1u"c")/ω^2)*Δω
+    (Δω=Δω, Δf=Δf, Δλ=Δλ)
+end
+
+bandwidth(f::AbstractField) = spectral_bandwidths(f).Δω
+
+function show_bandwidth(io::IO, f::AbstractField)
+    Δω, Δf, Δλ = spectral_bandwidths(f)
+
     printfmt(io, "and a bandwidth of {1:.4f} Ha = {2:s} ⟺ {3:s} ⟺ {4:.4f} Bohr = {5:s}",
              Δω, au2si_round(Δω, u"eV"),
              au2si_round(Δf, u"Hz"),
@@ -1024,7 +1039,7 @@ export LinearPolarization, ArbitraryPolarization, polarization,
     frequency, max_frequency, wavenumber, fundamental, photon_energy,
     envelope,
     intensity, amplitude, fluence,
-    duration, time_bandwidth_product,
+    duration, time_bandwidth_product, spectral_bandwidths, bandwidth,
     field_amplitude, vector_potential, instantaneous_intensity,
     field_envelope,
     params, dimensions,
