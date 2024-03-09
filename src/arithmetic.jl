@@ -523,7 +523,7 @@ abstract type AbstractWindow end
 Base.Broadcast.broadcastable(x::AbstractWindow) = Ref(x)
 
 # Map [a,b] onto [-1/2,1/2]
-winx(a, b, t) = t/(b-a)
+winx(a, b, t) = (t-a)/(b-a) - 1/2
 windx(a, b, _) = inv(b-a)
 
 window_value(w::AbstractWindow, a, b, t) = window_value(w, winx(a, b, t))
