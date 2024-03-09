@@ -514,10 +514,14 @@ rotate(f::WindowedField, R) = WindowedField(rotate(f.field, R), f.a, f.b)
 
 export WindowedField
 
-# ** Apodized field
-
+# ** Apodized fields
 # *** Windows
 
+"""
+    AbstractWindow
+
+Base type of all apodizing windows.
+"""
 abstract type AbstractWindow end
 
 Base.Broadcast.broadcastable(x::AbstractWindow) = Ref(x)
@@ -530,6 +534,17 @@ window_value(w::AbstractWindow, a, b, t) = window_value(w, winx(a, b, t))
 window_derivative(w::AbstractWindow, a, b, t) = windx(a, b, t)*window_derivative(w, winx(a, b, t))
 
 # **** Rect
+@doc raw"""
+    Rect
+
+Rectangular window:
+```math
+W(x) = \begin{cases}
+1, & |x| \le \frac{1}{2}, \\
+0, & \textrm{else}.
+\end{cases}
+```
+"""
 struct Rect <: AbstractWindow end
 
 Base.show(io::IO, ::Rect) = write(io, "Rectangular")
@@ -556,6 +571,18 @@ function cosine_sum_window(name, a, pretty_name)
         fex
     end
 
+    eq = if na == 0
+        "0"
+    elseif na == 1
+        string(eval(first(a)))
+    else
+        eq = string(eval(first(a)))
+        for i = 2:na
+            eq *= " + "*string(eval(a[i]))*"\\cos($(2*(i-1)) \\pi x)"
+        end
+        eq
+    end
+
     dex = if na < 2
         z
     elseif na == 2
@@ -569,6 +596,14 @@ function cosine_sum_window(name, a, pretty_name)
     end
 
     quote
+        """
+            $($name)
+
+        $($pretty_name) is a sum-of-cosines window, with the terms
+        ```math
+        W(x) = $($eq).
+        ```
+        """
         struct $(name) <: AbstractWindow end
 
         Base.show(io::IO, ::$(name)) = write(io, $(pretty_name))
@@ -601,6 +636,15 @@ end
 
 # **** Kaiser
 
+@doc raw"""
+    Kaser(α)
+
+```math
+W(x) = \frac{I_0\left[\pi\alpha\sqrt{1 - (2x)^2}\right]}{I_0(\pi\alpha)},
+```
+where ``I_0`` is the 0th order modified Bessel function of the first
+kind.
+"""
 struct Kaiser{T} <: AbstractWindow
     α::T
 end
@@ -625,6 +669,12 @@ end
 
 # *** Implementation
 
+"""
+    ApodizedField(field, a, b, window)
+
+A wrapper that provides an wrapped version of `field`, apodized by
+`window` on the interval `a .. b`. See [`AbstractWindow`](@ref).
+"""
 struct ApodizedField{Field<:AbstractField,T,Window<:AbstractWindow} <: WrappedField
     field::Field
     a::T
@@ -648,6 +698,12 @@ end
 
 Base.parent(f::ApodizedField) = f.field
 
+"""
+    span(f::ApodizedField)
+
+The span of `f` is given by the intersection of `span(parent(f))` and
+the apodizing interval `a .. b`.
+"""
 span(f::ApodizedField) = span(parent(f)) ∩ (f.a..f.b)
 
 phase_shift(f::ApodizedField, δϕ) =
