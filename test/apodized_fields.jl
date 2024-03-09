@@ -21,6 +21,9 @@
     mid_sel2 = findall(∈(7.5 .. 14.0), t)
     post_sel = findall(>(14.0), t)
 
+    ElectricFields.@cosine_sum_window Zero () "Zero"
+    ElectricFields.@cosine_sum_window One (1.0,) "One"
+
     @testset "Window: $(window)" for window in (ElectricFields.Hann(), ElectricFields.Hamming(),
                                                 ElectricFields.Blackman(),
                                                 ElectricFields.BlackmanExact(),
@@ -28,15 +31,18 @@
                                                 ElectricFields.BlackmanNuttall(),
                                                 ElectricFields.BlackmanHarris(),
                                                 ElectricFields.Kaiser(3), ElectricFields.Kaiser(2),
-                                                ElectricFields.Rect())
+                                                ElectricFields.Rect(), Zero(), One())
         w = ElectricFields.window_value.(window, x)
         ∂w = ElectricFields.window_derivative.(window, x)
 
         @test all(iszero, w[pre_sel])
         @test all(iszero, ∂w[pre_sel])
 
-        if window isa ElectricFields.Rect
+        if window isa Union{ElectricFields.Rect,One}
             @test all(isone, w[mid_sel])
+            @test all(iszero, ∂w[mid_sel])
+        elseif window isa Zero
+            @test all(iszero, w[mid_sel])
             @test all(iszero, ∂w[mid_sel])
         else
             @test all(<(1), w[mid_sel])

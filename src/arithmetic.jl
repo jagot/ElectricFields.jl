@@ -604,16 +604,16 @@ function cosine_sum_window(name, a, pretty_name)
         W(x) = $($eq).
         ```
         """
-        struct $(name) <: AbstractWindow end
+        struct $(name) <: ElectricFields.AbstractWindow end
 
         Base.show(io::IO, ::$(name)) = write(io, $(pretty_name))
 
-        function window_value(::$(name), x)
+        function ElectricFields.window_value(::$(name), x)
             abs(2x) > 1 && return zero(x)
             $(fex)
         end
 
-        function window_derivative(::$(name), x)
+        function ElectricFields.window_derivative(::$(name), x)
             abs(2x) > 1 && return zero(x)
             $(dex)
         end
