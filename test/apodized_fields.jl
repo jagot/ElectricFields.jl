@@ -101,4 +101,9 @@
           – and a bandwidth of Inf Ha = Inf eV ⟺ Inf Hz ⟺ Inf Bohr = Inf m
           – Uₚ = 0.2500 Ha = 6.8028 eV => α = 1.0000 Bohr = 52.9177 pm"""
     end
+
+    R = ElectricFields.compute_rotation((π/2, [0,1,0]))
+    RFw = rotate(Fw, R)
+    RFwv = field_amplitude(RFw, t)
+    @test RFwv ≈ hcat(Fwv, zeros(length(t), 2))
 end
