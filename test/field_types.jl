@@ -11,6 +11,7 @@
 
         @test field_envelope(F, 0.0) ≈ 1 rtol=1e-7
         @test fluence(F) ≈ 5.452488660809239*3.0*√(2π)/π
+        @test bandwidth(F) ≈ 0.39247000750515826
 
         withenv("UNITFUL_FANCY_EXPONENTS" => true) do
             @test string(F) == """
