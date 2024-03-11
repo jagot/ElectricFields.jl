@@ -83,5 +83,8 @@ end
 
     include("spectra.jl")
 
+    include("bsplines.jl")
+    include("bspline_fields.jl")
+
     # include("sellmeier.jl")
 end
