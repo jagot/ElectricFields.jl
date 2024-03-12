@@ -2,6 +2,7 @@ using ElectricFields
 using Test
 using Unitful
 using UnitfulAtomic
+using LinearAlgebra
 using IntervalSets
 using FFTW
 using PrettyTables
@@ -86,5 +87,5 @@ end
     include("bsplines.jl")
     include("bspline_fields.jl")
 
-    # include("sellmeier.jl")
+    include("sellmeier.jl")
 end

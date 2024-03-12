@@ -41,7 +41,7 @@ include("knot_sets.jl")
 include("bsplines.jl")
 include("bspline_field.jl")
 
-# include("sellmeier.jl")
+include("sellmeier.jl")
 # include("dispersed_fields.jl")
 
 include("strong_field_properties.jl")
