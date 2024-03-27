@@ -22,20 +22,13 @@ as default, ``f_s=100f_{\textrm{max}}``. This also makes plots nicer.
 If `fs<:Integer`, the sampling frequency is computed as `fs/T`,
 i.e. `fs` steps per cycle.
 """
-steps(f::AbstractField, fs::Real=default_sampling_frequency(f)) =
-    ceil(Int, fs*abs(-(endpoints(span(f))...)))
+steps(s::Interval, fs::Real=default_sampling_frequency(f)) =
+    ceil(Int, fs*abs(s.right-s.left))
+steps(f::AbstractField, args...) = steps(span(f), args...)
 steps(f::AbstractField, ndt::Int) = steps(f, ndt/austrip(period(f)))
 
-"""
-    timeaxis(f[, fs])
-
-Construct a time axis for the field `f`, covering the [`span`](@ref)
-of the envelope in the number of [`steps`](@ref) given by the sample
-frequency `fs`.
-"""
-function timeaxis(f::AbstractField, fs::Number=default_sampling_frequency(f))
-    num_steps = steps(f, fs)
-    s = span(f)
+function timeaxis(f::AbstractField, s::Interval, fs::Number=default_sampling_frequency(f))
+    num_steps = steps(s, fs)
     if num_steps > 1 || s.left == s.right
         range(s, length=num_steps)
     else
@@ -46,6 +39,15 @@ function timeaxis(f::AbstractField, fs::Number=default_sampling_frequency(f))
         a:(b-a):a
     end
 end
+
+"""
+    timeaxis(f[, fs])
+
+Construct a time axis for the field `f`, covering the [`span`](@ref)
+of the envelope in the number of [`steps`](@ref) given by the sample
+frequency `fs`.
+"""
+timeaxis(f::AbstractField, args...) = timeaxis(f, span(f), args...)
 
 """
     timeaxis(f, (N,dt))

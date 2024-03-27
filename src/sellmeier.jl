@@ -59,6 +59,8 @@ end
 
 Base.Broadcast.broadcastable(m::Sellmeier) = Ref(m)
 
+const AnisotropicMaterial = SVector{<:Any,<:Sellmeier}
+
 # ** BK7
 """
     BK7
@@ -108,6 +110,16 @@ const Quartz = SVector(Sellmeier(1.3573, Float64[], Int[], fill(0.0u"μm^2", 0),
 
 # ** KTP
 
+# """
+#     KTP
+
+# KTP is a biaxial crystal.
+
+# Numbers taken from <https://www.newlightphotonics.com/v1/ktp-properties.html>.
+# """
+# const KTP = SVector(Sellmeier(2.0065, [0.03901u"μm^2"], [0], [0.04251u"μm^2"], (-0.01327u"μm^-2",), [2]),
+#                     Sellmeier(2.0333, [0.04154u"μm^2"], [0], [0.04547u"μm^2"], (-0.01408u"μm^-2",), [2]),
+#                     Sellmeier(2.0065, [0.05694u"μm^2"], [0], [0.05658u"μm^2"], (-0.01682u"μm^-2",), [2]))
 """
     KTP
 
@@ -122,12 +134,14 @@ const KTP = SVector(Sellmeier(1.10468, [0.89342], [2], [0.04438u"μm^2"], (-0.01
 # * Refractive index
 
 function n²(m::Sellmeier, λ::Length)
-    v = 1.0 + m.A
+    O = one(ustrip(λ))
+    v = O + m.A
     isinf(λ) && return v
 
-    v += NoUnits(sum([Bᵢ*λ^pᵢ/(λ^2-Cᵢ)
-                     for (Bᵢ,pᵢ,Cᵢ) ∈ zip(m.B, m.p, m.C)], init=0.0))
-    v += NoUnits(sum([Dⱼ*λ^qⱼ for (Dⱼ,qⱼ) ∈ zip(m.D,m.q)], init=0.0))
+    v += sum([NoUnits(Bᵢ*λ^pᵢ/(λ^2-Cᵢ))
+             for (Bᵢ,pᵢ,Cᵢ) ∈ zip(m.B, m.p, m.C)], init=zero(O))
+    v += sum([NoUnits(Dⱼ*λ^qⱼ)
+             for (Dⱼ,qⱼ) ∈ zip(m.D,m.q)], init=zero(O))
 
     v
 end
@@ -142,28 +156,16 @@ refractive_index(m::Sellmeier, f::Frequency) = refractive_index(m, u"c"/f)
 
 # * Dispersion
 
-"""
-    dispersion(m, d, f[, f₀=0u"Hz])
-
-Calculate dispersion through a Sellmeier `m` of length `d`. Optionally,
-remove central frequency k-vector, to keep pulse temporally centred.
-"""
-function dispersion(m::Sellmeier, d::Length, f::AbstractVector{F}, f₀::Frequency = 0u"Hz") where {F<:Frequency}
-    n = real(m.(f))
-
-    # Wavevector in vacuum
-    k₀ = 2π*f./u"c"
-    # Wavevector in the Sellmeier
-    k = n.*k₀
-
-    if !iszero(f₀)
-        # Slope of dispersion relation at central frequency
-        ∂k∂f = (2π/u"c")*ForwardDiff.derivative(f -> real(m(f*u"Hz"))*f, f₀/u"Hz" .|> NoUnits)
-        k -= ∂k∂f*f
-    end
-
-    exp.(-im*k*d)
+function dispersion_slope(m::Sellmeier, ω₀)
+    f₀ = ustrip(auconvert(u"Hz", ω₀/2π))
+    inv(austrip(1u"c"))*ForwardDiff.derivative(f -> real(m(f*u"Hz"))*f, f₀)
 end
+
+# We can only remove a common slope, since the different axes _should_
+# be delayed with respect to each other.
+dispersion_slope(m::AnisotropicMaterial, ω₀) =
+    mean(dispersion_slope.(m, ω₀))
+
 # * Exports
 
-export Sellmeier, BK7, SiO₂, Calcite, Quartz, KTP, refractive_index, dispersion
+export Sellmeier, BK7, SiO₂, Calcite, Quartz, KTP, refractive_index, dispersion, dispersion_slope
