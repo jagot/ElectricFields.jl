@@ -27,17 +27,17 @@ number of knots can be influenced by the \"sampling frequency\" `Bfs`.
 """
 function DispersedField(f::AbstractField, de; spline_order=7, Bfs=20/period(f), verbosity=0, kwargs...)
     s = find_time_span(f, de; verbosity=verbosity-2, kwargs...)
-    t = timeaxis(f, s)
-
-    num_knots = ceil(Int, austrip(Bfs)*(s.right-s.left))
-    B = BSpline(LinearKnotSet(spline_order, s.left, s.right, num_knots))
-    verbosity > 1 && @info "Generated B-spline" num_knots B
+    t = timeaxis(f, s=s)
 
     ω = rfftω(t)
     H = frequency_response(de, ω)
 
     As = rfft_vector_potential(f, t)
     Arec = irfft(H.*As, t)
+
+    num_knots = ceil(Int, austrip(Bfs)*(s.right-s.left))
+    B = BSpline(LinearKnotSet(spline_order, s.left, s.right, num_knots))
+    verbosity > 1 && @info "Generated B-spline" num_knots B
 
     FB = BSplineField(B, t, Arec)
 
