@@ -1,5 +1,6 @@
 using ElectricFields
 using Unitful
+using UnitfulAtomic
 using FFTW
 using Statistics
 
