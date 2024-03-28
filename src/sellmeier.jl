@@ -205,19 +205,32 @@ function n²(m::Sellmeier, λ::Length)
     v = O + m.A
     isinf(λ) && return v
 
-    v += sum([NoUnits(Bᵢ*λ^pᵢ/(λ^2-Cᵢ))
+    v += sum([NoUnits(Bᵢ*λ^pᵢ/(λ^2*(1+im*eps())-Cᵢ))
              for (Bᵢ,pᵢ,Cᵢ) ∈ zip(m.B, m.p, m.C)], init=zero(O))
     v += sum([NoUnits(Dⱼ*λ^qⱼ)
              for (Dⱼ,qⱼ) ∈ zip(m.D,m.q)], init=zero(O))
 
     v
 end
+n²(m::Sellmeier, f::Frequency) = n²(m, u"c"/f)
 
-n²(m::AbstractVector{<:Sellmeier}, λ::Length) = n².(m, λ)
+n²(m::AbstractVector{<:Sellmeier}, v) = n².(m, v)
+
+function n²_3d(m::Sellmeier, v)
+    nn = n²(m, v)
+    SVector(nn, nn, nn)
+end
+
+function n²_3d(m::SVector{2}, v)
+    nₒ²,nₑ² = n².(m, v)
+    SVector(nₒ², nₒ², nₑ²)
+end
+
+n²_3d(m::SVector{3}, v) = n²(m, v)
 
 maybe_complex(x) = x<0 ? complex(x) : x
-refractive_index(m::Sellmeier, λ::Length) = √(maybe_complex(n²(m, λ)))
-refractive_index(m::Sellmeier, f::Frequency) = refractive_index(m, u"c"/f)
+maybe_complex(x::Complex) = x
+refractive_index(m::Sellmeier, v) = √(maybe_complex(n²(m, v)))
 
 (m::Sellmeier)(x) = refractive_index(m, x)
 

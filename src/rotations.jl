@@ -37,4 +37,7 @@ function rotation_axis(R::AbstractMatrix)
     normalize(real(ee.vectors[:,i]))
 end
 
+rotation_matrix(R::AbstractMatrix) = compute_rotation(R)
+rotation_matrix(I::UniformScaling) = SMatrix{3,3}(compute_rotation(I))
+
 export rotation_angle, rotation_axis, rotation_matrix

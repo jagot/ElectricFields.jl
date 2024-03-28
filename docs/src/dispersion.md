@@ -164,6 +164,8 @@ ElectricFields.find_time_span
 
 [Interactive demonstration](https://micro.magnet.fsu.edu/primer/java/polarizedlight/ellipsoid/index.html)
 
+![Dispersed field](figures/dispersed_field.svg)
+
 ```@docs
 ElectricFields.Medium
 IsotropicMedium

@@ -78,7 +78,7 @@ dispersion relation, i.e. remove the time shift, such that a pulse
 with central angular frequency `ω₀` stays centred in the frame of
 reference.
 """
-struct Crystal{Material,D<:Length,Rotation,U} <: Medium
+struct Crystal{Material,D<:Length,Rotation<:AbstractMatrix,U} <: Medium
     material::Material
     d::D
     R::Rotation
@@ -94,7 +94,7 @@ of the `material` is computed at `ω₀`. This slope is subsequently
 subtracted from the dispersion.
 """
 Crystal(material, d, R=I; ω₀=nothing) =
-    Crystal(material, d, R,
+    Crystal(material, d, rotation_matrix(R),
             isnothing(ω₀) ? 0 : dispersion_slope(material, ω₀))
 
 function Base.show(io::IO, m::Crystal)
@@ -107,7 +107,19 @@ function Base.show(io::IO, m::Crystal)
 end
 
 function frequency_response(m::Crystal, ω::Number)
-    SVector(1,1,1)
+    f = ω/2π
+    n⁻² = inv.(n²_3d(m.material, auconvert(u"Hz", f)))
+    n = .√(maybe_complex.(inv.(m.R*n⁻²)))
+
+    # Wavevector in vacuum
+    k₀ = ω/austrip(1u"c")
+    # Wavevector in the medium, subtracting the linear component to
+    # centre the pulse in the frame of reference.
+    k = n*k₀ .- ω*m.∂k∂ω₀
+
+    d = austrip(m.d)
+
+    exp.(-im*k*d)
 end
 
 export IsotropicMedium, Crystal

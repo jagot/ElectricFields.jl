@@ -283,6 +283,7 @@ function chirped_field()
             plot(tplot, Av, "k")
             plot(tplot, Arec)
             xlabel(L"$t$ [fs]")
+            axes_labels_opposite(:y)
             axes_labels_opposite(:x)
             ylabel(L"A(t)")
         end
@@ -303,6 +304,75 @@ function chirped_field()
     end
 end
 
+function dispersed_field()
+    τ = austrip(3u"fs")
+
+    @field(F) do
+        λ = 800u"nm"
+        I₀ = 1.0
+        τ = τ
+        σoff = 4.0
+        σmax = 6.0
+        env = :trunc_gauss
+        ϕ = π
+    end
+    F = rotate(F, ElectricFields.compute_rotation((π/3, [0.4,1,0])))
+
+    ω₀ = photon_energy(F)
+
+    de = Crystal(KTP, 12u"μm", ω₀=ω₀)
+    Fc = DispersedField(F, de, spline_order=3, verbosity=4)
+
+    t = timeaxis(Fc)
+    tplot = ustrip(auconvert.(u"fs", 1))*t
+
+    Fv = field_amplitude(F, t)
+    Av = vector_potential(F, t)
+
+    Frec = @time field_amplitude(Fc, t)
+    Arec = @time vector_potential(Fc, t)
+
+    savedfigure("dispersed_field", figsize=(7,8)) do
+        csubplot(3,2,(1,1), nox=true) do
+            plot(tplot, Fv[:,1], "k")
+            plot(tplot, Frec[:,1])
+            ylabel(L"F_x(t)")
+        end
+        csubplot(3,2,(1,2), nox=true) do
+            plot(tplot, Av[:,1], "k")
+            plot(tplot, Arec[:,1])
+            ylabel(L"A_x(t)")
+            axes_labels_opposite(:y)
+        end
+
+        csubplot(3,2,(2,1), nox=true) do
+            plot(tplot, Fv[:,2], "k")
+            plot(tplot, Frec[:,2])
+            ylabel(L"F_y(t)")
+        end
+        csubplot(3,2,(2,2), nox=true) do
+            plot(tplot, Av[:,2], "k")
+            plot(tplot, Arec[:,2])
+            ylabel(L"A_y(t)")
+            axes_labels_opposite(:y)
+        end
+
+        csubplot(3,2,(3,1)) do
+            plot(tplot, Fv[:,3], "k")
+            plot(tplot, Frec[:,3])
+            ylabel(L"F_z(t)")
+            xlabel(L"$t$ [fs]")
+        end
+        csubplot(3,2,(3,2)) do
+            plot(tplot, Av[:,3], "k")
+            plot(tplot, Arec[:,3])
+            ylabel(L"A_z(t)")
+            axes_labels_opposite(:y)
+            xlabel(L"$t$ [fs]")
+        end
+    end
+end
+
 macro echo(expr)
     println(expr)
     :(@time $expr)
@@ -317,3 +387,4 @@ mkpath(fig_dir)
 @echo apodized_field()
 @echo apodizing_windows()
 @echo chirped_field()
+@echo dispersed_field()
