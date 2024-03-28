@@ -91,7 +91,7 @@ function Base.show(io::IO, ce::CascadedDispersiveElement)
 end
 
 tropy(ce::CascadedDispersiveElement) =
-    reduce((a,t) -> tropy(a) * t, ce.elements, init=Isotropic())
+    foldr((a,t) -> tropy(a) * t, ce.elements, init=Isotropic())
 
 function frequency_response(ce::CascadedDispersiveElement, ω::Number)
     v = 1
@@ -155,7 +155,7 @@ the resulting field is contained in the time interval. This is done by
 successively multiplying the time span on which `F` is evaluated `ξ`
 before the `RFFT`, until the `IRFFT` has converged.
 """
-function find_time_span(f, de, args...; max_iter=10, ξ = 2.0, tol=5000√(eps()), verbosity=0)
+function find_time_span(f, de, args...; max_iter=7, ξ = 2.0, tol=5e-4, verbosity=0)
     verbosity > 0 && @info "Finding large enough time span to encompass dispersed field" f de max_iter ξ tol
     a,b = endpoints(span(f))
     a == b && throw(ArgumentError("Cannot successively double an infinitesimal interval $(span(f))"))
@@ -195,4 +195,4 @@ function find_time_span(f, de, args...; max_iter=10, ξ = 2.0, tol=5000√(eps()
 end
 
 # * Exports
-export chirp
+export PhaseShift, Chirp, chirp

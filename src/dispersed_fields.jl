@@ -25,15 +25,37 @@ resultant vector potential, such that [`vector_potential`](@ref) and
 [`field_amplitude`](@ref) can be evaluated at arbitrary times. The
 number of knots can be influenced by the \"sampling frequency\" `Bfs`.
 """
-function DispersedField(f::AbstractField, de; spline_order=7, Bfs=20/period(f), verbosity=0, kwargs...)
+function DispersedField(f::AbstractField, de;
+                        spline_order=3, Bfs=20/period(parent(f)),
+                        cutoff=1e5√(eps()),
+                        verbosity=0, kwargs...)
     s = find_time_span(f, de; verbosity=verbosity-2, kwargs...)
     t = timeaxis(f, s=s)
+    s₀ = span(f)
 
     ω = rfftω(t)
     H = frequency_response(de, ω)
 
     As = rfft_vector_potential(f, t)
     Arec = irfft(H.*As, t)
+
+    # Truncate time span such that |A| > cutoff*max|A|, but still
+    # cover the whole time span of the undispersed field.
+    if cutoff > 0
+        Amag = sum(abs, Arec, dims=2)
+        Amax = maximum(Amag)
+        abs_cutoff = cutoff*Amax
+
+        sel = findall(∈(s₀), t)
+        a = min(findfirst(>(abs_cutoff), Amag), first(sel))
+        b = max(findlast(>(abs_cutoff), Amag), last(sel))
+
+        s = t[a] .. t[b]
+        t = t[a:b]
+        Arec = selectdim(Arec, 1, a:b)
+
+        verbosity > 1 && @info "Truncated to time interval $(s)" a b cutoff abs_cutoff
+    end
 
     num_knots = ceil(Int, austrip(Bfs)*(s.right-s.left))
     B = BSpline(LinearKnotSet(spline_order, s.left, s.right, num_knots))
@@ -73,13 +95,14 @@ end
 
 Base.parent(f::DispersedField) = f.f
 
-for fun in [:vector_potential, :field_amplitude, :intensity]
+for fun in [:vector_potential, :field_amplitude]
     @eval $fun(f::DispersedField, t::Number) =
         $fun(f.FB, t)
 end
 
 # Some of these forwards are iffy, i.e. after e.g. a chirp, the
-# carrier is most certainly not a FixedCarrier anymore.
+# carrier is most certainly not a FixedCarrier anymore, and the
+# duration is not the Fourier-limited one.
 for fun in [:params, :carrier, :envelope, :polarization,
             :wavelength, :period, :frequency, :max_frequency,
             :wavenumber, :fundamental, :photon_energy,
@@ -88,6 +111,6 @@ for fun in [:params, :carrier, :envelope, :polarization,
     @eval $fun(f::DispersedField) = $fun(parent(f))
 end
 
-span(f::DispersedField) = span(f.s)
+span(f::DispersedField) = f.s
 
 export DispersedField

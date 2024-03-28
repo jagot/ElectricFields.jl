@@ -31,6 +31,9 @@ function test_approx_eq(a, b; on_fail::Union{Nothing,Function}=nothing, isbroken
     end
 end
 
+≲(a,b; kwargs...) = a < b || isapprox(a, b; kwargs...)
+≳(a,b; kwargs...) = a > b || isapprox(a, b; kwargs...)
+
 @testset "ElectricFields.jl" begin
     include("namespace_macro.jl")
     include("units.jl")
@@ -88,4 +91,5 @@ end
     include("bspline_fields.jl")
 
     include("sellmeier.jl")
+    include("dispersed_fields.jl")
 end
