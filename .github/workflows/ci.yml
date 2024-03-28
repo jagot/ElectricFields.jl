@@ -75,6 +75,6 @@ jobs:
           julia --project=docs -e '
             using Documenter: DocMeta, doctest
             using ElectricFields
-            DocMeta.setdocmeta!(ElectricFields, :DocTestSetup, :(using ElectricFields, Unitful); recursive=true)
+            DocMeta.setdocmeta!(ElectricFields, :DocTestSetup, :(using ElectricFields, Unitful, UnitfulAtomic); recursive=true)
             doctest(ElectricFields)'
 
