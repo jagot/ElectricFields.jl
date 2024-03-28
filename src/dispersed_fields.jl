@@ -27,7 +27,7 @@ number of knots can be influenced by the \"sampling frequency\" `Bfs`.
 """
 function DispersedField(f::AbstractField, de;
                         spline_order=3, Bfs=20/period(parent(f)),
-                        cutoff=1e5√(eps()),
+                        cutoff=1e5*√(eps()),
                         verbosity=0, kwargs...)
     s = find_time_span(f, de; verbosity=verbosity-2, kwargs...)
     t = timeaxis(f, s=s)
