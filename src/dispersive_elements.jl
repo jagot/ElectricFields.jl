@@ -271,7 +271,7 @@ function find_time_span(f, de, args...; max_iter=7, ξ = 2.0, tol=5e-4, verbosit
 
         if i > 0
             sel = find_overlapping_range(t, t′)
-            R = norm(F - F′[sel])
+            R = norm(F - selectdim(F′, 1, sel))
             verbosity > 1 && @show R
             R < tol && break
         end

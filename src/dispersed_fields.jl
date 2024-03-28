@@ -42,7 +42,7 @@ function DispersedField(f::AbstractField, de;
     # Truncate time span such that |A| > cutoff*max|A|, but still
     # cover the whole time span of the undispersed field.
     if cutoff > 0
-        Amag = sum(abs, Arec, dims=2)
+        Amag = vec(sum(abs, Arec, dims=2))
         Amax = maximum(Amag)
         abs_cutoff = cutoff*Amax
 
