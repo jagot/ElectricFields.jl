@@ -2,36 +2,29 @@
     @testset "String representation" begin
         Bstr = string(BK7.B)
         Cstr = join(string.(BK7.C), ", ")
-        @test string(BK7) == "Medium($(Bstr), [$(Cstr)])"
+        @test string(BK7) == "Sellmeier(0.0, $(Bstr), [2, 2, 2], [$(Cstr)], [], $(Int)[])"
     end
 
     @test BK7(0.5876u"μm") ≈ 1.5168 atol=1e-3
     @test SiO₂(0.5876u"μm") ≈ 1.4585 atol=1e-3
 
-    @testset "Dispersion" begin
-        # Dispersing a pulse through a positive amount of glass should
-        # /delay/ the pulse, i.e. its maximum should arrive /later/,
-        # and vice versa for a negative amount of glass (achievable
-        # through precompensation, common in pulse compressors).
+    Cn² = ElectricFields.n².(Ref(Calcite), [1064,800,632.8,532,400,355,266]*u"nm")
+    Cno = .√(first.(Cn²))
+    Cne = .√(last.(Cn²))
+    test_approx_eq(Cno, [1.6423,1.6487,1.6557,1.6629,1.6823,1.6951,1.7497], rtol=5e-5)
+    test_approx_eq(Cne, [1.4797,1.4821,1.4852,1.4886,1.4974,1.5032,1.5259], rtol=5e-5)
 
-        λ = 500.0u"nm"
-        f₀ = u"c"/λ |> u"THz"
-        ω₀ = 2π*f₀
-        τ = 6.2u"fs" # Pulse duration, intensity FWHM
-        γ = τ^2/8log(2)
+    Qn² = ElectricFields.n².(Ref(Quartz), [1064,800,632.8,532,400,355,266]*u"nm")
+    Qno = .√(first.(Qn²))
+    Qne = .√(last.(Qn²))
+    test_approx_eq(Qno, [1.5341,1.5384,1.5427,1.5469,1.5577,1.5646,1.5916], rtol=5e-5)
+    test_approx_eq(Qne, [1.5428,1.5473,1.5517,1.5561,1.5673,1.5744,1.6024], rtol=5e-5)
 
-        f = range(0,stop=30,length=2000)*f₀
-        ω = 2π*f
-
-        Ê = exp.(-(ω .- ω₀).^2*γ)
-        Ê′ = Ê.*dispersion(BK7, 6u"μm", f)
-        Ê′′ = Ê.*dispersion(BK7, -6u"μm", f)
-        Ê′′′ = Ê.*dispersion(BK7, -6u"μm", f, f₀)
-
-        time_domain_envelope(spectrum) = abs.(fftshift(ifft(spectrum)*√(length(spectrum))))
-
-        @test argmax(time_domain_envelope(Ê′)) > argmax(time_domain_envelope(Ê))
-        @test argmax(time_domain_envelope(Ê′′)) < argmax(time_domain_envelope(Ê))
-        @test argmax(time_domain_envelope(Ê′′′)) == argmax(time_domain_envelope(Ê))
-    end
+    Kn² = ElectricFields.n².(Ref(KTP), [1064,532]*u"nm")
+    Knx = real(.√(ElectricFields.maybe_complex.(first.(Kn²))))
+    Kny = real(.√(ElectricFields.maybe_complex.((e -> e[2]).(Kn²))))
+    Knz = real(.√(ElectricFields.maybe_complex.(last.(Kn²))))
+    test_approx_eq(Knx, [1.7377,1.7780], rtol=5e-3)
+    test_approx_eq(Kny, [1.7453,1.7886], rtol=5e-3)
+    test_approx_eq(Knz, [1.8297,1.8887], rtol=5e-3)
 end

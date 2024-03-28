@@ -1,5 +1,4 @@
 using StaticArrays
-using LinearAlgebra
 import ElectricFields: compute_rotation, rotation_angle, rotation_axis
 
 @testset "Rotations" begin

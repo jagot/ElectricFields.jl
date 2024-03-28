@@ -30,4 +30,8 @@ ElectricFields.nfft
 ElectricFields.fft_vector_potential
 ElectricFields.nfft_vector_potential
 ElectricFields.fftω
+ElectricFields.AbstractFFTs.rfft
+ElectricFields.AbstractFFTs.irfft
+ElectricFields.rfft_vector_potential
+ElectricFields.rfftω
 ```
