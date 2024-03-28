@@ -1,3 +1,8 @@
+"""
+    Medium
+
+Base type for all dispersive media
+"""
 abstract type Medium <: DispersiveElement end
 
 """
@@ -17,6 +22,15 @@ struct IsotropicMedium{Material,D<:Length,U} <: Medium
     d::D
     ∂k∂ω₀::U
 end
+
+"""
+    IsotropicMedium(material, d; ω₀)
+
+Convenience constructor for [`IsotropicMedium`](@ref); if a central
+angular frequency `ω₀` is provided, the linear slope of the dispersion
+of the `material` is computed at `ω₀`. This slope is subsequently
+subtracted from the dispersion.
+"""
 IsotropicMedium(material, d; ω₀=nothing) =
     IsotropicMedium(material, d, isnothing(ω₀) ? 0 : dispersion_slope(material, ω₀))
 
@@ -70,6 +84,15 @@ struct Crystal{Material,D<:Length,Rotation,U} <: Medium
     R::Rotation
     ∂k∂ω₀::U
 end
+
+"""
+    Crystal(material, d, R=I; ω₀)
+
+Convenience constructor for [`Crystal`](@ref); if a central
+angular frequency `ω₀` is provided, the linear slope of the dispersion
+of the `material` is computed at `ω₀`. This slope is subsequently
+subtracted from the dispersion.
+"""
 Crystal(material, d, R=I; ω₀=nothing) =
     Crystal(material, d, R,
             isnothing(ω₀) ? 0 : dispersion_slope(material, ω₀))

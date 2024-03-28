@@ -322,9 +322,26 @@ rotate(f::DelayedField, R) = DelayedField(rotate(f.a, R), f.t₀)
 #     Convention for delayed fields: a field delayed by a /positive/
 #     time, comes /later/, i.e. we write \(f(t-\delta t)\).
 
+"""
+    delay(a, t₀)
+
+Delay the field `a` by the time `t₀`.
+"""
 delay(a::AbstractField, t₀::Union{<:Real,<:Unitful.Time}) = DelayedField(a, austrip(t₀))
+
+"""
+    delay(a, ϕ)
+
+Delay the field `a` by the phase `ϕ` with respect to its
+[`period`](@ref).
+"""
 delay(a::AbstractField, ϕ::Quantity{<:Real, NoDims}) = delay(a, (ϕ/(2π*u"rad"))*period(a))
 
+"""
+    delay(a)
+
+Return the delay of the field `a`.
+"""
 delay(a::DelayedField) = a.t₀
 delay(a::AbstractField) = 0
 

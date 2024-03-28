@@ -11,6 +11,8 @@ Base.:(*)(::Tropy, ::Tropy) = Anisotropic()
 
 """
     DispersiveElement
+
+Base type for all dispersive elements
 """
 abstract type DispersiveElement end
 tropy(::DispersiveElement) = Anisotropic()
@@ -33,6 +35,22 @@ frequency_response(de::DispersiveElement, ω::AbstractVector) =
 
 # ** Phase shift
 
+@doc raw"""
+    PhaseShift(ϕ)
+
+Represents a phase shift according to
+```math
+H(\omega) =
+\exp(-\im\phi).
+```
+
+# Example
+
+```julia
+julia> PhaseShift(6)
+PhaseShift(ϕ = 6.0000 rad)
+```
+"""
 struct PhaseShift{T} <: DispersiveElement
     ϕ::T
 end
@@ -45,11 +63,33 @@ tropy(::PhaseShift) = Isotropic()
 frequency_response(e::PhaseShift, ::Number) =
     exp(-im*e.ϕ)
 
+"""
+    phase_shift(f, ϕ)
+
+Returns the field resulting from applying a [`PhaseShift`](@ref) to
+the field `f`.
+"""
 phase_shift(f::AbstractField, ϕ; kwargs...) =
     DispersedField(f, PhaseShift(ϕ); kwargs...)
 
 # ** Chirp
 
+@doc raw"""
+    Chirp(b, ω₀)
+
+Represents chirp according to
+```math
+H(\omega) =
+\exp[-\im b(ω-ω_0)^2].
+```
+
+# Example
+
+```julia
+julia> Chirp(austrip(5u"fs^2"), austrip(1.5u"eV"))
+Chirp(b = 8545.5457 = 5.0000 fs², ω₀ = 0.0551 = 1.5000 eV)
+```
+"""
 struct Chirp{T,U} <: DispersiveElement
     b::T
     ω₀::U
@@ -68,11 +108,60 @@ tropy(::Chirp) = Isotropic()
 frequency_response(e::Chirp, ω::Number) =
     exp(-im*e.b*(ω-e.ω₀)^2)
 
+"""
+    chirp(f, b, ω₀=photon_energy(f))
+
+Returns the field resulting from applying a [`Chirp`](@ref) to the
+field `f`.
+
+# Example
+
+```julia
+julia> @field(F) do
+           I₀ = 1.0
+           T = 2.0u"fs"
+           σ = 3.0
+           Tmax = 3.0
+       end
+Linearly polarized field with
+  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm⁻² =>
+    - E₀ = 1.0000e+00 au = 514.2207 GV m⁻¹
+    - A₀ = 13.1594 au
+  – a Fixed carrier @ λ = 599.5849 nm (T = 2.0000 fs, ω = 0.0760 Ha = 2.0678 eV, f = 500.0000 THz)
+  – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±82.68σ)
+  – and a bandwidth of 0.3925 Ha = 10.6797 eV ⟺ 2.5823 PHz ⟺ 58518.2144 Bohr = 3.0967 μm
+  – Uₚ = 43.2922 Ha = 1.1780 keV => α = 173.1690 Bohr = 9.1637 nm
+
+julia> chirp(F, austrip(1u"fs^2"))
+DispersedField:
+Linearly polarized field with
+  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm⁻² =>
+    - E₀ = 1.0000e+00 au = 514.2207 GV m⁻¹
+    - A₀ = 13.1594 au
+  – a Fixed carrier @ λ = 599.5849 nm (T = 2.0000 fs, ω = 0.0760 Ha = 2.0678 eV, f = 500.0000 THz)
+  – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±82.68σ)
+  – and a bandwidth of 0.3925 Ha = 10.6797 eV ⟺ 2.5823 PHz ⟺ 58518.2144 Bohr = 3.0967 μm
+  – Uₚ = 43.2922 Ha = 1.1780 keV => α = 173.1690 Bohr = 9.1637 nm
+  – dispersed through Chirp(b = 1709.1091 = 1.0000 fs², ω₀ = 0.0760 = 2.0678 eV)
+```
+"""
 chirp(f::AbstractField, b, ω₀=photon_energy(f); kwargs...) =
     DispersedField(f, Chirp(b, ω₀); kwargs...)
 
 # ** Cascade of dispersive elements
 
+"""
+    CascadedDispersiveElement(elements)
+
+Represents the combination of multiple [`DispersiveElement`](@ref)s.
+
+# Example
+
+```julia
+julia> PhaseShift(6)*Chirp(austrip(5u"fs^2"), austrip(1.5u"eV"))
+[PhaseShift(ϕ = 6.0000 rad) ∗ Chirp(b = 8545.5457 = 5.0000 fs², ω₀ = 0.0551 = 1.5000 eV)]
+```
+"""
 struct CascadedDispersiveElement{Elements} <: DispersiveElement
     elements::Elements
 end
@@ -147,7 +236,7 @@ function find_overlapping_range(r1::StepRangeLen, r2::StepRangeLen)
 end
 
 """
-find_time_span(f, de[, fs]; max_iter=10, ξ=2.0, tol)
+    find_time_span(f, de[, fs]; max_iter=10, ξ=2.0, tol)
 
 Find a suitable time span ``[a,b]`` such that when `f` is dispersed
 through the [`DispersiveElement`](@ref) `de`, the compact support of

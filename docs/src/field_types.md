@@ -15,6 +15,7 @@ ElectricFields.SumField
 ElectricFields.WrappedField
 ElectricFields.NegatedField
 ElectricFields.DelayedField
+delay
 ElectricFields.PaddedField
 ElectricFields.WindowedField
 ElectricFields.phase_shift

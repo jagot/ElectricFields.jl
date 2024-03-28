@@ -6,7 +6,6 @@ isdefined(Main, :NOPLOTS) && NOPLOTS || include("plots.jl")
 makedocs(;
     modules=[ElectricFields],
     authors="Stefanos Carlström <stefanos.carlstrom@gmail.com> and contributors",
-    repo="https://github.com/jagot/ElectricFields.jl/blob/{commit}{path}#L{line}",
     sitename="ElectricFields.jl",
     format=Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true",
@@ -35,9 +34,11 @@ makedocs(;
         "Envelopes" => "envelopes.md",
         "Carriers" => "carriers.md",
         "Field properties" => "properties.md",
+        "Dispersion" => "dispersion.md",
         "Reference" => "reference.md",
     ],
-    doctest=false
+    doctest=false,
+    checkdocs=:exports
 )
 
 deploydocs(;
