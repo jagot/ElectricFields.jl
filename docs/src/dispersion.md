@@ -68,6 +68,86 @@ b(\omega-\omega_0)^2 +
 [`delay`](@ref) by ``t_d`` (by the Fourier shift theorem), and ``b``
 introduced a [`Chirp`](@ref).
 
+```julia-repl
+julia> @field(F) do
+           λ = 800u"nm"
+           I₀ = 1.0
+           τ = 3u"fs"
+           σoff = 4.0
+           σmax = 6.0
+           env = :trunc_gauss
+           ϕ = π
+       end
+Linearly polarized field with
+  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm⁻² =>
+    - E₀ = 1.0000e+00 au = 514.2207 GV m⁻¹
+    - A₀ = 17.5580 au
+  – a Fixed carrier @ λ = 800.0000 nm (T = 2.6685 fs, ω = 0.0570 Ha = 1.5498 eV, f = 374.7406 THz); CEP = 1.00π
+  – and a Truncated Gaussian envelope of duration 124.0241 jiffies = 3.0000 fs (intensity FWHM; turn-off from 5.0959 fs to 7.6439 fs)
+  – and a bandwidth of 0.0224 Ha = 608.3170 meV ⟺ 147.0904 THz ⟺ 5933.9307 Bohr = 314.0101 nm
+  – Uₚ = 77.0706 Ha = 2.0972 keV => α = 308.2823 Bohr = 16.3136 nm
+
+julia> Fc = chirp(F, austrip(5u"fs^2"), verbosity=4)
+┌ Info: Finding large enough time span to encompass dispersed field
+│   f =
+│    Linearly polarized field with
+│      - I₀ = 1.0000e+00 au = 3.5094452e16 W cm⁻² =>
+│        - E₀ = 1.0000e+00 au = 514.2207 GV m⁻¹
+│        - A₀ = 17.5580 au
+│      – a Fixed carrier @ λ = 800.0000 nm (T = 2.6685 fs, ω = 0.0570 Ha = 1.5498 eV, f = 374.7406 THz); CEP = 1.00π
+│      – and a Truncated Gaussian envelope of duration 124.0241 jiffies = 3.0000 fs (intensity FWHM; turn-off from 5.0959 fs to 7.6439 fs)
+│      – and a bandwidth of 0.0224 Ha = 608.3170 meV ⟺ 147.0904 THz ⟺ 5933.9307 Bohr = 314.0101 nm
+│      – Uₚ = 77.0706 Ha = 2.0972 keV => α = 308.2823 Bohr = 16.3136 nm
+│   de = Chirp(b = 8545.5457 = 5.0000 fs², ω₀ = 0.0570 = 1.5498 eV)
+│   max_iter = 7
+│   ξ = 2.0
+└   tol = 0.0005
+----------------------------------------------------------------------------------------------------
+1
+t′ = -632.0183332958276:1.1049271561115868:633.1232604519392
+R = 2.095947834009663
+----------------------------------------------------------------------------------------------------
+2
+t′ = -1264.0366665916551:1.1049271561115868:1265.1415937477668
+R = 0.16138039790711892
+----------------------------------------------------------------------------------------------------
+3
+t′ = -2528.0733331833103:1.1049271561115868:2529.178260339422
+R = 0.0013929399886955529
+----------------------------------------------------------------------------------------------------
+4
+t′ = -5056.146666366621:1.1049271561115868:5057.251593522733
+R = 0.00012089884366390845
+┌ Info: Truncated to time interval -896.38155595379 .. 888.6605640985183
+│   a = 1480
+│   b = 3098
+│   cutoff = 0.0014901161193847656
+└   abs_cutoff = 0.014115901307391281
+┌ Info: Generated B-spline
+│   num_knots = 324
+└   B = BSpline basis with typename(ElectricFields.LinearKnotSet)(Float64) of order k = 3 (parabolic) on -896.38155595379 .. 888.6605640985183 (324 intervals)
+DispersedField:
+Linearly polarized field with
+  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm⁻² =>
+    - E₀ = 1.0000e+00 au = 514.2207 GV m⁻¹
+    - A₀ = 17.5580 au
+  – a Fixed carrier @ λ = 800.0000 nm (T = 2.6685 fs, ω = 0.0570 Ha = 1.5498 eV, f = 374.7406 THz); CEP = 1.00π
+  – and a Truncated Gaussian envelope of duration 124.0241 jiffies = 3.0000 fs (intensity FWHM; turn-off from 5.0959 fs to 7.6439 fs)
+  – and a bandwidth of 0.0224 Ha = 608.3170 meV ⟺ 147.0904 THz ⟺ 5933.9307 Bohr = 314.0101 nm
+  – Uₚ = 77.0706 Ha = 2.0972 keV => α = 308.2823 Bohr = 16.3136 nm
+  – dispersed through Chirp(b = 8545.5457 = 5.0000 fs², ω₀ = 0.0570 = 1.5498 eV)
+```
+
+![Chirped field](figures/chirped_field.svg)
+
+In black, we see the original field, in red the chirped field, and the
+bottom panel shows a [Gabor
+transform](https://en.wikipedia.org/wiki/Gabor_transform) of the
+chirped field, along with horizontal line at the carrier frequency
+``\omega_0``, and a diagonal line at the expected instantaneous
+frequency ``\omega=\omega_0 + \frac{1}{2}\frac{b}{\gamma^2 + b^2}t``,
+where ``\gamma = \frac{\tau^2}{8\ln2}``.
+
 ```@docs
 ElectricFields.DispersiveElement
 PhaseShift

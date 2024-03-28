@@ -1,11 +1,21 @@
 using ElectricFields
 using Unitful
 using FFTW
+using Statistics
 
 using PythonPlot
 using Jagot
 using Jagot.plotting
 plot_style("ggplot")
+
+function wind_transf(t, x, w)
+    f = rfftfreq(length(t),1.0/(t[2]-t[1]))
+    ecat(a,b) = cat(a,b,dims=ndims(x)+1)
+    Cₓ = reduce(ecat, x.*circshift(w,i) for i = 1:length(t))
+    Wₓ = rfft(Cₓ, 1)
+    f,Wₓ
+end
+gabor(t, x, σ) = wind_transf(t, x, fftshift(exp.(-(t .- mean(t)).^2/2σ^2)))
 
 function savedocfig(name,dir="figures")
     fig = gcf()
@@ -190,7 +200,7 @@ function apodized_field()
 
     w = ElectricFields.window_value.(Fw.window, 1.0, 14.0, t)
 
-   savedfigure("apodized_field", figsize=(7,8)) do
+    savedfigure("apodized_field", figsize=(7,8)) do
         csubplot(211, nox=true) do
             plot(tplot, Fv)
             plot(tplot, Fwv)
@@ -237,6 +247,61 @@ function apodizing_windows()
     end
 end
 
+function chirped_field()
+    τ = austrip(3u"fs")
+    η = austrip(5.0u"fs^2")
+
+    @field(F) do
+        λ = 800u"nm"
+        I₀ = 1.0
+        τ = τ
+        σoff = 4.0
+        σmax = 6.0
+        env = :trunc_gauss
+        ϕ = π
+    end
+    Fc = chirp(F, η)
+
+    γ = τ^2/(8log(2))
+    ω₀ = photon_energy(F)
+
+    t = range(span(Fc), length=1500)
+    tplot = ustrip(auconvert.(u"fs", 1))*t
+
+    Av = vector_potential(F, t)
+    Fv = field_amplitude(F, t)
+
+    Frec = @time field_amplitude(Fc, t)
+    Arec = @time vector_potential(Fc, t)
+
+    freq,G = gabor(t, Frec, 1austrip(period(F)))
+    fsel = ind(freq, 0):ind(freq, 2ω₀/2π)
+
+    savedfigure("chirped_field", figsize=(7,8)) do
+        csubplot(311) do
+            plot(tplot, Av, "k")
+            plot(tplot, Arec)
+            xlabel(L"$t$ [fs]")
+            axes_labels_opposite(:x)
+            ylabel(L"A(t)")
+        end
+        csubplot(312,nox=true) do
+            plot(tplot, Fv, "k")
+            plot(tplot, Frec)
+            ylabel(L"F(t)")
+        end
+        csubplot(313) do
+            plot_map(tplot, freq[fsel], abs2.(G[fsel,:]))
+            hline(ω₀/2π, color="white")
+            yl = ylim()
+            plot(tplot, (ω₀ .+ 1/2*η/(γ^2 + η^2)*t)/2π, color="white")
+            ylim(yl)
+            xlabel(L"$t$ [fs]")
+            ylabel(L"\omega/2\pi")
+        end
+    end
+end
+
 macro echo(expr)
     println(expr)
     :(@time $expr)
@@ -250,3 +315,4 @@ mkpath(fig_dir)
 @echo index_spectrum_example()
 @echo apodized_field()
 @echo apodizing_windows()
+@echo chirped_field()
