@@ -169,6 +169,7 @@ end
 function Base.show(io::IO, ce::CascadedDispersiveElement)
     if isempty(ce.elements)
         write(io, "CascadedDispersiveElement(())")
+        return
     end
     write(io, "[")
     n = length(ce.elements)

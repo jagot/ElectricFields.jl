@@ -54,6 +54,12 @@ import ElectricFields: CascadedDispersiveElement, frequency_response
                 ω₀ = photon_energy(F)
                 Fc = chirp(F, η, ω₀)
 
+                withenv("UNITFUL_FANCY_EXPONENTS" => true) do
+                    s = η > 0 ? "" : "-"
+                    v1,v2 = s .* (name == "Short" ? ("8545.5457", "5.0000") : ("25636.6372","15.0000"))
+                    @test string(Fc.de) == "Chirp(b = $(v1) = $(v2) fs², ω₀ = 0.0570 = 1.5498 eV)"
+                end
+
                 torig = timeaxis(F)
                 t = timeaxis(Fc)
 
@@ -77,6 +83,8 @@ import ElectricFields: CascadedDispersiveElement, frequency_response
         b = Chirp(austrip(5u"fs^2"), 1.0)
         c = CascadedDispersiveElement(())
 
+        @test string(c) == "CascadedDispersiveElement(())"
+
         d = a*b
         e = d*b
         f = a*d
@@ -86,15 +94,19 @@ import ElectricFields: CascadedDispersiveElement, frequency_response
 
         @test d == CascadedDispersiveElement((a,b))
         @test frequency_response(d, 0.4) ≈ frequency_response(a, 0.4)*frequency_response(b, 0.4)
+        @test string(d) == "[$(a) ∗ $(b)]"
 
         @test e == CascadedDispersiveElement((a,b,b))
         @test frequency_response(e, 0.4) ≈ frequency_response(a, 0.4)*frequency_response(b, 0.4)^2
+        @test string(e) == "[$(a) ∗ $(b) ∗ $(b)]"
 
         @test f == CascadedDispersiveElement((a,a,b))
         @test frequency_response(f, 0.4) ≈ frequency_response(a, 0.4)^2*frequency_response(b, 0.4)
+        @test string(f) == "[$(a) ∗ $(a) ∗ $(b)]"
 
         @test g == CascadedDispersiveElement((a,b,a,b))
         @test frequency_response(g, 0.4) ≈ frequency_response(a, 0.4)^2*frequency_response(b, 0.4)^2
+        @test string(g) == "[$(a) ∗ $(b) ∗ $(a) ∗ $(b)]"
     end
 
     @testset "Isotropic material" begin
