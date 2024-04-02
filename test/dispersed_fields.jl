@@ -39,8 +39,10 @@ import ElectricFields: CascadedDispersiveElement, frequency_response
 
             ω₀ = photon_energy(F)
             Fc = chirp(F, η, ω₀)
-            let s = η > 0 ? "" : "-"
-                @test string(Fc.de) == "Chirp(b = $(s)8545.5457 = $(s)5.0000 fs², ω₀ = 0.0570 = 1.5498 eV)"
+            withenv("UNITFUL_FANCY_EXPONENTS" => true) do
+                let s = η > 0 ? "" : "-"
+                    @test string(Fc.de) == "Chirp(b = $(s)8545.5457 = $(s)5.0000 fs², ω₀ = 0.0570 = 1.5498 eV)"
+                end
             end
 
             torig = timeaxis(F)
