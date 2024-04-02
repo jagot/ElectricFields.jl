@@ -52,4 +52,17 @@ import ElectricFields: compute_rotation, rotation_angle, rotation_axis
             @test rotation_axis(R) ≈ normalize(axis)
         end
     end
+
+    @testset "Rotation matrix" begin
+        @test rotation_matrix([1.0 1.0 0.0
+                               0.0 1.0 1.0
+                               0.0 0.0 1.0]) ≈ SMatrix{3,3}(I) rtol=1e-14
+        @test rotation_matrix(2*[1.0 0.0 0.0
+                                 0.0 1.0 0.0
+                                 0.0 0.0 1.0]) ≈ SMatrix{3,3}(I) rtol=1e-14
+        @test rotation_matrix([1.0 1.0 1.0
+                               0.0 1.0 1.0
+                               0.0 0.0 1.0]) ≈ SMatrix{3,3}(I) rtol=1e-14
+        @test rotation_matrix(π*I) ≈ SMatrix{3,3}(I) rtol=1e-14
+    end
 end

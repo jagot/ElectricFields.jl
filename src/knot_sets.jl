@@ -13,8 +13,6 @@ set, `k` is the order of the piecewise polynomials (`order = degree +
 right endpoints, respectively.  """
 abstract type AbstractKnotSet{k,ml,mr,T} <: AbstractVector{T} end
 
-distribution(::AbstractKnotSet) = NonUniform()
-
 """
     assert_multiplicities(k,ml,mr,t)
 
@@ -306,8 +304,6 @@ function LinearKnotSet(k::Integer, a, b, N::Integer,
     LinearKnotSet{k,ml,mr}(t)
 end
 
-distribution(::LinearKnotSet) = Uniform()
-
 # ** Exponential knot set
 """
     ExpKnotSet{k,ml,mr}(exponents, base, t, include0)
@@ -358,7 +354,7 @@ function ExpKnotSet(k::Integer, a::T, b::T, N::Integer,
 end
 
 function show(io::IO, t::ExpKnotSet)
-    write(io, "$(typeof(t).name)($(eltype(t))) of ")
+    write(io, "$(nameof(typeof(t)))($(eltype(t))) of ")
     show_order_multiplicities(io, t)
     write(io, " on ")
     t.include0 && write(io, "0,")
