@@ -39,4 +39,13 @@ linear_combination(V::AbstractVector, C::AbstractMatrix) =
 vector_potential(f::BSplineField, t::Number) =
     linear_combination(f.B[t,:], f.C)
 
+vector_potential(f::BSplineField, t::AbstractVector) =
+    f.B[t,:]*f.C
+
+field_amplitude(f::BSplineField, t::Number) =
+    -linear_combination(derivative(f.B, t, :, 1), f.C)
+
+field_amplitude(f::BSplineField, t::AbstractVector) =
+    -derivative(f.B, t, :, 1)*f.C
+
 export BSplineField

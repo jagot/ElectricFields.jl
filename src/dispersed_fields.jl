@@ -98,6 +98,8 @@ Base.parent(f::DispersedField) = f.f
 for fun in [:vector_potential, :field_amplitude]
     @eval $fun(f::DispersedField, t::Number) =
         $fun(f.FB, t)
+    @eval $fun(f::DispersedField, t::AbstractVector) =
+        $fun(f.FB, t)
 end
 
 # Some of these forwards are iffy, i.e. after e.g. a chirp, the

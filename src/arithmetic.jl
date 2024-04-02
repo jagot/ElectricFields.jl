@@ -113,6 +113,8 @@ end
 for fun in [:vector_potential, :field_amplitude, :vector_potential_spectrum]
     @eval $fun(f::SumField, t::Number) =
         $fun(f.a, t) + $fun(f.b, t)
+    @eval $fun(f::SumField, t::AbstractVector) =
+        $fun(f.a, t) + $fun(f.b, t)
 end
 
 polarization(f::SumField) = polarization(f.a)
@@ -226,6 +228,7 @@ Base.parent(f::NegatedField) = f.a
 
 for fun in [:vector_potential, :vector_potential_spectrum]
     @eval $fun(f::NegatedField, t::Number) = -$fun(parent(f), t)
+    @eval $fun(f::NegatedField, t::AbstractVector) = -$fun(parent(f), t)
 end
 
 rotate(f::NegatedField, R) = NegatedField(rotate(f.a, R))
@@ -298,6 +301,8 @@ end
 for fun in [:vector_potential, :field_amplitude, :intensity]
     @eval $fun(f::DelayedField, t::Number) =
         $fun(f.a, t-f.t₀)
+    @eval $fun(f::DelayedField, t::AbstractVector) =
+        $fun(f.a, t .- f.t₀)
 end
 
 vector_potential_spectrum(f::DelayedField, ω) =

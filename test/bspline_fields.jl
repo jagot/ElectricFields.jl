@@ -44,6 +44,17 @@
 
             test_approx_eq(Av, Arec, rtol=1e-4)
             test_approx_eq(Fv, Frec, rtol=1e-4)
+
+            @testset "Scalar evaluation" begin
+                sel = 1:1000
+                correct_tensor(::LinearPolarization, v) = v
+                correct_tensor(::ArbitraryPolarization, v) = transpose(reduce(hcat, v))
+                Arec2 = correct_tensor(polarization(FB), vector_potential.(Ref(FB), t[sel]))
+                Frec2 = correct_tensor(polarization(FB), field_amplitude.(Ref(FB), t[sel]))
+
+                test_approx_eq(selectdim(Arec, 1, sel), Arec2, rtol=1e-14)
+                test_approx_eq(selectdim(Frec, 1, sel), Frec2, rtol=1e-14)
+            end
         end
     end
 end

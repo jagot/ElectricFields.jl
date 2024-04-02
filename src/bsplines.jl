@@ -146,6 +146,46 @@ end
 getindex(B::BSpline, x, ::Colon) =
     getindex(B, x, 1:size(B,2))
 
+function derivative(B::BSpline, x::Real, j::Integer, m)
+    T = promote_type(eltype(B.t), typeof(x))
+    deBoor(B.t, UnitVector{T}(size(B,2), j),
+           x, find_interval(B.t, x), m)
+end
+
+function derivative(B::BSpline, x::Real, sel::AbstractVector, m)
+    T = promote_type(eltype(B.t), typeof(x))
+    i = find_interval(B.t, x)
+    χ = spzeros(T, length(sel))
+    o = sel[1] - 1
+    for j in sel
+        χ[j-o] = deBoor(B.t, UnitVector{T}(size(B,2), j), x, i, m)
+    end
+    χ
+end
+
+function derivative_basis_function!(χ, B::BSpline, x::AbstractVector, j, m)
+    T = promote_type(eltype(B.t), eltype(x))
+    eⱼ = UnitVector{T}(size(B,2), j)
+    for (is,k) ∈ within_support(x, B.t, j)
+        for i in is
+            χ[i] = deBoor(B.t, eⱼ, x[i], k, m)
+        end
+    end
+end
+
+function derivative(B::BSpline, x::AbstractVector, sel::AbstractVector, m)
+    T = promote_type(eltype(B.t), eltype(x))
+    χ = spzeros(T, length(x), length(sel))
+    o = sel[1] - 1
+    for j in sel
+        derivative_basis_function!(view(χ, :, j-o), B, x, j, m)
+    end
+    χ
+end
+
+derivative(B::BSpline, x, ::Colon, m) =
+    derivative(B, x, 1:size(B,2), m)
+
 struct BSplineView{Bt,Sel}
     B::Bt
     sel::Sel
@@ -173,6 +213,9 @@ end
 
 getindex(B::BSplineView, x, j) =
     getindex(B.B, x, B.sel[j])
+
+derivative(B::BSplineView, x, j, m) =
+    derivative(B.B, x, B.sel[j], m)
 
 const BSplineOrView = Union{BSpline,BSplineView}
 
