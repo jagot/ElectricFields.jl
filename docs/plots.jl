@@ -283,7 +283,6 @@ function chirped_field()
             plot(tplot, Av, "k")
             plot(tplot, Arec)
             xlabel(L"$t$ [fs]")
-            axes_labels_opposite(:y)
             axes_labels_opposite(:x)
             ylabel(L"A(t)")
         end
