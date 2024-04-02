@@ -29,6 +29,16 @@
             end
 
             FB = BSplineField(B, t, Av)
+
+            @test dimensions(FB) == n
+
+            @test pretty_print_object(FB) ==
+                  if case == "restricted"
+                  "B-spline field expanded over\n  Restriction to basis functions 2:105 of BSpline basis with LinearKnotSet(Float64) of order k = 7 on -42.0 .. 42.0 (100 intervals)"
+                  else
+                      "B-spline field expanded over\n  BSpline basis with LinearKnotSet(Float64) of order k = 7 on -42.0 .. 42.0 (100 intervals)"
+                  end
+
             Arec = vector_potential(FB, t)
             Frec = field_amplitude(FB, t)
 

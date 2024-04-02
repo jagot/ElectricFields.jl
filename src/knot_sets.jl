@@ -169,7 +169,8 @@ function show_order_multiplicities(io::IO, t::AbstractKnotSet{k,ml,mr}) where {k
 end
 
 function show(io::IO, t::AbstractKnotSet)
-    write(io, "$(typeof(t).name)($(eltype(t))) of ")
+    # https://stackoverflow.com/a/76363569
+    write(io, "$(nameof(typeof(t)))($(eltype(t))) of ")
     show_order_multiplicities(io, t)
     write(io, " on $(first(t)..last(t)) ($(numintervals(t)) intervals)")
 end

@@ -1,7 +1,8 @@
 using IntervalSets
 import ElectricFields: RightContinuous, find_interval, within_support,
 LinearKnotSet, ArbitraryKnotSet, ExpKnotSet,
-numfunctions, BSpline, nonempty_intervals, numintervals
+numfunctions, BSpline, nonempty_intervals, numintervals,
+knotset, order
 using SparseArrays
 
 within_interval(x::AbstractRange, interval::Interval) = findall(in(interval), x)
@@ -48,6 +49,13 @@ function test_within_interval(x, interval, expected=nothing; reversed=true)
 end
 
 @testset "B-splines" begin
+    @testset "Unit vectors" begin
+        e₆ = ElectricFields.UnitVector{Bool}(10, 6)
+        @test size(e₆) == (10,)
+        @test e₆ == vcat(zeros(Bool, 5), one(Bool), zeros(Bool, 4))
+        @test string(e₆) == "ê{Bool}(6|10)"
+    end
+
     @testset "Knot sets" begin
         @testset "Simple tests" begin
             @test ArbitraryKnotSet(3, [0.0, 1, 1, 3, 4, 6], 1, 3) ≈ [0.0, 1, 1, 3, 4, 6, 6, 6]
@@ -77,7 +85,7 @@ end
                 @test_throws ArgumentError LinearKnotSet(0, 0, 1, 4)
                 @test_throws ArgumentError LinearKnotSet(-1, 0, 1, 4)
             end
-            @testset "Invalid multipicities" begin
+            @testset "Invalid multiplicities" begin
                 @test_throws ArgumentError LinearKnotSet(1, 0, 1, 4, 0, 1)
                 @test_throws ArgumentError LinearKnotSet(1, 0, 1, 4, 1, 0)
                 @test_throws ArgumentError LinearKnotSet(1, 0, 1, 4, 1, 2)
@@ -262,8 +270,18 @@ end
             t = ArbitraryKnotSet(3, [0.0, 1, 1, 3, 4, 6], 1, 3)
             B = BSpline(t)
 
+            @test firstindex(B,2) == 1
+            @test lastindex(B,2) == 5
+            @test size(B,2) == 5
+
+            @test knotset(B) == t
+            @test order(B) == 3
+
             @test all(B[0.0, :] .== 0)
             @test all(B[0.0:0.5:1.0, :][1, :] .== 0)
+
+            @test B[0.0, 1] == 0.0
+            @test B[0.1, 1] ≈ 0.01
         end
 
         @testset "Evaluate B-splines" begin
