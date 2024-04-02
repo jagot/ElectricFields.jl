@@ -160,11 +160,78 @@ ElectricFields.find_time_span
 
 ## Dispersive media
 
-[Index ellipsoid](https://en.wikipedia.org/wiki/Index_ellipsoid)
+In addition to the simple, analytic dispersive elements listed above,
+[`PhaseShift`](@ref) and [`Chirp`](@ref), we also support calculating
+the dispersion resulting from pulse propagation through a dispersive
+[`ElectricFields.Medium`](@ref), which models a physical medium
+phenomenologically. Typically, one employs a [`Sellmeier`](@ref)
+equation to describe the variation of the refractive index with the
+wavelength of the incident light, and the compute the dispersion
+according to
+```math
+H(\omega) =
+\exp[-\im k(\omega)d],
+```
+where ``d`` is the thickness of the medium,
+```math
+k(\omega) = n(\omega)k_0
+```
+is the wavevector in the medium with refractive index
+``n(\omega)``. For convenience, we typically subtract the linear
+component at the carrier energy ``\omega_0`` according to
+```math
+\tilde{k}(\omega) =
+k(\omega) -
+\omega
+\left.\frac{\partial k}{\partial\omega}\right|_{\omega_0}
+```
+to keep the pulse centred in the frame of reference.
 
-[Interactive demonstration](https://micro.magnet.fsu.edu/primer/java/polarizedlight/ellipsoid/index.html)
+For an [`IsotropicMedium`](@ref), the square of the refractive index,
+``n^2(\lambda)`` does not depend on the direction of polarization. For
+an anistropic medium, a [`Crystal`](@ref), different polarization axes
+may have different refractive indices. This is modelled using the
+[index ellipsoid](https://en.wikipedia.org/wiki/Index_ellipsoid)[^demo],
+which obeys
+```math
+\frac{x^2}{n_a^2} + \frac{y^2}{n_b^2} + \frac{z^2}{n_c^2} = 1.
+```
+By choosing the orientation of the crystal appropriately (or
+equivalently rotate the field), we can achieve different dispersion
+for the different components of the field:
+
+```julia-repl
+julia> @field(F) do
+           λ = 800u"nm"
+           I₀ = 1.0
+           τ = 3u"fs"
+           σoff = 4.0
+           σmax = 6.0
+           env = :trunc_gauss
+           ϕ = π
+       end;
+
+julia> F = rotate(F, ElectricFields.compute_rotation((π/3, [0.4,1,0])));
+
+julia> de = Crystal(KTP, 12u"μm", ω₀=photon_energy(F));
+
+julia> Fc = DispersedField(F, de)
+DispersedField:
+Transversely polarized field with
+  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm⁻² =>
+    - E₀ = 1.0000e+00 au = 514.2207 GV m⁻¹
+    - A₀ = 17.5580 au
+  – a LinearTransverseCarrier: Fixed carrier @ λ = 800.0000 nm (T = 2.6685 fs, ω = 0.0570 Ha = 1.5498 eV, f = 374.7406 THz); CEP = 1.00π
+  – a Truncated Gaussian envelope of duration 124.0241 jiffies = 3.0000 fs (intensity FWHM; turn-off from 5.0959 fs to 7.6439 fs)
+  – and a rotation of 0.33π about [0.371, 0.928, 0.000]
+  – and a bandwidth of 0.0224 Ha = 608.3170 meV ⟺ 147.0904 THz ⟺ 5933.9307 Bohr = 314.0101 nm
+  – Uₚ = 77.0706 Ha = 2.0972 keV => α = 308.2823 Bohr = 16.3136 nm
+  – dispersed through Crystal(226767.13 Bohr = 12.00 μm of Sellmeier{Float64, Float64, Quantity{Float64, 𝐋², Unitful.FreeUnits{(μm²,), 𝐋², nothing}}, Tuple{Quantity{Float64, 𝐋⁻², Unitful.FreeUnits{(μm⁻²,), 𝐋⁻², nothing}}}}[Sellmeier(1.10468, [0.89342], [2], [0.04438 μm²], [-0.01036 μm⁻²], [2]), Sellmeier(1.14559, [0.87629], [2], [0.0485 μm²], [-0.01173 μm⁻²], [2]), Sellmeier(0.9446, [1.3617], [2], [0.047 μm²], [-0.01491 μm⁻²], [2])], R = [1.0 0.0 0.0; 0.0 1.0 0.0; 0.0 0.0 1.0], ∂k∂ω₀ = 0.0134)
+```
 
 ![Dispersed field](figures/dispersed_field.svg)
+
+[^demo]: [Interactive demonstration of the index ellipsoid.](https://micro.magnet.fsu.edu/primer/java/polarizedlight/ellipsoid/index.html)
 
 ```@docs
 ElectricFields.Medium
