@@ -2,11 +2,7 @@ import ElectricFields: CascadedDispersiveElement, frequency_response
 
 @testset "Dispersed fields" begin
     @testset "Chirped fields" begin
-        # This reference function produces chirped _electric fields_,
-        # whereas ElectricFields.jl compute the electric field from
-        # the _vector potential_. This will impact the comparison for
-        # pulses of short durations.
-        function chirped_gaussian(t, ω₀, ϕ₀, τ, η; verbose = false)
+        function chirped_gaussian(t::Number, ω₀, ϕ₀, τ, η; verbose = false)
             γ = τ^2/(8log(2))
             g = inv(γ^2 + η^2)
 
@@ -20,70 +16,59 @@ import ElectricFields: CascadedDispersiveElement, frequency_response
 
             ca = exp(im*(ω₀*t + ϕ₀ + bη/2*t^2))
             env = exp(-aη*t^2)
-            real(A*ca*env)
+
+            ca′ = im*(ω₀ + bη*t)*exp(im*(ω₀*t + ϕ₀ + bη/2*t^2))
+            env′ = (-2aη*t)*exp(-aη*t^2)
+            1/ω₀*imag(A*ca*env), -1/ω₀*imag(A*(ca′*env + ca*env′))
         end
 
-        @testset "Short pulse, η = $(η)" for η = 5.0u"fs^2"*[1,-1]
-            τ = austrip(3u"fs")
-            η = austrip(η)
-
-            @field(F) do
-                λ = 800u"nm"
-                I₀ = 1.0
-                τ = τ
-                σoff = 4.0
-                σmax = 6.0
-                env = :trunc_gauss
-                ϕ = π
+        function chirped_gaussian(t::AbstractVector, args...; kwargs...)
+            T = eltype(t)
+            if !isempty(t)
+                A,F = chirped_gaussian(first(t), args...; kwargs...)
+                T = promote_type(T, typeof(A), typeof(F))
             end
+            V = zeros(T, length(t), 2)
+            for (i,t) in enumerate(t)
+                V[i,:] .= chirped_gaussian(t, args...; kwargs...)
+            end
+            V[:,1],V[:,2]
+        end
 
-            ω₀ = photon_energy(F)
-            Fc = chirp(F, η, ω₀)
-            withenv("UNITFUL_FANCY_EXPONENTS" => true) do
-                let s = η > 0 ? "" : "-"
-                    @test string(Fc.de) == "Chirp(b = $(s)8545.5457 = $(s)5.0000 fs², ω₀ = 0.0570 = 1.5498 eV)"
+        @testset "$(name) pulse" for (name,τ,ηs,rtol) in (
+            ("Short", 3u"fs", 5.0u"fs^2"*[1,-1], 4e-2),
+            ("Long", 30u"fs", 15.0u"fs^2"*[1,-1], 5e-3))
+            @testset "η = $(η)" for η in ηs
+                τ = austrip(τ)
+                η = austrip(η)
+
+                @field(F) do
+                    λ = 800u"nm"
+                    I₀ = 1.0
+                    τ = τ
+                    σoff = 4.0
+                    σmax = 6.0
+                    env = :trunc_gauss
                 end
+
+                ω₀ = photon_energy(F)
+                Fc = chirp(F, η, ω₀)
+
+                torig = timeaxis(F)
+                t = timeaxis(Fc)
+
+                @test t[1] ≲ torig[1] rtol=5e-3
+                @test t[end] ≳ torig[end] rtol=5e-3
+
+                Fv = field_amplitude(Fc, t)
+                Av = vector_potential(Fc, t)
+
+                F₀ = amplitude(F)
+                Avref,Fvref = F₀ .* chirped_gaussian(t, ω₀, 0.0, τ, η)
+
+                test_approx_eq(Fv, Fvref, rtol=rtol)
+                test_approx_eq(Av, Avref, rtol=rtol)
             end
-
-            torig = timeaxis(F)
-            t = timeaxis(Fc)
-
-            @test t[1] < torig[1]
-            @test t[end] > torig[end]
-
-            Fv = field_amplitude(Fc, t)
-            Fvref = chirped_gaussian.(t, ω₀, 0.0, τ, η)
-
-            test_approx_eq(Fv, Fvref, rtol=3e-1)
-        end
-
-        @testset "Long pulse, η = $(η)" for η = 15.0u"fs^2"*[1,-1]
-            τ = austrip(30u"fs")
-            η = austrip(η)
-
-            @field(F) do
-                λ = 800u"nm"
-                I₀ = 1.0
-                τ = τ
-                σoff = 4.0
-                σmax = 6.0
-                env = :trunc_gauss
-                ϕ = π
-            end
-
-            ω₀ = photon_energy(F)
-            Fc = chirp(F, η, ω₀)
-
-            torig = timeaxis(F)
-            t = timeaxis(Fc)
-
-            @test t[1] ≲ torig[1] rtol=5e-3
-            @test t[end] ≳ torig[end] rtol=5e-3
-
-            Fv = field_amplitude(Fc, t)
-            Fvref = chirped_gaussian.(t, ω₀, 0.0, τ, η)
-
-            test_approx_eq(Fv, Fvref, rtol=3e-2)
         end
     end
 
