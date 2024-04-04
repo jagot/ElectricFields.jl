@@ -659,7 +659,7 @@ end
 # **** Kaiser
 
 @doc raw"""
-    Kaser(α)
+    Kaiser(α)
 
 ```math
 W(x) = \frac{I_0\left[\pi\alpha\sqrt{1 - (2x)^2}\right]}{I_0(\pi\alpha)},
