@@ -85,7 +85,8 @@
                                                 ElectricFields.BlackmanHarris(),
                                                 ElectricFields.Kaiser(3), ElectricFields.Kaiser(2),
                                                 ElectricFields.Rect(), Zero(), One())
-        w = ElectricFields.window_value.(window, x)
+        wx = Base.Fix1(ElectricFields.window_value, window)
+        w = wx.(x)
         ∂w = ElectricFields.window_derivative.(window, x)
 
         @test all(iszero, w[pre_sel])
@@ -103,6 +104,9 @@
             # the derivative, just that the behaviour is reasonable.
             @test all(≥(0), ∂w[mid_sel1])
             @test all(≤(0), ∂w[mid_sel2])
+            # Here we however compare the analytic derivatives with
+            # AD.
+            test_approx_eq(ForwardDiff.derivative.(wx, x[2:end-1]), ∂w[2:end-1])
         end
 
         @test all(iszero, w[post_sel])
@@ -135,7 +139,7 @@
     # For the same reason, the intensity is not exactly the original
     # intensity (flat for this particular field) times the window
     # value squared, hence the high tolerance.
-    @test abs2.(w[mid_sel]) ≈ Iwv[mid_sel] rtol=5e-2
+    test_approx_eq(abs2.(w[mid_sel]), Iwv[mid_sel], rtol=0.2)
     @test all(iszero, Fwv[post_sel])
 
     @test all(iszero, Awv[pre_sel])

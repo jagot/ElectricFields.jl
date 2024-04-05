@@ -5,6 +5,7 @@ using UnitfulAtomic
 using LinearAlgebra
 using IntervalSets
 using FFTW
+using ForwardDiff
 using PrettyTables
 
 function test_approx_eq(a, b; on_fail::Union{Nothing,Function}=nothing, isbroken=false, kwargs...)

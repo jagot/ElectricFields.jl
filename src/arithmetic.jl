@@ -685,7 +685,7 @@ function window_derivative(w::Kaiser, x)
     abs(2x) > 1 && return zero(x)
     a = π*w.α
     f = √(1 - (2x)^2)
-    pf = 2a*x/(besseli(0,a)*f)
+    pf = 4a*x/(besseli(0,a)*f)
     -pf*besseli(1, a*f)
 end
 
