@@ -310,6 +310,9 @@ end
         @test field_amplitude(phase_shift(B, 2.0), 0.4) == field_amplitude(phase_shift(A, 2.0), 0.4)
         @test field_amplitude(phase_shift(B, 2.0), 3.0) == zero(field_amplitude(phase_shift(A, 2.0), 0.4))
 
+        @test field_amplitude(B, -5, -4) ≈ field_amplitude(A, austrip(-0.1u"fs"), -4)
+        @test field_amplitude(B2, -5, -4) ≈ field_amplitude(A2, austrip(-0.1u"fs"), -4)
+
         R = [1 0 0; 0 1 1; 0 -1 1]
         rB = test_rotated_field(B, R)
         @test rB isa ElectricFields.WindowedField

@@ -328,29 +328,42 @@ Required parameters:
 Beware that this envelope can introduce artifacts at the ends of the
 pulse, such that the electric field is non-vanishing, depending of
 e.g. the phase of the carrier.
+
+The shape of the ramp can be influenced by chaining ``g[f(t)]``, where
+``g(x)`` should map smoothly to ``[0,1]`` for ``x\in[0,1]``. Currently
+implemented ramps are
+- `ramp_kind = :linear` ``\implies g(x) = x`` (default)
+- `ramp_kind = :sin² | ramp_kind = :sin2` ``\implies g(x) = \sin^2(\pi x/2)``
 """
-struct TrapezoidalEnvelope{T} <: AbstractEnvelope
+struct TrapezoidalEnvelope{T,G} <: AbstractEnvelope
     ramp_up::T
     flat::T
     ramp_down::T
     period::T
+    g::G
+    ramp_kind::Symbol
 
-    function TrapezoidalEnvelope(ramp_up::T, flat::T, ramp_down::T, period::T) where T
+    function TrapezoidalEnvelope(ramp_up::T, flat::T, ramp_down::T, period::T,
+                                 g::G, ramp_kind) where {T,G<:Function}
         ramp_up >= 0 || error("Negative up-ramp not supported")
         flat >= 0 || error("Negative flat region not supported")
         ramp_down >= 0 || error("Negative down-ramp not supported")
         ramp_up + flat + ramp_down > 0 || error("Pulse length must be non-zero")
 
-        new{T}(ramp_up, flat, ramp_down, period)
+        new{T,G}(ramp_up, flat, ramp_down, period, g, ramp_kind)
     end
 end
+
+TrapezoidalEnvelope(ramp_up, flat, ramp_down, period) =
+    TrapezoidalEnvelope(ramp_up, flat, ramp_down, period, identity, :linear)
+
 envelope_types[:trapezoidal] = TrapezoidalEnvelope
 # Common alias
 envelope_types[:tophat] = TrapezoidalEnvelope
 
 function (env::TrapezoidalEnvelope{T})(t) where T
     t = real(t)/env.period
-    if t < 0
+    f = if t < 0
         zero(T)
     elseif t < env.ramp_up
         t/env.ramp_up
@@ -361,11 +374,12 @@ function (env::TrapezoidalEnvelope{T})(t) where T
     else
         zero(T)
     end
+    env.g(f)
 end
 
 show(io::IO, env::TrapezoidalEnvelope) =
-    printfmt(io, "/{1:d}‾{2:d}‾{3:d}\\ cycles trapezoidal envelope",
-             env.ramp_up, env.flat, env.ramp_down)
+    printfmt(io, "/{1:d}‾{2:d}‾{3:d}\\ cycles trapezoidal envelope, with {4:s} ramps",
+             env.ramp_up, env.flat, env.ramp_down, env.ramp_kind)
 
 function TrapezoidalEnvelope(field_params::Dict{Symbol,Any}, args...)
     test_field_parameters(field_params, [:T]) # Period time required to relate ramps/flat to cycles
@@ -378,10 +392,22 @@ function TrapezoidalEnvelope(field_params::Dict{Symbol,Any}, args...)
             ramp_up = ramp
             ramp_down = ramp
         end
+        if !ramp_kind
+            ramp_kind = :linear
+        end
     end
 
-    @unpack ramp_up, flat, ramp_down, T = field_params
-    TrapezoidalEnvelope(ramp_up, flat, ramp_down, austrip(T))
+    @unpack ramp_up, flat, ramp_down, T, ramp_kind = field_params
+
+    g = if ramp_kind == :linear
+        identity
+    elseif ramp_kind == :sin² || ramp_kind == :sin2
+        x -> sinpi(x/2)^2
+    else
+        throw(ArgumentError("Unknown ramp kind $(ramp_kind)"))
+    end
+
+    TrapezoidalEnvelope(ramp_up, flat, ramp_down, austrip(T), g, ramp_kind)
 end
 
 continuity(::TrapezoidalEnvelope) = 0

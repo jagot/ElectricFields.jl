@@ -24,7 +24,7 @@
         @test continuity(env) == 0
         @test span(env) == 0..12
 
-        @test string(env) == "/1‾3‾2\\ cycles trapezoidal envelope"
+        @test string(env) == "/1‾3‾2\\ cycles trapezoidal envelope, with linear ramps"
 
         @field(F2) do
             I₀ = 1.0
@@ -32,12 +32,28 @@
             ramp = 1.0
             flat = 3.0
             env = :trapezoidal
+            ramp_kind = :sin²
         end
 
         env2 = envelope(F2)
 
+        @test env2(-1.0) == 0.0
+        @test env2(0.0) == 0.0
+        @test env2(2/3) ≈ 0.25
+        @test env2(1.0) ≈ 0.5
+        @test env2(4/3) ≈ 0.75
+        @test env2(2.5) == 1.0
+        @test env2(7.9) == 1.0
+        @test env2(8.0+2/3) ≈ 0.75
+        @test env2(9.0) ≈ 0.5
+        @test env2(8.0+4/3) ≈ 0.25
+        @test env2(10.0) == 0.0
+        @test env2(11.0) == 0.0
+
         @test env2.ramp_up == env2.ramp_down == 1.0
         @test span(env2) == 0..10
+
+        @test string(env2) == "/1‾3‾1\\ cycles trapezoidal envelope, with sin² ramps"
 
         @test_throws ErrorException ElectricFields.TrapezoidalEnvelope(-1.0, 1.0, 1.0, 1.0)
         @test_throws ErrorException ElectricFields.TrapezoidalEnvelope(1.0, -1.0, 1.0, 1.0)

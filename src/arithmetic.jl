@@ -113,6 +113,8 @@ end
 for fun in [:vector_potential, :field_amplitude, :vector_potential_spectrum]
     @eval $fun(f::SumField, t::Number) =
         $fun(f.a, t) + $fun(f.b, t)
+    @eval $fun(f::SumField, t::AbstractVector) =
+        $fun(f.a, t) + $fun(f.b, t)
 end
 
 polarization(f::SumField) = polarization(f.a)
@@ -226,6 +228,7 @@ Base.parent(f::NegatedField) = f.a
 
 for fun in [:vector_potential, :vector_potential_spectrum]
     @eval $fun(f::NegatedField, t::Number) = -$fun(parent(f), t)
+    @eval $fun(f::NegatedField, t::AbstractVector) = -$fun(parent(f), t)
 end
 
 rotate(f::NegatedField, R) = NegatedField(rotate(f.a, R))
@@ -298,6 +301,8 @@ end
 for fun in [:vector_potential, :field_amplitude, :intensity]
     @eval $fun(f::DelayedField, t::Number) =
         $fun(f.a, t-f.t₀)
+    @eval $fun(f::DelayedField, t::AbstractVector) =
+        $fun(f.a, t .- f.t₀)
 end
 
 vector_potential_spectrum(f::DelayedField, ω) =
@@ -322,9 +327,26 @@ rotate(f::DelayedField, R) = DelayedField(rotate(f.a, R), f.t₀)
 #     Convention for delayed fields: a field delayed by a /positive/
 #     time, comes /later/, i.e. we write \(f(t-\delta t)\).
 
+"""
+    delay(a, t₀)
+
+Delay the field `a` by the time `t₀`.
+"""
 delay(a::AbstractField, t₀::Union{<:Real,<:Unitful.Time}) = DelayedField(a, austrip(t₀))
+
+"""
+    delay(a, ϕ)
+
+Delay the field `a` by the phase `ϕ` with respect to its
+[`period`](@ref).
+"""
 delay(a::AbstractField, ϕ::Quantity{<:Real, NoDims}) = delay(a, (ϕ/(2π*u"rad"))*period(a))
 
+"""
+    delay(a)
+
+Return the delay of the field `a`.
+"""
 delay(a::DelayedField) = a.t₀
 delay(a::AbstractField) = 0
 
@@ -637,7 +659,7 @@ end
 # **** Kaiser
 
 @doc raw"""
-    Kaser(α)
+    Kaiser(α)
 
 ```math
 W(x) = \frac{I_0\left[\pi\alpha\sqrt{1 - (2x)^2}\right]}{I_0(\pi\alpha)},
@@ -663,7 +685,7 @@ function window_derivative(w::Kaiser, x)
     abs(2x) > 1 && return zero(x)
     a = π*w.α
     f = √(1 - (2x)^2)
-    pf = 2a*x/(besseli(0,a)*f)
+    pf = 4a*x/(besseli(0,a)*f)
     -pf*besseli(1, a*f)
 end
 

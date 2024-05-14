@@ -481,7 +481,7 @@ Linearly polarized field with
     - E₀ = 2.2361e-01 au = 114.9832 GV m^-1
     - A₀ = 0.2236 au
   – a Fixed carrier @ λ = 45.5634 nm (T = 151.9830 as, ω = 1.0000 Ha = 27.2114 eV, f = 6.5797 PHz)
-  – and a /1‾3‾1\\ cycles trapezoidal envelope
+  – and a /1‾3‾1\\ cycles trapezoidal envelope, with linear ramps
   – and a bandwidth of Inf Ha = Inf eV ⟺ Inf Hz ⟺ Inf Bohr = Inf m
   – Uₚ = 0.0125 Ha = 340.1423 meV => α = 0.2236 Bohr = 11.8328 pm
 ```

@@ -120,9 +120,50 @@ temporal grid `t`.
 nfft_vector_potential(f::AbstractField, t::AbstractRange) =
     _nfft(fft_vector_potential(f, t), t)
 
+
+rfftω(args...) = 2π*rfftfreq(args...)
+"""
+    rfftω(t::AbstractRange)
+
+Return the angular frequency grid corresponding to uniform sampling in
+time with the tempolar grid `t`, in the case of real-valued signals.
+"""
+rfftω(t::AbstractRange) = rfftω(length(t), 1/step(t))
+
+"""
+    rfft(f::AbstractField, t::AbstractRange)
+
+Compute the RFFT of the [`field_amplitude`](@ref) of the field `f`
+sampled on the uniform temporal grid `t`, in the case of real-valued
+signals.
+"""
+FFTW.rfft(f::AbstractField, t::AbstractRange) =
+    rfft(field_amplitude(f, t), 1)
+
+"""
+    rfft_vector_potential(f::AbstractField, t::AbstractRange)
+
+Compute the RFFT of the [`vector_potential`](@ref) of the field `f`
+sampled on the uniform temporal grid `t`, in the case of real-valued
+signals.
+"""
+rfft_vector_potential(f::AbstractField, t::AbstractRange) =
+    rfft(vector_potential(f, t), 1)
+
+"""
+    irfft(F, t)
+
+Compute the IRFFT of the spectral amplitudes `F`, with the end-result
+resolved on the time axis `t`, in the case of real-valued signals.
+"""
+FFTW.irfft(F::AbstractVecOrMat, t::AbstractRange) =
+    irfft(F, length(t), 1)
+
 # * Exports
 
 export spectrum,
     fftω, fftshift,
     fft, fft_vector_potential,
-    nfft, nfft_vector_potential
+    nfft, nfft_vector_potential,
+    rfftω,
+    rfft, rfft_vector_potential, irfft

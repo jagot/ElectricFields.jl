@@ -2,6 +2,8 @@ module ElectricFields
 
 using LinearAlgebra
 using StaticArrays
+using SparseArrays
+using Statistics
 
 using Unitful
 using UnitfulAtomic
@@ -36,8 +38,14 @@ include("arithmetic.jl")
 
 include("field_dsl.jl")
 
-# include("sellmeier.jl")
-# include("dispersed_fields.jl")
+include("knot_sets.jl")
+include("bsplines.jl")
+include("bspline_field.jl")
+
+include("dispersed_fields.jl")
+include("dispersive_elements.jl")
+include("sellmeier.jl")
+include("dispersive_media.jl")
 
 include("strong_field_properties.jl")
 

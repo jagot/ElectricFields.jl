@@ -2,8 +2,10 @@ using ElectricFields
 using Test
 using Unitful
 using UnitfulAtomic
+using LinearAlgebra
 using IntervalSets
 using FFTW
+using ForwardDiff
 using PrettyTables
 
 function test_approx_eq(a, b; on_fail::Union{Nothing,Function}=nothing, isbroken=false, kwargs...)
@@ -28,6 +30,15 @@ function test_approx_eq(a, b; on_fail::Union{Nothing,Function}=nothing, isbroken
     else
         @test_broken isapprox(a, b; kwargs...)
     end
+end
+
+≲(a,b; kwargs...) = a < b || isapprox(a, b; kwargs...)
+≳(a,b; kwargs...) = a > b || isapprox(a, b; kwargs...)
+
+function pretty_print_object(obj)
+    buf = IOBuffer()
+    show(buf, MIME"text/plain"(), obj)
+    String(take!(buf))
 end
 
 @testset "ElectricFields.jl" begin
@@ -83,5 +94,9 @@ end
 
     include("spectra.jl")
 
-    # include("sellmeier.jl")
+    include("bsplines.jl")
+    include("bspline_fields.jl")
+
+    include("sellmeier.jl")
+    include("dispersed_fields.jl")
 end

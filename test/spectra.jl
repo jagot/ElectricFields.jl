@@ -1,5 +1,5 @@
 @testset "Field spectra" begin
-    @testset "Gaussian, $(kind)" for kind = [:linear, :transverse, :elliptical]
+    @testset "Gaussian, $(kind)" for kind = [:linear, :linear_transverse, :transverse, :elliptical]
         if kind == :elliptical
             @field(F) do
                 I₀ = 1.0
@@ -9,12 +9,16 @@
                 ξ = 0.67
             end
         else
+            k = (kind == :linear_transverse ? :linear : kind)
             @field(F) do
                 I₀ = 1.0
                 T = 1.0
                 τ = 2.0
                 σmax = 6.0
-                kind = kind
+                kind = k
+            end
+            if kind == :linear_transverse
+                F = transverse_field(F)
             end
         end
 
@@ -26,7 +30,7 @@
         F̂v = exp.(im*ω*t[1]) .* fftshift(nfft(F, t), 1)
         Âv = exp.(im*ω*t[1]) .* fftshift(nfft_vector_potential(F, t), 1)
 
-        sel = kind == :linear ? 1 : (kind == :transverse ? 3 : Colon())
+        sel = kind == :linear ? 1 : (kind ∈ (:linear_transverse, :transverse) ? 3 : Colon())
         @test norm(F̂v[:,sel]) ≈ 1.4251872372067347
         @test norm(Âv[:,sel]) ≈ 0.22581870287199948
 
