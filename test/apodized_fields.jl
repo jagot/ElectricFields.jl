@@ -154,7 +154,7 @@
             - E₀ = 1.0000e+00 au = 514.2207 GV m⁻¹
             - A₀ = 1.0000 au
           – a Fixed carrier @ λ = 45.5634 nm (T = 151.9830 as, ω = 1.0000 Ha = 27.2114 eV, f = 6.5797 PHz)
-          – and a /0‾3‾0\\ cycles trapezoidal envelope
+          – and a /0‾3‾0\\ cycles trapezoidal envelope, with linear ramps
           – and a bandwidth of Inf Ha = Inf eV ⟺ Inf Hz ⟺ Inf Bohr = Inf m
           – Uₚ = 0.2500 Ha = 6.8028 eV => α = 1.0000 Bohr = 52.9177 pm"""
     end
