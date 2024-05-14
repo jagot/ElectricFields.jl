@@ -14,6 +14,9 @@ function BSplineField(B::BSplineOrView, t::AbstractVector, A::AbstractVecOrMat)
     BSplineField(B, interpolate(B, t, A))
 end
 
+BSplineField(B::BSplineOrView, t::AbstractVector{<:Unitful.Time}, A::AbstractVecOrMat) =
+    BSplineField(B, austrip.(t), A)
+
 Base.show(io::IO, f::BSplineField) =
     write(io, "B-spline field")
 

@@ -47,6 +47,8 @@ include("dispersive_elements.jl")
 include("sellmeier.jl")
 include("dispersive_media.jl")
 
+include("tabulated_fields.jl")
+
 include("strong_field_properties.jl")
 
 end # module

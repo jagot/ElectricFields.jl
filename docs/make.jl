@@ -35,6 +35,7 @@ makedocs(;
         "Carriers" => "carriers.md",
         "Field properties" => "properties.md",
         "Dispersion" => "dispersion.md",
+        "Tabulated fields" => "tabulated_fields.md",
         "Reference" => "reference.md",
     ],
     doctest=false,
