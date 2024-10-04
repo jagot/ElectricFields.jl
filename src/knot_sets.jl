@@ -214,6 +214,16 @@ function find_interval(t::AbstractKnotSet{k,ml,mr,T}, x, i=ml) where {T,k,ml,mr}
     @assert false
 end
 
+function find_interval(t::AbstractVector, x, i=firstindex(t))
+    # @assert nondecreasing(t)
+    (x < first(t) || x > last(t) || i > length(t) || x < t[i]) && return nothing
+    x == last(t) && return length(t)
+    for r ∈ i:length(t)
+        t[r] > x && return r-1
+    end
+    @assert false
+end
+
 const RightContinuous{T} = Interval{:closed,:open,T}
 
 function support_interval(t::AbstractKnotSet, j::Integer)

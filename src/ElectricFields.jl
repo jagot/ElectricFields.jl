@@ -43,6 +43,7 @@ include("knot_sets.jl")
 include("quadrature.jl")
 include("bsplines.jl")
 include("bspline_field.jl")
+include("cubic_hermite_spline_field.jl")
 
 include("dispersed_fields.jl")
 include("dispersive_elements.jl")
