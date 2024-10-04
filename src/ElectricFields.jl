@@ -14,6 +14,7 @@ using ForwardDiff
 using Optim
 using Roots
 using SpecialFunctions
+using FastGaussQuadrature
 
 using IntervalSets
 
@@ -39,6 +40,7 @@ include("arithmetic.jl")
 include("field_dsl.jl")
 
 include("knot_sets.jl")
+include("quadrature.jl")
 include("bsplines.jl")
 include("bspline_field.jl")
 
