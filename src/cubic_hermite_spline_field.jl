@@ -98,6 +98,16 @@ end
 
 # * FFT derivatives/integrals
 
+# The derivative/integral of a real function is real, but using the
+# FFT to compute these operation necessarily introduces an imaginary
+# part, which ideally should be "small".
+function ensure_real(y::AbstractArray{Complex{T}}; tol=√(eps(T))) where T
+    reY = real(y)
+    imY = imag(y)
+    norm(imY)/norm(reY) < tol || @warn "Expected a negligible imaginary part, got" norm(reY) norm(imY) norm(imY)/norm(reY)
+    reY
+end
+
 #=
 Here we implement FFT-based differentition/integration, as described
 by
@@ -106,7 +116,7 @@ by
   differentiation. https://math.mit.edu/~stevenj/fft-deriv.pdf
 =#
 
-function fft_derivative(y::AbstractVecOrMat, fs=1)
+function fft_derivative(y::AbstractVecOrMat{<:Complex}, fs=1)
     # This implements Algorithm 1 by Johnson (2011).
     N = size(y, 1)
     ω = 2π*fftfreq(N, fs)
@@ -118,7 +128,10 @@ function fft_derivative(y::AbstractVecOrMat, fs=1)
     ifft(Y′, 1)
 end
 
-function fft_integral(y::AbstractVecOrMat, fs=1)
+fft_derivative(y::AbstractVecOrMat{<:Real}, args...) =
+    ensure_real(fft_derivative(complex(y), args...))
+
+function fft_integral(y::AbstractVecOrMat{<:Complex}, fs=1)
     # This implements the inverse of Algorithm 1 by Johnson (2011).
     N = size(y, 1)
     ω = 2π*fftfreq(N, fs)
@@ -133,6 +146,9 @@ function fft_integral(y::AbstractVecOrMat, fs=1)
     end
     ifft(Y′, 1)
 end
+
+fft_integral(y::AbstractVecOrMat{<:Real}, args...) =
+    ensure_real(fft_integral(complex(y), args...))
 
 approximate_derivative(t::AbstractRange, A) = fft_derivative(A, 1/step(t))
 approximate_integral(t::AbstractRange, A) = fft_integral(A, 1/step(t))
