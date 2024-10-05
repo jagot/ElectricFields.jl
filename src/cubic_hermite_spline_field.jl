@@ -59,9 +59,14 @@ CubicHermiteSplineField(t::AbstractVector, ::Nothing, F::AbstractVecOrMat) =
     CubicHermiteSplineField(t, -approximate_integral(t, F), -F)
 
 Base.show(io::IO, f::CubicHermiteSplineField) =
-    printfmt(io, "{1:d}-sample, {2:d}-component Cubic Hermite spline field, t ∈ {3:s}..{4:s}",
-             length(f.t), dimensions(f),
-             f.t[begin], f.t[end])
+    printfmt(io, "{1:d}-sample, {2:d}-component Cubic Hermite spline field, t ∈ {3:s}",
+             length(f.t), dimensions(f), span(f))
+
+span(f::CubicHermiteSplineField) = first(f.t)..last(f.t)
+
+min_step(t::AbstractRange) = step(t)
+min_step(t::AbstractVector) = minimum(abs, diff(t))
+max_frequency(f::CubicHermiteSplineField) = inv(min_step(f.t))
 
 dimensions(::CubicHermiteSplineField{<:Any,<:AbstractVector}) = 1
 dimensions(::CubicHermiteSplineField{<:Any,<:AbstractMatrix}) = 3
