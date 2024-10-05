@@ -75,7 +75,7 @@ free_oscillation_amplitude(F::SumField) =
 
 # * Print info
 
-function show_strong_field_properties(io::IO, F::Union{LinearField,TransverseField})
+function show_strong_field_properties(io::IO, F::AbstractField)
     Uₚ = austrip(ponderomotive_potential(F))
     α = austrip(free_oscillation_amplitude(F))
     printfmt(io, "Uₚ = {1:.4f} Ha = {2:s} => α = {3:.4f} Bohr = {4:s}",

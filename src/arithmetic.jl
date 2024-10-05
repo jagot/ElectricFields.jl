@@ -287,6 +287,13 @@ for fun in [:vector_potential, :vector_potential_spectrum]
     @eval $fun(f::ScaledField, t::AbstractVector) = f.η*$fun(parent(f), t)
 end
 
+for fun in [:amplitude, :free_oscillation_amplitude]
+    @eval $fun(f::ScaledField) = f.η*$fun(parent(f))
+end
+for fun in [:intensity, :ponderomotive_potential]
+    @eval $fun(f::ScaledField, args...) = f.η^2*$fun(parent(f), args...)
+end
+
 rotate(f::ScaledField, R) = ScaledField(rotate(parent(f), R), f.η)
 
 function Base.show(io::IO, f::ScaledField)
@@ -296,7 +303,10 @@ end
 
 function Base.show(io::IO, mime::MIME"text/plain", f::ScaledField)
     printfmt(io, "ScaledField: {1:s} × ", f.η)
-    show(io, mime, parent(f))
+    show(io, parent(f))
+    println(io)
+    print(io, "  ")
+    show_strong_field_properties(io, f)
 end
 
 # ** Delayed fields

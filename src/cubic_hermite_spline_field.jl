@@ -62,6 +62,13 @@ Base.show(io::IO, f::CubicHermiteSplineField) =
     printfmt(io, "{1:d}-sample, {2:d}-component Cubic Hermite spline field, t ∈ {3:s}",
              length(f.t), dimensions(f), span(f))
 
+function Base.show(io::IO, ::MIME"text/plain", f::CubicHermiteSplineField)
+    show(io, f)
+    println(io)
+    print(io, "  ")
+    show_strong_field_properties(io, f)
+end
+
 span(f::CubicHermiteSplineField) = first(f.t)..last(f.t)
 
 min_step(t::AbstractRange) = step(t)
@@ -78,6 +85,77 @@ vector_potential(f::CubicHermiteSplineField, t::Number) =
     cubic_hermite_interpolation(f.t, f.A, f.Aₜ, t)
 
 export CubicHermiteSplineField
+
+# * Strong field properties
+
+function _maximize_interpolation(t, v, f, f′; verbosity=0)
+    # This is only a rough approximation, and will most likely only
+    # work reasonably well if there is one isolated pulse in the
+    # trace.
+
+    N = length(t)
+
+    # We begin by finding the maximum point.
+    i = argmax(i -> abs(v[i]), 1:N)
+    tᵢ = t[i]
+    fᵢ = abs(v[i])
+    verbosity > 0 && @info "Initial maximum amplitude" i tᵢ fᵢ
+
+    # Since the electric field is minus the time derivative of the
+    # vector potential, we know that when the vector potential is
+    # extremized, the electric field has a root. The converse is not
+    # necessarily true (only for purely monochromatic fields is that
+    # guaranteed), but we assume it is.
+    tₘₐₓ = find_zero(f′, tᵢ)
+    fₘₐₓ = abs(f(tₘₐₓ))
+
+    verbosity > 0 && @info "Optimized maximum amplitude" tₘₐₓ fₘₐₓ fₘₐₓ ≥ fᵢ
+
+    if fₘₐₓ < fᵢ
+        @warn "Was not able to find the proper maximum"
+        return fᵢ
+    end
+
+    fₘₐₓ
+end
+
+function amplitude(f::CubicHermiteSplineField; kwargs...)
+    # Since the electric field is minus the time derivative of the
+    # vector potential, we know that when the vector potential is
+    # extremized, the electric field has a root. The converse is not
+    # necessarily true (only for purely monochromatic fields is that
+    # guaranteed), but we assume it is.
+    _maximize_interpolation(f.t, f.Aₜ,
+                            Base.Fix1(field_amplitude, f),
+                            (Base.Fix1(vector_potential, f),
+                             t -> -field_amplitude(f, t));
+                            kwargs...)
+end
+
+function ponderomotive_potential(f::CubicHermiteSplineField; kwargs...)
+    # Since the electric field is minus the time derivative of the
+    # vector potential, we know that when the vector potential is
+    # extremized, the electric field has a root. We therefore look for
+    # a root of the electric field, starting from the time we found
+    # above.
+    Aₘₐₓ = _maximize_interpolation(f.t, f.A,
+                                   Base.Fix1(vector_potential, f),
+                                   t -> -field_amplitude(f, t);
+                                   kwargs...)
+
+    Aₘₐₓ^2/4
+end
+
+function free_oscillation_amplitude(f::CubicHermiteSplineField; kwargs...)
+    ∫A = approximate_integral(f.t, f.A)
+    ∫Af = t -> cubic_hermite_interpolation(f.t, ∫A, f.A, t)
+
+    _maximize_interpolation(f.t, ∫A,
+                            ∫Af,
+                            (Base.Fix1(vector_potential, f),
+                             t -> -field_amplitude(f, t));
+                            kwargs...)
+end
 
 # * Cubic Hermite spline interpolation
 
@@ -100,6 +178,9 @@ function cubic_hermite_interpolation(xp::AbstractVector, f::AbstractVector, fₓ
 
     h₀₀*f[i] + h₁₀*δx*fₓ[i] + h₀₁ * f[i+1] + h₁₁*δx*fₓ[i+1]
 end
+
+cubic_hermite_interpolation(xp::AbstractVector, f::AbstractVector, fₓ::AbstractVector, x::AbstractVector) =
+    cubic_hermite_interpolation.(Ref(xp), Ref(f), Ref(fₓ), x)
 
 # * FFT derivatives/integrals
 
