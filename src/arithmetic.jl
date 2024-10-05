@@ -233,6 +233,72 @@ end
 
 rotate(f::NegatedField, R) = NegatedField(rotate(f.a, R))
 
+# ** Scaled field
+
+"""
+    ScaledField(f, η)
+
+Represents a field whose [`vector_potential`](@ref) is that of `f`
+scaled by `η`.
+
+# Example
+
+```jldoctest
+julia> @field(A) do
+           I₀ = 1.0
+           T = 2.0
+           σ = 3.0
+           Tmax = 3.0
+       end
+Linearly polarized field with
+  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm⁻² =>
+    - E₀ = 1.0000e+00 au = 514.2207 GV m⁻¹
+    - A₀ = 0.3183 au
+  – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV, f = 20.6707 PHz)
+  – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+  – and a bandwidth of 0.3925 Ha = 10.6797 eV ⟺ 2.5823 PHz ⟺ 34.2390 Bohr = 1.8119 nm
+  – Uₚ = 0.0253 Ha = 689.2724 meV => α = 0.1013 Bohr = 5.3617 pm
+
+julia> B = 0.1A
+ScaledField: 0.1 × Linearly polarized field with
+  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm⁻² =>
+    - E₀ = 1.0000e+00 au = 514.2207 GV m⁻¹
+    - A₀ = 0.3183 au
+  – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV, f = 20.6707 PHz)
+  – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+  – and a bandwidth of 0.3925 Ha = 10.6797 eV ⟺ 2.5823 PHz ⟺ 34.2390 Bohr = 1.8119 nm
+  – Uₚ = 0.0253 Ha = 689.2724 meV => α = 0.1013 Bohr = 5.3617 pm
+```
+"""
+struct ScaledField{F<:AbstractField,Scale<:Number} <: WrappedField
+    f::F
+    η::Scale
+end
+
+Base.:(*)(f::AbstractField, η::Number) = ScaledField(f, η)
+Base.:(*)(η::Number, f::AbstractField) = ScaledField(f, η)
+Base.:(*)(f::ScaledField, η::Number) = ScaledField(parent(f), f.η*η)
+Base.:(*)(η::Number, f::ScaledField) = ScaledField(parent(f), f.η*η)
+
+Base.parent(f::ScaledField) = f.f
+
+for fun in [:vector_potential, :vector_potential_spectrum]
+    @eval $fun(f::ScaledField, t::Number) = f.η*$fun(parent(f), t)
+    @eval $fun(f::ScaledField, t::AbstractVector) = f.η*$fun(parent(f), t)
+end
+
+rotate(f::ScaledField, R) = ScaledField(rotate(parent(f), R), f.η)
+
+function Base.show(io::IO, f::ScaledField)
+    printfmt(io, "ScaledField: {1:s} × ", f.η)
+    show(io, parent(f))
+end
+
+function Base.show(io::IO, mime::MIME"text/plain", f::ScaledField)
+    printfmt(io, "ScaledField: {1:s} × ", f.η)
+    show(io, mime, parent(f))
+end
+
 # ** Delayed fields
 
 """
