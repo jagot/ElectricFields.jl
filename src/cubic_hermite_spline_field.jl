@@ -160,6 +160,8 @@ end
 # * Cubic Hermite spline interpolation
 
 function cubic_hermite_interpolation(xp::AbstractVector, f::AbstractVector, fₓ::AbstractVector, x::Number)
+    x < first(xp) && return first(f)
+    x > last(xp) && return last(f)
     i = find_interval(xp, x)
     i == length(xp) && return f[i]
 
