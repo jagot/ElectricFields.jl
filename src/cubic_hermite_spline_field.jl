@@ -65,7 +65,12 @@ Base.show(io::IO, f::CubicHermiteSplineField) =
 function Base.show(io::IO, ::MIME"text/plain", f::CubicHermiteSplineField)
     show(io, f)
     println(io)
-    print(io, "  ")
+    buf = IOBuffer()
+    show_temporal_spectral_properties(buf, f)
+    for line in split(strip(String(take!(buf))), '\n')
+        println(io, "  ", line)
+    end
+    print(io, "  - ")
     show_strong_field_properties(io, f)
 end
 
@@ -85,6 +90,65 @@ vector_potential(f::CubicHermiteSplineField, t::Number) =
     cubic_hermite_interpolation(f.t, f.A, f.Aₜ, t)
 
 export CubicHermiteSplineField
+
+# * Temporal and spectral properties
+
+function temporal_spectral_properties(f::CubicHermiteSplineField{<:AbstractRange})
+    t = f.t
+    Fv = field_amplitude(f, t)
+
+    freq = fftshift(fftfreq(length(t), 1/(t[2]-t[1])))
+    ω = 2π*freq
+
+    F̂ = fftshift(fft(Fv, 1), 1)
+    F̂pos = F̂ .* (ω .≥ 0)
+    Fpos = ifft(fftshift(2F̂pos, 1), 1)
+
+    # Extraction of peak amplitude and FWHM assumes one central pulse
+    is = eachindex(t)
+    i₀ = argmax(i -> abs(Fpos[i]), is)
+    E₀ = abs(Fpos[i₀])
+    I₀ = E₀^2
+    ih = argmin(i -> abs(abs2(Fpos[i])-I₀/2), is)
+    τ = 2abs(t[i₀] - t[ih])
+
+    # Extraction of central frequency and bandwidth assumes single
+    # frequency or, equivalently, bandwidth that is much smaller than
+    # the central frequency.
+    w = abs2.(F̂pos)
+    avg(v) = sum(w .* v)/sum(w) # Weighted arithmetic mean
+    ω₀ = avg(ω)
+    f = ω₀/2π
+    T = 1/f
+    λ = 2π*austrip(1u"c")/ω₀
+    σ = .√(avg((ω .- ω₀).^2))/2π
+    Δf = 2√(2log(2))*σ
+
+    tbp = τ*Δf
+
+    (E₀=E₀, I₀=I₀, A₀=E₀/ω₀, τ=τ,
+     ω₀=ω₀, T=T, λ=λ, f=f,
+     σ=σ, Δf=Δf, tbp=tbp,
+     ω=ω, F̂=F̂, F̂pos=F̂pos)
+end
+
+function show_temporal_spectral_properties(io::IO, f::CubicHermiteSplineField{<:AbstractRange})
+    @unpack I₀,E₀,A₀,τ,ω₀,T,λ,f,Δf,tbp = temporal_spectral_properties(f)
+
+    printfmtln(io, "- I₀ = {1:.4e} = {2:s}", I₀, si_round(I₀*Iau))
+    printfmtln(io, "  - E₀ = {1:.4e} = {2:s}", E₀, au2si_round(E₀, u"V/m"))
+    printfmtln(io, "  - A₀ = {1:.4e}", A₀)
+    printfmtln(io, "- ω₀ = {1:.4e} Ha = {2:s} (T = {3:s}, λ = {4:s}, f = {5:s})",
+               ω₀, au2si_round(ω₀, u"eV"),
+               au2si_round(T, u"s"), au2si_round(λ, u"m"), au2si_round(f, u"Hz"))
+    printfmtln(io, "- Intensity FWHM = {1:.4e} jiffies = {2:s}",
+               τ, si_round(auconvert(u"s", τ)))
+    print(io, "- ")
+    show_bandwidth(io, τ, Δf, ω₀)
+    printfmtln(io, " ⟹ time–bandwidth product = {1:.4e}", tbp)
+end
+
+show_temporal_spectral_properties(io::IO, f::CubicHermiteSplineField) = nothing
 
 # * Strong field properties
 

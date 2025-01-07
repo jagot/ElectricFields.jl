@@ -379,21 +379,23 @@ ArbitraryPolarization()
 """
 function polarization end
 
-function spectral_bandwidths(f::AbstractField)
-    τ = duration(f)
-    tbp = time_bandwidth_product(f)
-    λ = wavelength(f)
-    ω = photon_energy(f)
-    Δf = tbp/τ
+function spectral_bandwidths(τ, Δf, ω)
     Δω = Δf*2π
     Δλ = (2π*austrip(1u"c")/ω^2)*Δω
     (Δω=Δω, Δf=Δf, Δλ=Δλ)
 end
 
+function spectral_bandwidths(f::AbstractField)
+    τ = duration(f)
+    tbp = time_bandwidth_product(f)
+    ω = photon_energy(f)
+    spectral_bandwidths(τ, tbp/τ, ω)
+end
+
 bandwidth(f::AbstractField) = spectral_bandwidths(f).Δω
 
-function show_bandwidth(io::IO, f::AbstractField)
-    Δω, Δf, Δλ = spectral_bandwidths(f)
+function show_bandwidth(io::IO, args...)
+    Δω, Δf, Δλ = spectral_bandwidths(args...)
 
     printfmt(io, "and a bandwidth of {1:.4f} Ha = {2:s} ⟺ {3:s} ⟺ {4:.4f} Bohr = {5:s}",
              Δω, au2si_round(Δω, u"eV"),
