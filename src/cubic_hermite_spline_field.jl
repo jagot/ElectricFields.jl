@@ -40,8 +40,8 @@ end
 Convenience constructor for [`CubicHermiteSplineField`](@ref), when
 the vector potential is known. Its derivative (minus the electric
 field) will be approximated; if `t` is uniformly spaced, a FFT-based
-derivative will computed (it is up to the user to apodize the samples,
-if needed).
+derivative will be computed (it is up to the user to apodize the
+samples, if needed).
 """
 CubicHermiteSplineField(t::AbstractVector, A::AbstractVecOrMat, ::Nothing) =
     CubicHermiteSplineField(t, A, approximate_derivative(t, A))
@@ -52,7 +52,7 @@ CubicHermiteSplineField(t::AbstractVector, A::AbstractVecOrMat, ::Nothing) =
 Convenience constructor for [`CubicHermiteSplineField`](@ref), when
 the electric field is known. Its integral (minus the vector potential)
 will be approximated; if `t` is uniformly spaced, a FFT-based integral
-will computed (it is up to the user to apodize the samples, if
+will be computed (it is up to the user to apodize the samples, if
 needed).
 """
 CubicHermiteSplineField(t::AbstractVector, ::Nothing, F::AbstractVecOrMat) =
@@ -261,7 +261,7 @@ function ensure_real(y::AbstractArray{Complex{T}}; tol=√(eps(T))) where T
 end
 
 #=
-Here we implement FFT-based differentition/integration, as described
+Here we implement FFT-based differentiation/integration, as described
 by
 
 - Johnson, S. G. (2011). Notes on FFT-based
