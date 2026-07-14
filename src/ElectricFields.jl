@@ -25,6 +25,12 @@ using Format
 
 abstract type AbstractField end
 
+function pretty_print_object(obj)
+    buf = IOBuffer()
+    show(buf, MIME"text/plain"(), obj)
+    String(take!(buf))
+end
+
 include("units.jl")
 include("rotations.jl")
 include("relation_dsl.jl")

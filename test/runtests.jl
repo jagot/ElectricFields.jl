@@ -1,4 +1,5 @@
 using ElectricFields
+import ElectricFields: pretty_print_object
 using Test
 using Unitful
 using UnitfulAtomic
@@ -33,11 +34,6 @@ end
 ≲(a,b; kwargs...) = a < b || isapprox(a, b; kwargs...)
 ≳(a,b; kwargs...) = a > b || isapprox(a, b; kwargs...)
 
-function pretty_print_object(obj)
-    buf = IOBuffer()
-    show(buf, MIME"text/plain"(), obj)
-    String(take!(buf))
-end
 
 @testset "ElectricFields.jl" begin
     include("namespace_macro.jl")

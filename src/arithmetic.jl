@@ -105,6 +105,21 @@ function show(io::IO, f::SumField)
     end
 end
 
+function show(io::IO, ::MIME"text/plain", f::SumField)
+    a_str = split(pretty_print_object(f.a), "\n")
+    b_str = split(pretty_print_object(f.b), "\n")
+
+    for (s,l) in zip("┌" * repeat("│", length(a_str)-1), a_str)
+        write(io, "$s $l\n")
+    end
+
+    write(io, "⊕")
+
+    for (s,l) in zip(repeat("│", length(b_str)-1) * "└", b_str)
+        write(io, "\n$s $l")
+    end
+end
+
 +(::Pol, a::AbstractField, ::Pol, b::AbstractField) where {Pol<:Polarization} = SumField(a, b)
 +(::LinearPolarization, a::AbstractField, ::ArbitraryPolarization, b::AbstractField) = SumField(transverse_field(a), b)
 +(::ArbitraryPolarization, a::AbstractField, ::LinearPolarization, b::AbstractField) = SumField(a, transverse_field(b))
