@@ -55,6 +55,37 @@
 
         @test string(env2) == "/1‾3‾1\\ cycles trapezoidal envelope, with sin² ramps"
 
+        wind = ElectricFields.BlackmanHarris()
+        @field(F3) do
+            I₀ = 1.0
+            T = 2.0
+            ramp = 1.0
+            flat = 3.0
+            env = :trapezoidal
+            ramp_kind = :window
+            ramp_window = wind
+        end
+
+        env3 = envelope(F3)
+
+        @test env3(-1.0) ≈ 0.0 atol=1e-4
+        @test env3(0.0) ≈ 0.0 atol=1e-4
+        @test env3(2/3) ≈ ElectricFields.window_value(wind, -1.0/3)
+        @test env3(1.0) ≈ ElectricFields.window_value(wind, -0.25)
+        @test env3(4/3) ≈ ElectricFields.window_value(wind, -1.0/6)
+        @test env3(2.5) ≈ 1.0 atol=1e-4
+        @test env3(7.9) ≈ 1.0 atol=1e-4
+        @test env3(8.0+2/3) ≈ ElectricFields.window_value(wind, 1.0/6)
+        @test env3(9.0) ≈ ElectricFields.window_value(wind, 0.25)
+        @test env3(8.0+4/3) ≈ ElectricFields.window_value(wind, 1.0/3)
+        @test env3(10.0) ≈ 0.0 atol=1e-4
+        @test env3(11.0) ≈ 0.0 atol=1e-4
+
+        @test env3.ramp_up == env3.ramp_down == 1.0
+        @test span(env3) == 0..10
+
+        @test string(env3) == "/1‾3‾1\\ cycles trapezoidal envelope, with Blackman–Harris ramps"
+
         @test_throws ErrorException ElectricFields.TrapezoidalEnvelope(-1.0, 1.0, 1.0, 1.0)
         @test_throws ErrorException ElectricFields.TrapezoidalEnvelope(1.0, -1.0, 1.0, 1.0)
         @test_throws ErrorException ElectricFields.TrapezoidalEnvelope(1.0, 1.0, -1.0, 1.0)

@@ -14,6 +14,7 @@ ElectricFields.Ramp
 ElectricFields.SumField
 ElectricFields.WrappedField
 ElectricFields.NegatedField
+ElectricFields.ScaledField
 ElectricFields.DelayedField
 delay
 ElectricFields.PaddedField
@@ -101,4 +102,17 @@ ElectricFields.Nuttall
 ElectricFields.BlackmanNuttall
 ElectricFields.BlackmanHarris
 ElectricFields.Kaiser
+```
+
+## Cubic Hermite spline fields
+
+The cubic Hermite spline field is an alternative to
+[`ElectricFields.BSplineField`](@ref), which is simpler to set up and
+use. As Hermite spline interpolation requires knowledge of the
+derivative of the quantity being interpolated, convenience wrappers
+estimating the derivative of ``A(t)`` or integral of ``F(t)`` using
+FFT are provided.
+
+```@docs
+ElectricFields.CubicHermiteSplineField
 ```

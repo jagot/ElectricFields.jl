@@ -333,7 +333,8 @@ The shape of the ramp can be influenced by chaining ``g[f(t)]``, where
 ``g(x)`` should map smoothly to ``[0,1]`` for ``x\in[0,1]``. Currently
 implemented ramps are
 - `ramp_kind = :linear` ``\implies g(x) = x`` (default)
-- `ramp_kind = :sin² | ramp_kind = :sin2` ``\implies g(x) = \sin^2(\pi x/2)``
+- `ramp_kind = :sin² | ramp_kind = :sin2` ``\implies g(x) = \sin^2(\pi x/2)``,
+- `ramp_kind = :window`, in which case `ramp_window` must be set to an instance of [`AbstractWindow`](@ref).
 """
 struct TrapezoidalEnvelope{T,G} <: AbstractEnvelope
     ramp_up::T
@@ -379,7 +380,8 @@ end
 
 show(io::IO, env::TrapezoidalEnvelope) =
     printfmt(io, "/{1:d}‾{2:d}‾{3:d}\\ cycles trapezoidal envelope, with {4:s} ramps",
-             env.ramp_up, env.flat, env.ramp_down, env.ramp_kind)
+             env.ramp_up, env.flat, env.ramp_down,
+             env.ramp_kind == :window ? env.g.ramp_window : env.ramp_kind)
 
 function TrapezoidalEnvelope(field_params::Dict{Symbol,Any}, args...)
     test_field_parameters(field_params, [:T]) # Period time required to relate ramps/flat to cycles
@@ -403,6 +405,12 @@ function TrapezoidalEnvelope(field_params::Dict{Symbol,Any}, args...)
         identity
     elseif ramp_kind == :sin² || ramp_kind == :sin2
         x -> sinpi(x/2)^2
+    elseif ramp_kind == :window
+        test_field_parameters(field_params, [:ramp_window])
+        ramp_window = field_params[:ramp_window]
+        ramp_window isa AbstractWindow ||
+            throw(ArgumentError("ramp_window parameter must be an AbstractWindow"))
+        x -> window_value(ramp_window, 0, 2, x)
     else
         throw(ArgumentError("Unknown ramp kind $(ramp_kind)"))
     end

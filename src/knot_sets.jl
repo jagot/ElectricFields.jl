@@ -192,7 +192,7 @@ julia> ElectricFields.nonempty_intervals(ElectricFields.ArbitraryKnotSet(3, [0.0
 ```
 
 """
-nonempty_intervals(t::AbstractKnotSet) =
+nonempty_intervals(t::AbstractVector) =
     [j for j in 1:length(t)-1
      if t[j] ≠ t[j+1]]
 
@@ -214,7 +214,22 @@ function find_interval(t::AbstractKnotSet{k,ml,mr,T}, x, i=ml) where {T,k,ml,mr}
     @assert false
 end
 
+function find_interval(t::AbstractVector, x, i=firstindex(t))
+    # @assert nondecreasing(t)
+    (x < first(t) || x > last(t) || i > length(t) || x < t[i]) && return nothing
+    x == last(t) && return length(t)
+    for r ∈ i:length(t)
+        t[r] > x && return r-1
+    end
+    @assert false
+end
+
 const RightContinuous{T} = Interval{:closed,:open,T}
+
+function support_interval(t::AbstractKnotSet, j::Integer)
+    k = order(t)
+    Interval(t[j], t[j+k])
+end
 
 """
     within_support(x, t, j)

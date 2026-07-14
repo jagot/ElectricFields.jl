@@ -242,7 +242,7 @@ function apodizing_windows()
                 plot(x, ElectricFields.window_derivative.(w, x), label=string(w))
             end
             legend(loc=1, ncol=2)
-            xlabel(L"$t$ [fs]")
+            xlabel(L"$x$")
             ylabel(L"w'(x)")
         end
     end

@@ -105,6 +105,21 @@ function show(io::IO, f::SumField)
     end
 end
 
+function show(io::IO, ::MIME"text/plain", f::SumField)
+    a_str = split(pretty_print_object(f.a), "\n")
+    b_str = split(pretty_print_object(f.b), "\n")
+
+    for (s,l) in zip("┌" * repeat("│", length(a_str)-1), a_str)
+        write(io, "$s $l\n")
+    end
+
+    write(io, "⊕")
+
+    for (s,l) in zip(repeat("│", length(b_str)-1) * "└", b_str)
+        write(io, "\n$s $l")
+    end
+end
+
 +(::Pol, a::AbstractField, ::Pol, b::AbstractField) where {Pol<:Polarization} = SumField(a, b)
 +(::LinearPolarization, a::AbstractField, ::ArbitraryPolarization, b::AbstractField) = SumField(transverse_field(a), b)
 +(::ArbitraryPolarization, a::AbstractField, ::LinearPolarization, b::AbstractField) = SumField(a, transverse_field(b))
@@ -138,7 +153,7 @@ for fun in [:wavelength, :period, :frequency, :wavenumber, :fundamental, :photon
 end
 
 max_frequency(f::SumField) =
-    max(max_frequency(f.a), max_frequency(f.b))
+    max(austrip(max_frequency(f.a)), austrip(max_frequency(f.b)))
 
 continuity(f::SumField) =
     min(continuity(f.a), continuity(f.b))
@@ -232,6 +247,83 @@ for fun in [:vector_potential, :vector_potential_spectrum]
 end
 
 rotate(f::NegatedField, R) = NegatedField(rotate(f.a, R))
+
+# ** Scaled field
+
+"""
+    ScaledField(f, η)
+
+Represents a field whose [`vector_potential`](@ref) is that of `f`
+scaled by `η`.
+
+# Example
+
+```jldoctest
+julia> @field(A) do
+           I₀ = 1.0
+           T = 2.0
+           σ = 3.0
+           Tmax = 3.0
+       end
+Linearly polarized field with
+  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm^-2 =>
+    - E₀ = 1.0000e+00 au = 514.2207 GV m^-1
+    - A₀ = 0.3183 au
+  – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV, f = 20.6707 PHz)
+  – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+  – and a bandwidth of 0.3925 Ha = 10.6797 eV ⟺ 2.5823 PHz ⟺ 34.2390 Bohr = 1.8119 nm
+  – Uₚ = 0.0253 Ha = 689.2724 meV => α = 0.1013 Bohr = 5.3617 pm
+
+julia> B = 0.1A
+ScaledField: 0.1 × Linearly polarized field with
+  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm^-2 =>
+    - E₀ = 1.0000e+00 au = 514.2207 GV m^-1
+    - A₀ = 0.3183 au
+  – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV, f = 20.6707 PHz)
+  – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+  – and a bandwidth of 0.3925 Ha = 10.6797 eV ⟺ 2.5823 PHz ⟺ 34.2390 Bohr = 1.8119 nm
+  – Uₚ = 0.0253 Ha = 689.2724 meV => α = 0.1013 Bohr = 5.3617 pm
+  Uₚ = 0.0003 Ha = 6.8927 meV => α = 0.0101 Bohr = 536.1686 fm
+```
+"""
+struct ScaledField{F<:AbstractField,Scale<:Number} <: WrappedField
+    f::F
+    η::Scale
+end
+
+Base.:(*)(f::AbstractField, η::Number) = ScaledField(f, η)
+Base.:(*)(η::Number, f::AbstractField) = ScaledField(f, η)
+Base.:(*)(f::ScaledField, η::Number) = ScaledField(parent(f), f.η*η)
+Base.:(*)(η::Number, f::ScaledField) = ScaledField(parent(f), f.η*η)
+
+Base.parent(f::ScaledField) = f.f
+
+for fun in [:vector_potential, :vector_potential_spectrum]
+    @eval $fun(f::ScaledField, t::Number) = f.η*$fun(parent(f), t)
+    @eval $fun(f::ScaledField, t::AbstractVector) = f.η*$fun(parent(f), t)
+end
+
+for fun in [:amplitude, :free_oscillation_amplitude]
+    @eval $fun(f::ScaledField) = f.η*$fun(parent(f))
+end
+for fun in [:intensity, :ponderomotive_potential]
+    @eval $fun(f::ScaledField, args...) = f.η^2*$fun(parent(f), args...)
+end
+
+rotate(f::ScaledField, R) = ScaledField(rotate(parent(f), R), f.η)
+
+function Base.show(io::IO, f::ScaledField)
+    printfmt(io, "ScaledField: {1:s} × ", f.η)
+    show(io, parent(f))
+end
+
+function Base.show(io::IO, mime::MIME"text/plain", f::ScaledField)
+    printfmt(io, "ScaledField: {1:s} × ", f.η)
+    show(io, parent(f))
+    println(io)
+    print(io, "  ")
+    show_strong_field_properties(io, f)
+end
 
 # ** Delayed fields
 

@@ -37,7 +37,7 @@ Base.Broadcast.broadcastable(f::AbstractField) = Ref(f)
 vector_potential(::LinearPolarization, f, t::AbstractVector) =
     vector_potential.(f, t)
 vector_potential(::ArbitraryPolarization, f, t::AbstractVector) =
-    transpose(reduce(hcat, vector_potential.(f, t)))
+    permutedims(reduce(hcat, vector_potential.(f, t)))
 vector_potential(f::AbstractField, t::AbstractVector) =
     vector_potential(polarization(f), f, t)
 
@@ -51,7 +51,7 @@ function vector_potential end
 field_amplitude(::LinearPolarization, f, t::AbstractVector) =
     field_amplitude.(f, t)
 field_amplitude(::ArbitraryPolarization, f, t::AbstractVector) =
-    transpose(reduce(hcat, field_amplitude.(f, t)))
+    permutedims(reduce(hcat, field_amplitude.(f, t)))
 field_amplitude(f::AbstractField, t::AbstractVector) =
     field_amplitude(polarization(f), f, t)
 
@@ -379,21 +379,23 @@ ArbitraryPolarization()
 """
 function polarization end
 
-function spectral_bandwidths(f::AbstractField)
-    τ = duration(f)
-    tbp = time_bandwidth_product(f)
-    λ = wavelength(f)
-    ω = photon_energy(f)
-    Δf = tbp/τ
+function spectral_bandwidths(τ, Δf, ω)
     Δω = Δf*2π
     Δλ = (2π*austrip(1u"c")/ω^2)*Δω
     (Δω=Δω, Δf=Δf, Δλ=Δλ)
 end
 
+function spectral_bandwidths(f::AbstractField)
+    τ = duration(f)
+    tbp = time_bandwidth_product(f)
+    ω = photon_energy(f)
+    spectral_bandwidths(τ, tbp/τ, ω)
+end
+
 bandwidth(f::AbstractField) = spectral_bandwidths(f).Δω
 
-function show_bandwidth(io::IO, f::AbstractField)
-    Δω, Δf, Δλ = spectral_bandwidths(f)
+function show_bandwidth(io::IO, args...)
+    Δω, Δf, Δλ = spectral_bandwidths(args...)
 
     printfmt(io, "and a bandwidth of {1:.4f} Ha = {2:s} ⟺ {3:s} ⟺ {4:.4f} Bohr = {5:s}",
              Δω, au2si_round(Δω, u"eV"),
@@ -415,7 +417,7 @@ function vector_potential_spectrum end
 vector_potential_spectrum(::LinearPolarization, f, ω::AbstractVector) =
     vector_potential_spectrum.(f, ω)
 vector_potential_spectrum(::ArbitraryPolarization, f, ω::AbstractVector) =
-    transpose(reduce(hcat, vector_potential_spectrum.(f, ω)))
+    permutedims(reduce(hcat, vector_potential_spectrum.(f, ω)))
 vector_potential_spectrum(f::AbstractField, ω::AbstractVector) =
     vector_potential_spectrum(polarization(f), f, ω)
 
@@ -438,7 +440,7 @@ field_amplitude_spectrum(f::AbstractField, ω::Number) =
 field_amplitude_spectrum(::LinearPolarization, f, ω::AbstractVector) =
     field_amplitude_spectrum.(f, ω)
 field_amplitude_spectrum(::ArbitraryPolarization, f, ω::AbstractVector) =
-    transpose(reduce(hcat, field_amplitude_spectrum.(f, ω)))
+    permutedims(reduce(hcat, field_amplitude_spectrum.(f, ω)))
 field_amplitude_spectrum(f::AbstractField, ω::AbstractVector) =
     field_amplitude_spectrum(polarization(f), f, ω)
 
