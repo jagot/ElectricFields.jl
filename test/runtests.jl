@@ -97,4 +97,6 @@ end
 
     include("sellmeier.jl")
     include("dispersed_fields.jl")
+
+    include("cubic_hermite_spline_field.jl")
 end
