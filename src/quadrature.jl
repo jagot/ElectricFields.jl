@@ -41,7 +41,7 @@ function num_quadrature_points(ka, kb, k′)
 end
 num_quadrature_points(k, k′) = num_quadrature_points(k, k, k′)
 
-"""
+raw"""
     lgwt(t, N) -> (x,w)
 
 Generate the `N` Gauß–Legendre quadrature roots `x` and associated
@@ -51,10 +51,10 @@ set `t`.
 # Examples
 
 ```jldoctest
-julia> ElectricFields.lgwt(LinearKnotSet(2, 0, 1, 3), 2)
+julia> ElectricFields.lgwt(ElectricFields.LinearKnotSet(2, 0, 1, 3), 2)
 ([0.0704416, 0.262892, 0.403775, 0.596225, 0.737108, 0.929558], [0.166667, 0.166667, 0.166667, 0.166667, 0.166667, 0.166667])
 
-julia> ElectricFields.lgwt(ExpKnotSet(2, -4, 2, 7), 2)
+julia> ElectricFields.lgwt(ElectricFields.ExpKnotSet(2, -4, 2, 7), 2)
 ([2.11325e-5, 7.88675e-5, 0.000290192, 0.000809808, 0.00290192, 0.00809808, 0.0290192, 0.0809808, 0.290192, 0.809808, 2.90192, 8.09808, 29.0192, 80.9808], [5.0e-5, 5.0e-5, 0.00045, 0.00045, 0.0045, 0.0045, 0.045, 0.045, 0.45, 0.45, 4.5, 4.5, 45.0, 45.0])
 ```
 """

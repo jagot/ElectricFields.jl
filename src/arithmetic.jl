@@ -251,8 +251,8 @@ julia> @field(A) do
            Tmax = 3.0
        end
 Linearly polarized field with
-  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm⁻² =>
-    - E₀ = 1.0000e+00 au = 514.2207 GV m⁻¹
+  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm^-2 =>
+    - E₀ = 1.0000e+00 au = 514.2207 GV m^-1
     - A₀ = 0.3183 au
   – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV, f = 20.6707 PHz)
   – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
@@ -261,13 +261,14 @@ Linearly polarized field with
 
 julia> B = 0.1A
 ScaledField: 0.1 × Linearly polarized field with
-  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm⁻² =>
-    - E₀ = 1.0000e+00 au = 514.2207 GV m⁻¹
+  - I₀ = 1.0000e+00 au = 3.5094452e16 W cm^-2 =>
+    - E₀ = 1.0000e+00 au = 514.2207 GV m^-1
     - A₀ = 0.3183 au
   – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV, f = 20.6707 PHz)
   – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
   – and a bandwidth of 0.3925 Ha = 10.6797 eV ⟺ 2.5823 PHz ⟺ 34.2390 Bohr = 1.8119 nm
   – Uₚ = 0.0253 Ha = 689.2724 meV => α = 0.1013 Bohr = 5.3617 pm
+  Uₚ = 0.0003 Ha = 6.8927 meV => α = 0.0101 Bohr = 536.1686 fm
 ```
 """
 struct ScaledField{F<:AbstractField,Scale<:Number} <: WrappedField
