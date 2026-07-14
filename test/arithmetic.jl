@@ -152,6 +152,7 @@ end
         t = timeaxis(nA)
         @test t ≈ timeaxis(A)
         @test field_amplitude(nA, t) ≈ -field_amplitude(A, t)
+        @test field_amplitude(nA, [t]) ≈ -field_amplitude(A, [t])
 
         @field(B) do
             I₀ = 0.5
@@ -178,6 +179,7 @@ end
         B = 0.1A
         @test field_amplitude(B, 0.0) ≈ 0.1field_amplitude(A, 0.0)
         @test field_amplitude(B, 0.1) ≈ 0.1field_amplitude(A, 0.1)
+        @test field_amplitude(B, [0.1]) ≈ 0.1field_amplitude(A, [0.1])
         C = 10B
         @test field_amplitude(C, 0.0) ≈ field_amplitude(A, 0.0)
         @test field_amplitude(C, 0.1) ≈ field_amplitude(A, 0.1)
@@ -189,7 +191,22 @@ end
         @test field_amplitude(C, 0.0) ≈ field_amplitude(A, 0.0)
         @test field_amplitude(C, 0.1) ≈ field_amplitude(A, 0.1)
 
+        R = [1 0 0; 0 1 1; 0 -1 1]
+        rB = test_rotated_field(B, R)
+        @test rB isa ElectricFields.ScaledField
+        @test rotation_matrix(rB) ≈ ElectricFields.compute_rotation(R)
+
         withenv("UNITFUL_FANCY_EXPONENTS" => true) do
+            @test string(B) == """
+                               ScaledField: 0.1 × Linearly polarized field with
+                                 - I₀ = 1.0000e+00 au = 3.5094452e16 W cm⁻² =>
+                                   - E₀ = 1.0000e+00 au = 514.2207 GV m⁻¹
+                                   - A₀ = 0.3183 au
+                                 – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV, f = 20.6707 PHz)
+                                 – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+                                 – and a bandwidth of 0.3925 Ha = 10.6797 eV ⟺ 2.5823 PHz ⟺ 34.2390 Bohr = 1.8119 nm
+                                 – Uₚ = 0.0253 Ha = 689.2724 meV => α = 0.1013 Bohr = 5.3617 pm"""
+
             @test pretty_print_object(B) == """
                                             ScaledField: 0.1 × Linearly polarized field with
                                               - I₀ = 1.0000e+00 au = 3.5094452e16 W cm⁻² =>
