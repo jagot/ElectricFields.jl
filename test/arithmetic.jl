@@ -89,7 +89,7 @@ end
             @test fun(A+A) == fun(A)
         end
 
-        @test max_frequency(C) == frequency(B)
+        @test max_frequency(C) == austrip(frequency(B))
 
         @test continuity(C) == Inf
 

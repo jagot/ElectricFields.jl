@@ -28,13 +28,22 @@
         # but also between them, by making a denser grid.
         tt = range(t[1], stop=t[end], length=2length(t))
 
-        for ttt in (tt, timeaxis(A))
+        for ttt in (tt, t)
             test_approx_eq(field_amplitude(A, ttt), field_amplitude(B, ttt), rtol=4e-6)
             test_approx_eq(vector_potential(A, ttt), vector_potential(B, ttt), rtol=4e-6)
 
             test_approx_eq(field_amplitude(A, ttt), field_amplitude(C, ttt), rtol=4e-6)
             test_approx_eq(vector_potential(A, ttt), vector_potential(C, ttt), rtol=4e-6)
         end
+
+        tB = timeaxis(B)
+        tsum = timeaxis(A+B)
+        @test tsum[1] ≤ t[1]
+        @test tsum[1] ≤ tB[1]
+        @test step(tsum) ≤ step(t)
+        @test step(tsum) ≤ step(tB)
+        @test tsum[end] ≥ t[end]
+        @test tsum[end] ≥ tB[end]
 
         if dimensions(B) == 1
             withenv("UNITFUL_FANCY_EXPONENTS" => false) do
