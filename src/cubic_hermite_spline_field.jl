@@ -8,11 +8,13 @@ vector potential, and `Aₜ` a similar array for minus the electric
 field, since the cubic Hermite spline interpolation requires the
 derivative at each sample node.
 """
-struct CubicHermiteSplineField{Tt<:AbstractVector,At<:AbstractVector} <: AbstractField
+struct CubicHermiteSplineField{Tt<:AbstractVector,At<:AbstractVecOrMat} <: AbstractField
     t::Tt
     A::At
     Aₜ::At
-    function CubicHermiteSplineField(t::Tt, A::At, Aₜ::At) where {Tt<:AbstractVector,At<:AbstractVector}
+    function CubicHermiteSplineField(t::Tt, A::At, Aₜ::At) where {Tt<:AbstractVector,At<:AbstractVecOrMat}
+        size(A, 2) ∈ (1,3) || throw(ArgumentError("Only one or three components supported"))
+        size(A, 2) == size(Aₜ, 2) || throw(ArgumentError("Components mismatch"))
         n = length(t)
         nA = size(A, 1)
         nAₜ = size(Aₜ, 1)
@@ -20,18 +22,6 @@ struct CubicHermiteSplineField{Tt<:AbstractVector,At<:AbstractVector} <: Abstrac
             throw(DimensionMismatch("Number of nodes $(n) must match the number of function values $(nA) and derivatives $(nAₜ)"))
         new{Tt,At}(t, A, Aₜ)
     end
-end
-
-function CubicHermiteSplineField(t, A::AbstractMatrix, Aₜ::AbstractMatrix)
-    size(A, 2) == size(Aₜ, 2) == 3 || throw(ArgumentError("Three components expected for matrix input"))
-    n = length(t)
-    nA = size(A, 1)
-    nAₜ = size(Aₜ, 1)
-    n == nA == nAₜ ||
-        throw(DimensionMismatch("Number of nodes $(n) must match the number of function values $(nA) and derivatives $(nAₜ)"))
-
-    CubicHermiteSplineField(t, [SVector(A[i,1],A[i,2],A[i,2]) for i = 1:n],
-                            [SVector(Aₜ[i,1],Aₜ[i,2],Aₜ[i,2]) for i = 1:n])
 end
 
 """
@@ -106,10 +96,10 @@ function temporal_spectral_properties(f::CubicHermiteSplineField{<:AbstractRange
 
     # Extraction of peak amplitude and FWHM assumes one central pulse
     is = eachindex(t)
-    i₀ = argmax(i -> abs(Fpos[i]), is)
-    E₀ = abs(Fpos[i₀])
-    I₀ = E₀^2
-    ih = argmin(i -> abs(abs2(Fpos[i])-I₀/2), is)
+    i₀ = argmax(i -> sum(abs, Fpos[i,:]), is)
+    I₀ = sum(abs2, Fpos[i₀,:])
+    E₀ = √(I₀)
+    ih = argmin(i -> abs(sum(abs2, Fpos[i,:])-I₀/2), is)
     τ = 2abs(t[i₀] - t[ih])
 
     # Extraction of central frequency and bandwidth assumes single
@@ -171,7 +161,7 @@ function _maximize_interpolation(t, v, f, f′; verbosity=0)
     # necessarily true (only for purely monochromatic fields is that
     # guaranteed), but we assume it is.
     tₘₐₓ = find_zero(f′, tᵢ)
-    fₘₐₓ = abs(f(tₘₐₓ))
+    fₘₐₓ = norm(f(tₘₐₓ))
 
     verbosity > 0 && @info "Optimized maximum amplitude" tₘₐₓ fₘₐₓ fₘₐₓ ≥ fᵢ
 
@@ -191,8 +181,8 @@ function amplitude(f::CubicHermiteSplineField; kwargs...)
     # guaranteed), but we assume it is.
     _maximize_interpolation(f.t, f.Aₜ,
                             Base.Fix1(field_amplitude, f),
-                            (Base.Fix1(vector_potential, f),
-                             t -> -field_amplitude(f, t));
+                            (t -> sum(vector_potential(f, t)),
+                             t -> sum(-field_amplitude(f, t)));
                             kwargs...)
 end
 
@@ -216,8 +206,8 @@ function free_oscillation_amplitude(f::CubicHermiteSplineField; kwargs...)
 
     _maximize_interpolation(f.t, ∫A,
                             ∫Af,
-                            (Base.Fix1(vector_potential, f),
-                             t -> -field_amplitude(f, t));
+                            (t -> sum(vector_potential(f, t)),
+                             t -> sum(-field_amplitude(f, t)));
                             kwargs...)
 end
 
@@ -243,6 +233,16 @@ function cubic_hermite_interpolation(xp::AbstractVector, f::AbstractVector, fₓ
     h₁₁ = -c*a
 
     h₀₀*f[i] + h₁₀*δx*fₓ[i] + h₀₁ * f[i+1] + h₁₁*δx*fₓ[i+1]
+end
+
+function cubic_hermite_interpolation(xp::AbstractVector, f::AbstractMatrix, fₓ::AbstractMatrix, x::Number)
+    n = size(f, 2)
+    T = promote_type(eltype(f), eltype(fₓ), typeof(x))
+    fv = Vector{T}(undef, n)
+    for j in 1:n
+        fv[j] = cubic_hermite_interpolation(xp, view(f, :, j), view(fₓ, :, j), x)
+    end
+    fv
 end
 
 cubic_hermite_interpolation(xp::AbstractVector, f::AbstractVector, fₓ::AbstractVector, x::AbstractVector) =
