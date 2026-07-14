@@ -174,6 +174,35 @@ end
         @test rC.b isa ElectricFields.NegatedField
     end
 
+    @testset "Scaled field" begin
+        B = 0.1A
+        @test field_amplitude(B, 0.0) ≈ 0.1field_amplitude(A, 0.0)
+        @test field_amplitude(B, 0.1) ≈ 0.1field_amplitude(A, 0.1)
+        C = 10B
+        @test field_amplitude(C, 0.0) ≈ field_amplitude(A, 0.0)
+        @test field_amplitude(C, 0.1) ≈ field_amplitude(A, 0.1)
+
+        B = A*0.1
+        @test field_amplitude(B, 0.0) ≈ 0.1field_amplitude(A, 0.0)
+        @test field_amplitude(B, 0.1) ≈ 0.1field_amplitude(A, 0.1)
+        C = B*10
+        @test field_amplitude(C, 0.0) ≈ field_amplitude(A, 0.0)
+        @test field_amplitude(C, 0.1) ≈ field_amplitude(A, 0.1)
+
+        withenv("UNITFUL_FANCY_EXPONENTS" => true) do
+            @test pretty_print_object(B) == """
+                                            ScaledField: 0.1 × Linearly polarized field with
+                                              - I₀ = 1.0000e+00 au = 3.5094452e16 W cm⁻² =>
+                                                - E₀ = 1.0000e+00 au = 514.2207 GV m⁻¹
+                                                - A₀ = 0.3183 au
+                                              – a Fixed carrier @ λ = 14.5033 nm (T = 48.3777 as, ω = 3.1416 Ha = 85.4871 eV, f = 20.6707 PHz)
+                                              – and a Gaussian envelope of duration 170.8811 as (intensity FWHM; ±2.00σ)
+                                              – and a bandwidth of 0.3925 Ha = 10.6797 eV ⟺ 2.5823 PHz ⟺ 34.2390 Bohr = 1.8119 nm
+                                              – Uₚ = 0.0253 Ha = 689.2724 meV => α = 0.1013 Bohr = 5.3617 pm
+                                              Uₚ = 0.0003 Ha = 6.8927 meV => α = 0.0101 Bohr = 536.1686 fm"""
+        end
+    end
+
     @testset "Delayed fields" begin
         B = delay(A, 0.4)
         @test field_amplitude(delay(A,-0.4), 0.0) == field_amplitude(B, 0.8) == field_amplitude(A, 0.4)

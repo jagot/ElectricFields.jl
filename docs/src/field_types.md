@@ -14,6 +14,7 @@ ElectricFields.Ramp
 ElectricFields.SumField
 ElectricFields.WrappedField
 ElectricFields.NegatedField
+ElectricFields.ScaledField
 ElectricFields.DelayedField
 delay
 ElectricFields.PaddedField
